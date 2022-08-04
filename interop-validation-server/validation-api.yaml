@@ -1,0 +1,483 @@
+openapi: 3.0.0
+info:
+  title: Data Validation Service
+  description: The Data Validation Service provides APIs for managing data validation issues within the Ronin data ecosystem.
+  version: 1.0.0
+
+paths:
+  /resources:
+    get:
+      tags:
+        - resource
+      operationId: getResources
+      summary: Returns resources meeting the supplied filters.
+      description: By default, this service will return a maximum of 25 resources. Resources are always returned based off creation date and the supplied order.
+      parameters:
+        - name: status
+          in: query
+          description: The resource statuses to return.
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/ResourceStatus'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/After'
+      responses:
+        '200':
+          description: Successfully returned a list of Resources.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+    post:
+      tags:
+        - resource
+      operationId: addResource
+      summary: Adds the supplied resource and associated issues.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewResource'
+      responses:
+        '200':
+          description: Successfully created a new resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedId'
+
+  /resources/{resourceId}:
+    get:
+      tags:
+        - resource
+      operationId: getResourceById
+      summary: Retrieves resource by ID.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Successfully returned the Resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+
+  /resources/{resourceId}/comments:
+    get:
+      tags:
+        - comment
+      operationId: getCommentsByResource
+      summary: Returns comments associated to the supplied resource.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+        - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: Successfully returned a list of Comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Issue'
+    post:
+      tags:
+        - comment
+      operationId: addCommentForResource
+      summary: Adds the supplied comment to the resource.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewIssue'
+      responses:
+        '200':
+          description: Successfully created a new comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedId'
+
+  /resources/{resourceId}/reprocess:
+    post:
+      tags:
+        - resource
+      operationId: reprocessResource
+      summary: Triggers a reprocessing event.
+      description: A reprocessing event is not guaranteed to be immediate. This API will respond with success as long as it is able to properly mark the resource as ready for reprocessing, but does not guarantee reprocessing has yet occurred.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: string
+                  description: The name of the person who triggered the reprocess.
+                comment:
+                  type: string
+                  description: A comment to associate with the reprocessing. This will be added as a comment for this resource.
+              required:
+                - user
+                - comment
+      responses:
+        '202':
+          description: The reprocessing event was properly marked in the system and will occur along the schedule and parameters determined by the current implementation.
+
+  /resources/{resourceId}/issues:
+    get:
+      tags:
+        - issue
+      operationId: getIssues
+      summary: Returns resources meeting the supplied filters for this resource.
+      description: By default, this service will return a maximum of 25 issues. Issues are always returned based off creation date and the supplied order.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+        - name: status
+          in: query
+          description: The issue statuses to return.
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/IssueStatus'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/After'
+      responses:
+        '200':
+          description: Successfully returned a list of Issues.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Issue'
+
+  /resources/{resourceId}/issues/{issueId}:
+    get:
+      tags:
+        - issue
+      operationId: getIssueById
+      summary: Retrieves issue by ID.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+        - $ref: '#/components/parameters/IssueId'
+      responses:
+        '200':
+          description: Successfully returned the Issue.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+    patch:
+      tags:
+        - issue
+      operationId: updateIssue
+      summary: Updates the issue.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+        - $ref: '#/components/parameters/IssueId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIssue'
+      responses:
+        '200':
+          description: Successfully updated the Issue.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+
+  /resources/{resourceId}/issues/{issueId}/comments:
+    get:
+      tags:
+        - comment
+      operationId: getCommentsByIssue
+      summary: Returns comments associated to the supplied issue.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+        - $ref: '#/components/parameters/IssueId'
+        - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: Successfully returned a list of Comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Issue'
+    post:
+      tags:
+        - comment
+      operationId: addCommentForIssue
+      summary: Adds the supplied comment to the issue.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+        - $ref: '#/components/parameters/IssueId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewIssue'
+      responses:
+        '200':
+          description: Successfully created a new comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedId'
+
+components:
+  schemas:
+    # Common schemas useful for other schemas and parameters.
+    ResourceStatus:
+      type: string
+      enum:
+        - REPORTED
+        - IGNORED
+        - ADDRESSING
+        - REPROCESSED
+      description: The status of the resource
+    IssueStatus:
+      type: string
+      enum:
+        - REPORTED
+        - IGNORED
+        - ADDRESSING
+        - ADDRESSED
+      description: The status of the issue
+    Severity:
+      type: string
+      enum:
+        - FAILED
+        - WARNING
+      description: The severity
+    Id:
+      type: string
+      format: uuid
+      description: The opaque ID for this object.
+      example: 123e4567-e89b-12d3-a456-426614174000
+
+    # API schemas
+    GeneratedId:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+    NewResource:
+      type: object
+      properties:
+        resource_type:
+          type: string
+          description: The type of resource
+          example: Patient
+        resource:
+          type: string
+          description: The raw JSON associated to the resource
+        create_dt_tm:
+          type: string
+          format: date-time
+          description: The date and time when this resource was created. If not provided, it will be generated by the server based off when it is received.
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewIssue'
+          description: The issues associated to this resource
+      required:
+        - resource_type
+        - resource
+        - issues
+    Resource:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        resource_type:
+          type: string
+          description: The type of resource
+          example: Patient
+        resource:
+          type: string
+          description: The raw JSON associated to the resource
+        status:
+          $ref: '#/components/schemas/ResourceStatus'
+          description: The status of the resource.
+        severity:
+          $ref: '#/components/schemas/Severity'
+          description: The severity of the resource.
+        create_dt_tm:
+          type: string
+          format: date-time
+          description: The date and time in UTC when this resource was created.
+        update_dt_tm:
+          type: string
+          format: date-time
+          description: The date and time in UTC when this resource was last updated.
+        reprocess_dt_tm:
+          type: string
+          format: date-time
+          description: The date and time in UTC when this resource was reprocessed.
+      required:
+        - id
+        - resource_type
+        - resource
+        - status
+        - severity
+        - create_dt_tm
+    NewIssue:
+      type: object
+      properties:
+        severity:
+          $ref: '#/components/schemas/Severity'
+          description: The severity of the issue.
+        type:
+          type: string
+          description: The type of issue. This should be treated as a codified field based off the resource's resource_type
+          example: null-birthdate
+        description:
+          type: string
+          description: Any additional text needed to describe the issue.
+        create_dt_tm:
+          type: string
+          format: date-time
+          description: The date and time when this issue was created. If not provided, it will be generated by the server based off when it is received.
+      required:
+        - severity
+        - type
+        - description
+    UpdateIssue:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/IssueStatus'
+          description: The status of the issue.
+      required:
+        - status
+    Issue:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        severity:
+          $ref: '#/components/schemas/Severity'
+        type:
+          type: string
+          description: The type of issue. This should be treated as a codified field based off the resource's resource_type
+          example: null-birthdate
+        description:
+          type: string
+          description: Any additional text needed to describe the issue.
+        status:
+          $ref: '#/components/schemas/IssueStatus'
+          description: The status of the issue.
+        create_dt_tm:
+          type: string
+          format: date-time
+          description: The date and time in UTC when this issue was created.
+        update_dt_tm:
+          type: string
+          format: date-time
+          description: The date and time in UTC when this issue was last updated.
+      required:
+        - id
+        - severity
+        - type
+        - description
+        - status
+        - create_dt_tm
+    NewComment:
+      type: object
+      properties:
+        author:
+          type: string
+          description: The name of the author of this comment
+        text:
+          type: string
+          description: The text of the comment.
+        create_dt_tm:
+          type: string
+          format: date-time
+          description: The date and time when this comment was created. If not provided, it will be generated by the server based off when it is received.
+      required:
+        - author
+        - text
+    Comment:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        author:
+          type: string
+          description: The name of the author of this comment
+        text:
+          type: string
+          description: The text of the comment.
+        create_dt_tm:
+          type: string
+          format: date-time
+          description: The date and time in UTC when this comment was created.
+      required:
+        - id
+        - author
+        - text
+        - create_dt_tm
+
+  # Parameters used in multiple contexts
+  parameters:
+    Order:
+      name: order
+      in: query
+      description: The order in which the results are returned.
+      schema:
+        type: string
+        enum:
+          - ASC
+          - DESC
+        default: ASC
+    Limit:
+      name: limit
+      in: query
+      description: The number of elements to retrieve in a single request.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 25
+    After:
+      name: after
+      in: query
+      description: The reference ID after which results should be returned.
+      schema:
+        $ref: '#/components/schemas/Id'
+    ResourceId:
+      name: resourceId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    IssueId:
+      name: issueId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
