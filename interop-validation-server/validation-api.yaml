@@ -86,7 +86,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Issue'
+                  $ref: '#/components/schemas/Comment'
     post:
       tags:
         - comment
@@ -99,7 +99,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewIssue'
+              $ref: '#/components/schemas/NewComment'
       responses:
         '200':
           description: Successfully created a new comment
@@ -224,7 +224,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Issue'
+                  $ref: '#/components/schemas/Comment'
     post:
       tags:
         - comment
@@ -238,7 +238,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewIssue'
+              $ref: '#/components/schemas/NewComment'
       responses:
         '200':
           description: Successfully created a new comment
