@@ -1,3 +1,5 @@
+[![Lint](https://github.com/projectronin/interop-validation/actions/workflows/lint.yml/badge.svg)](https://github.com/projectronin/interop-validation/actions/workflows/lint.yml)
+
 # interop-validation
 
 ## Server

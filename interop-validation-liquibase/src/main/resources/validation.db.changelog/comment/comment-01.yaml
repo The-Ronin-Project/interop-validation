@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: comment-create
+      author: Josh Smith
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            - tableExists:
+                tableName: comment
+      changes:
+        - createTable:
+            tableName: comment
+            columns:
+              - column:
+                  name: comment_id
+                  # This is stored as a BINARY as an optimization for storing UUIDs.
+                  type: BINARY(16)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_comment
+              - column:
+                  name: author
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: text
+                  type: BLOB
+                  constraints:
+                    nullable: false
+              - column:
+                  name: create_dt_tm
+                  type: DATETIME
+                  constraints:
+                    nullable: false

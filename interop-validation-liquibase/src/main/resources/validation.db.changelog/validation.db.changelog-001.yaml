@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - include:
+      file: validation/db/changelog/resource/resource-01.yaml
+  - include:
+      file: validation/db/changelog/issue/issue-01.yaml
+  - include:
+      file: validation/db/changelog/comment/comment-01.yaml
+  - include:
+      file: validation/db/changelog/comment/resource_comment_r-01.yaml
+  - include:
+      file: validation/db/changelog/comment/issue_comment_r-01.yaml

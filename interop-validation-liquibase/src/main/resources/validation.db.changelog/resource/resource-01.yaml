@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: resource-create
+      author: Josh Smith
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            - tableExists:
+                tableName: resource
+      changes:
+        - createTable:
+            tableName: resource
+            columns:
+              - column:
+                  name: resource_id
+                  # This is stored as a BINARY as an optimization for storing UUIDs.
+                  type: BINARY(16)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_resource
+              - column:
+                  name: organization_id
+                  type: VARCHAR(8)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: resource_type
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: resource
+                  type: BLOB
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(15)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: create_dt_tm
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: update_dt_tm
+                  type: DATETIME
+                  constraints:
+                    nullable: true
+              - column:
+                  name: reprocess_dt_tm
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reprocessed_by
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: true

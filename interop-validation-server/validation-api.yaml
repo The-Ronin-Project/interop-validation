@@ -287,6 +287,10 @@ components:
     NewResource:
       type: object
       properties:
+        organization_id:
+          type: string
+          description: The ID of the organization to whom this resource belongs
+          example: 12345678
         resource_type:
           type: string
           description: The type of resource
@@ -312,6 +316,10 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/Id'
+        organization_id:
+          type: string
+          description: The ID of the organization to whom this resource belongs
+          example: 12345678
         resource_type:
           type: string
           description: The type of resource
@@ -337,6 +345,9 @@ components:
           type: string
           format: date-time
           description: The date and time in UTC when this resource was reprocessed.
+        reprocessed_by:
+          type: string
+          description: The name of the person who reprocessed this resource.
       required:
         - id
         - resource_type

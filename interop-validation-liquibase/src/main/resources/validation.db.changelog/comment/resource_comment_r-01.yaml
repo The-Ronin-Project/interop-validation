@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: resource-comment-r-create
+      author: Josh Smith
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            - tableExists:
+                tableName: resource_comment_r
+      changes:
+        - createTable:
+            tableName: resource_comment_r
+            columns:
+              - column:
+                  name: resource_id
+                  # This is stored as a BINARY as an optimization for storing UUIDs.
+                  type: BINARY(16)
+                  constraints:
+                    nullable: false
+                    references: resource(resource_id)
+                    foreignKeyName: fk_resource_comment_r_resource
+              - column:
+                  name: comment_id
+                  # This is stored as a BINARY as an optimization for storing UUIDs.
+                  type: BINARY(16)
+                  constraints:
+                    nullable: false
+                    references: comment(comment_id)
+                    foreignKeyName: fk_resource_comment_r_comment
+        - addPrimaryKey:
+            tableName: resource_comment_r
+            columnNames: resource_id, comment_id
+            constraintName: pk_resource_comment_r

@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: issue-create
+      author: Josh Smith
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            - tableExists:
+                tableName: issue
+      changes:
+        - createTable:
+            tableName: issue
+            columns:
+              - column:
+                  name: issue_id
+                  # This is stored as a BINARY as an optimization for storing UUIDs.
+                  type: BINARY(16)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_issue
+              - column:
+                  name: resource_id
+                  type: BINARY(16)
+                  constraints:
+                    nullable: false
+                    references: resource(resource_id)
+                    foreignKeyName: fk_issue_resource
+              - column:
+                  name: severity
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(256)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(15)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: create_dt_tm
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: update_dt_tm
+                  type: DATETIME
+                  constraints:
+                    nullable: true
