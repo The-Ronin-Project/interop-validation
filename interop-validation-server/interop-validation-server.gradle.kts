@@ -3,6 +3,7 @@ import org.jetbrains.gradle.ext.taskTriggers
 
 plugins {
     `maven-publish`
+    id("com.projectronin.interop.gradle.junit")
     id("com.projectronin.interop.gradle.spring")
     id("org.springframework.boot")
 
@@ -14,15 +15,28 @@ dependencies {
     implementation(platform(libs.spring.boot.parent))
     implementation(libs.springdoc.openapi.ui)
 
+    implementation(libs.ktorm.core)
+    implementation(libs.ktorm.support.mysql)
+    implementation(libs.uuid.creator)
+
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
 
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
+    runtimeOnly(project(":interop-validation-liquibase"))
+    runtimeOnly(libs.liquibase.core)
+    runtimeOnly(libs.mysql.connector.java)
+
     testImplementation(libs.interop.commonTestDb)
+    testImplementation(libs.mockk)
+    testImplementation(libs.rider.core)
+
+    testRuntimeOnly(libs.testcontainers.mysql)
 }
 
 openApiGenerate {
@@ -35,8 +49,8 @@ openApiGenerate {
             "enumPropertyNaming" to "UPPERCASE",
             "interfaceOnly" to "true",
             "useTags" to "true",
-            "packageName" to "com.projectronin.interop.validation.server",
-            "basePackage" to "com.projectronin.interop.validation.server",
+            "packageName" to "com.projectronin.interop.validation.server.generated",
+            "basePackage" to "com.projectronin.interop.validation.server.generated",
             "gradleBuildFile" to "false"
         )
     )
@@ -72,6 +86,22 @@ ktlint {
         exclude {
             it.file.path.contains("/generated/")
         }
+    }
+}
+
+tasks.withType(JacocoReport::class.java).forEach {
+    afterEvaluate {
+        it.classDirectories.setFrom(
+            files(
+                it.classDirectories.files.map {
+                    fileTree(it).apply {
+                        exclude(
+                            "**/generated/**"
+                        )
+                    }
+                }
+            )
+        )
     }
 }
 

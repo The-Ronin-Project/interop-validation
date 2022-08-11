@@ -1,24 +1,52 @@
 package com.projectronin.interop.validation.server.controller
 
-import com.projectronin.interop.validation.server.apis.ResourceApi
-import com.projectronin.interop.validation.server.models.GeneratedId
-import com.projectronin.interop.validation.server.models.NewResource
-import com.projectronin.interop.validation.server.models.ReprocessResourceRequest
-import com.projectronin.interop.validation.server.models.Resource
-import com.projectronin.interop.validation.server.models.ResourceStatus
+import com.projectronin.interop.validation.server.data.IssueDAO
+import com.projectronin.interop.validation.server.data.ResourceDAO
+import com.projectronin.interop.validation.server.data.model.ResourceDO
+import com.projectronin.interop.validation.server.generated.apis.ResourceApi
+import com.projectronin.interop.validation.server.generated.models.GeneratedId
+import com.projectronin.interop.validation.server.generated.models.NewResource
+import com.projectronin.interop.validation.server.generated.models.Order
+import com.projectronin.interop.validation.server.generated.models.ReprocessResourceRequest
+import com.projectronin.interop.validation.server.generated.models.Resource
+import com.projectronin.interop.validation.server.generated.models.ResourceStatus
+import com.projectronin.interop.validation.server.generated.models.Severity
+import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-class ResourceController : ResourceApi {
+class ResourceController(private val resourceDAO: ResourceDAO, private val issueDAO: IssueDAO) : ResourceApi {
+    val logger = KotlinLogging.logger { }
+
     override fun getResources(
         status: List<ResourceStatus>?,
-        order: String,
+        order: Order,
         limit: Int,
         after: UUID?
     ): ResponseEntity<List<Resource>> {
-        TODO()
+        val statuses = if (status == null || status.isEmpty()) ResourceStatus.values().toList() else status
+
+        val resourceDOs = resourceDAO.getResources(statuses, order, limit, after)
+        if (resourceDOs.isEmpty()) {
+            return ResponseEntity.ok(listOf())
+        }
+
+        val resourceIds = resourceDOs.map { it.id }
+        val issueSeveritiesByResource = issueDAO.getIssueSeveritiesForResources(resourceIds)
+
+        val resources = resourceDOs.mapNotNull {
+            val issueSeverities = issueSeveritiesByResource[it.id]
+            if (issueSeverities == null) {
+                logger.warn { "No issue severities found for resource ${it.id}" }
+                null
+            } else {
+                createResource(it, issueSeverities)
+            }
+        }
+
+        return ResponseEntity.ok(resources)
     }
 
     override fun getResourceById(resourceId: UUID): ResponseEntity<Resource> {
@@ -34,5 +62,22 @@ class ResourceController : ResourceApi {
         reprocessResourceRequest: ReprocessResourceRequest
     ): ResponseEntity<Unit> {
         TODO()
+    }
+
+    private fun createResource(resourceDO: ResourceDO, issueSeverities: Set<Severity>): Resource {
+        val resourceSeverity = if (issueSeverities.contains(Severity.FAILED)) Severity.FAILED else Severity.WARNING
+
+        return Resource(
+            id = resourceDO.id,
+            organizationId = resourceDO.organizationId,
+            resourceType = resourceDO.resourceType,
+            resource = resourceDO.resource,
+            status = resourceDO.status,
+            severity = resourceSeverity,
+            createDtTm = resourceDO.createDateTime,
+            updateDtTm = resourceDO.updateDateTime,
+            reprocessDtTm = resourceDO.reprocessDateTime,
+            reprocessedBy = resourceDO.reprocessedBy
+        )
     }
 }

@@ -37,6 +37,11 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: location
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
                   name: description
                   type: VARCHAR(256)
                   constraints:

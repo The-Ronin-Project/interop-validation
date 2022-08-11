@@ -277,6 +277,12 @@ components:
       format: uuid
       description: The opaque ID for this object.
       example: 123e4567-e89b-12d3-a456-426614174000
+    Order:
+      type: string
+      enum:
+        - ASC
+        - DESC
+      default: ASC
 
     # API schemas
     GeneratedId:
@@ -308,6 +314,7 @@ components:
             $ref: '#/components/schemas/NewIssue'
           description: The issues associated to this resource
       required:
+        - organization_id
         - resource_type
         - resource
         - issues
@@ -350,6 +357,7 @@ components:
           description: The name of the person who reprocessed this resource.
       required:
         - id
+        - organization_id
         - resource_type
         - resource
         - status
@@ -460,11 +468,7 @@ components:
       in: query
       description: The order in which the results are returned.
       schema:
-        type: string
-        enum:
-          - ASC
-          - DESC
-        default: ASC
+        $ref: '#/components/schemas/Order'
     Limit:
       name: limit
       in: query
