@@ -50,7 +50,23 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
     }
 
     override fun getResourceById(resourceId: UUID): ResponseEntity<Resource> {
-        TODO()
+        val resourceDO = resourceDAO.getResource(resourceId)
+            ?: return ResponseEntity.notFound().build()
+
+        val issueSeverities = issueDAO.getIssueSeveritiesForResources(listOf(resourceDO.id))[resourceDO.id]
+
+        val resource = if (issueSeverities == null) {
+            // Once we figure out how we're going to handle logging errors in DAOs, this will need to be changed.  For
+            // now, I'm leaving it a warning.
+            logger.warn { "No issue severities found for resource ${resourceDO.id}" }
+            null
+        } else {
+            createResource(resourceDO, issueSeverities)
+        }
+
+        // We either have a good resource, or our resource didn't have any issues assigned to it.
+        return resource?.let { ResponseEntity.ok(it) }
+            ?: ResponseEntity.internalServerError().build()
     }
 
     override fun addResource(newResource: NewResource): ResponseEntity<GeneratedId> {

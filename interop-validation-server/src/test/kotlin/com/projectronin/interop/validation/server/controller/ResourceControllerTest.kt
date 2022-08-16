@@ -203,7 +203,8 @@ class ResourceControllerTest {
 
         every { issueDAO.getIssueSeveritiesForResources(listOf(resource1Id)) } returns mapOf(
             resource1Id to setOf(
-                Severity.WARNING, Severity.FAILED
+                Severity.WARNING,
+                Severity.FAILED
             )
         )
 
@@ -234,7 +235,8 @@ class ResourceControllerTest {
 
         every { issueDAO.getIssueSeveritiesForResources(listOf(resource1Id, resource2Id)) } returns mapOf(
             resource1Id to setOf(
-                Severity.WARNING, Severity.FAILED
+                Severity.WARNING,
+                Severity.FAILED
             )
         )
 
@@ -264,7 +266,8 @@ class ResourceControllerTest {
         } returns listOf(resourceDO1, resourceDO2)
 
         every { issueDAO.getIssueSeveritiesForResources(listOf(resource1Id, resource2Id)) } returns mapOf(
-            resource1Id to setOf(Severity.FAILED), resource2Id to setOf(Severity.WARNING)
+            resource1Id to setOf(Severity.FAILED),
+            resource2Id to setOf(Severity.WARNING)
         )
 
         val response = controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, afterUUID)
@@ -297,5 +300,80 @@ class ResourceControllerTest {
             reprocessedBy = "Josh"
         )
         assertTrue(resources.contains(expectedResource2))
+    }
+
+    @Test
+    fun `getResourceById - can return a resource`() {
+        every {
+            resourceDAO.getResource(resource1Id)
+        } returns resourceDO1
+
+        every { issueDAO.getIssueSeveritiesForResources(listOf(resource1Id)) } returns mapOf(
+            resource1Id to setOf(Severity.WARNING)
+        )
+
+        val response = controller.getResourceById(resource1Id)
+        assertEquals(HttpStatus.OK, response.statusCode)
+
+        val resource = response.body!!
+        val expectedResource = Resource(
+            id = resource1Id,
+            organizationId = resourceDO1.organizationId,
+            resourceType = resourceDO1.resourceType,
+            resource = resourceDO1.resource,
+            status = ResourceStatus.REPORTED,
+            severity = Severity.WARNING,
+            createDtTm = resource1CreateDtTm
+        )
+        assertEquals(expectedResource, resource)
+    }
+
+    @Test
+    fun `getResourceById - handle multiple issue severities`() {
+        every {
+            resourceDAO.getResource(resource1Id)
+        } returns resourceDO1
+
+        every { issueDAO.getIssueSeveritiesForResources(listOf(resource1Id)) } returns mapOf(
+            resource1Id to setOf(Severity.WARNING),
+            resource1Id to setOf(Severity.FAILED)
+        )
+
+        val response = controller.getResourceById(resource1Id)
+        assertEquals(HttpStatus.OK, response.statusCode)
+
+        val resource = response.body!!
+        val expectedResource = Resource(
+            id = resource1Id,
+            organizationId = resourceDO1.organizationId,
+            resourceType = resourceDO1.resourceType,
+            resource = resourceDO1.resource,
+            status = ResourceStatus.REPORTED,
+            severity = Severity.FAILED,
+            createDtTm = resource1CreateDtTm
+        )
+        assertEquals(expectedResource, resource)
+    }
+
+    @Test
+    fun `getResourceById - bad UUID returns a not found`() {
+        every {
+            resourceDAO.getResource(resource1Id)
+        } returns null
+
+        val response = controller.getResourceById(resource1Id)
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+    }
+
+    @Test
+    fun `getResourceById - resource with no issues returns a server error`() {
+        every {
+            resourceDAO.getResource(resource1Id)
+        } returns resourceDO1
+
+        every { issueDAO.getIssueSeveritiesForResources(listOf(resource1Id)) } returns mapOf()
+
+        val response = controller.getResourceById(resource1Id)
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
     }
 }
