@@ -13,6 +13,7 @@ import org.ktorm.dsl.eq
 import org.ktorm.dsl.from
 import org.ktorm.dsl.greater
 import org.ktorm.dsl.inList
+import org.ktorm.dsl.insert
 import org.ktorm.dsl.less
 import org.ktorm.dsl.limit
 import org.ktorm.dsl.map
@@ -95,5 +96,28 @@ class ResourceDAO(private val database: Database) {
         val resources = query.map { ResourceDOs.createEntity(it) }
         logger.info { "Found ${resources.size} resources" }
         return resources
+    }
+
+    /**
+     * Inserts [resourceDO] and returns its generated [UUID].
+     */
+    fun insertResource(resourceDO: ResourceDO): UUID {
+        val newUUID = UUID.randomUUID()
+        logger.info { "Inserting resource for organization ${resourceDO.organizationId} with UUID $newUUID" }
+
+        database.insert(ResourceDOs) {
+            set(it.id, newUUID)
+            set(it.organizationId, resourceDO.organizationId)
+            set(it.resourceType, resourceDO.resourceType)
+            set(it.resource, resourceDO.resource)
+            set(it.status, resourceDO.status)
+            set(it.createDateTime, resourceDO.createDateTime)
+            set(it.updateDateTime, resourceDO.updateDateTime)
+            set(it.reprocessDateTime, resourceDO.reprocessDateTime)
+            set(it.reprocessedBy, resourceDO.reprocessedBy)
+        }
+
+        logger.info { "Resource $newUUID inserted" }
+        return newUUID
     }
 }

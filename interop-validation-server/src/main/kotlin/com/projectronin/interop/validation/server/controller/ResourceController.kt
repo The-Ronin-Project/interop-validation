@@ -3,6 +3,8 @@ package com.projectronin.interop.validation.server.controller
 import com.projectronin.interop.validation.server.data.IssueDAO
 import com.projectronin.interop.validation.server.data.ResourceDAO
 import com.projectronin.interop.validation.server.data.model.ResourceDO
+import com.projectronin.interop.validation.server.data.model.toIssueDO
+import com.projectronin.interop.validation.server.data.model.toResourceDO
 import com.projectronin.interop.validation.server.generated.apis.ResourceApi
 import com.projectronin.interop.validation.server.generated.models.GeneratedId
 import com.projectronin.interop.validation.server.generated.models.NewResource
@@ -13,6 +15,7 @@ import com.projectronin.interop.validation.server.generated.models.ResourceStatu
 import com.projectronin.interop.validation.server.generated.models.Severity
 import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
@@ -57,7 +60,7 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
 
         val resource = if (issueSeverities == null) {
             // Once we figure out how we're going to handle logging errors in DAOs, this will need to be changed.  For
-            // now, I'm leaving it a warning.
+            // now, I'm leaving it as a warning.
             logger.warn { "No issue severities found for resource ${resourceDO.id}" }
             null
         } else {
@@ -69,8 +72,15 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
             ?: ResponseEntity.internalServerError().build()
     }
 
+    @Transactional
     override fun addResource(newResource: NewResource): ResponseEntity<GeneratedId> {
-        TODO()
+        val resourceUUID = resourceDAO.insertResource(newResource.toResourceDO())
+
+        newResource.issues.forEach {
+            issueDAO.insertIssue(it.toIssueDO(resourceUUID))
+        }
+
+        return ResponseEntity.ok(GeneratedId(resourceUUID))
     }
 
     override fun reprocessResource(

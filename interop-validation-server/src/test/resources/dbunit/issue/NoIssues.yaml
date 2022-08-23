@@ -1,0 +1,10 @@
+resource:
+  - resource_id: "X3gcMALzTwatz3BVvLxXcA=="
+    # UUID: 5f781c30-02f3-4f06-adcf-7055bcbc5770
+    organization_id: "testorg"
+    resource_type: "Patient"
+    resource: "the patient resource"
+    status: "REPORTED"
+    create_dt_tm: "2022-08-01 11:18:00 +0000"
+
+issue:

@@ -17,7 +17,7 @@ class ValidationServer {
      * The Database used by validation based off the [dataSource].
      */
     @Bean
-    fun database(dataSource: DataSource): Database = Database.connect(dataSource)
+    fun database(dataSource: DataSource): Database = Database.connectWithSpringSupport(dataSource)
 }
 
 fun main(args: Array<String>) {

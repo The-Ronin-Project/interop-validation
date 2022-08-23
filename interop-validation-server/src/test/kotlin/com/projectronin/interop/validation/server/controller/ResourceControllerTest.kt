@@ -3,6 +3,10 @@ package com.projectronin.interop.validation.server.controller
 import com.projectronin.interop.validation.server.data.IssueDAO
 import com.projectronin.interop.validation.server.data.ResourceDAO
 import com.projectronin.interop.validation.server.data.model.ResourceDO
+import com.projectronin.interop.validation.server.data.model.toIssueDO
+import com.projectronin.interop.validation.server.data.model.toResourceDO
+import com.projectronin.interop.validation.server.generated.models.NewIssue
+import com.projectronin.interop.validation.server.generated.models.NewResource
 import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.Resource
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
@@ -13,11 +17,18 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.http.HttpStatus
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.UUID
 
+/*
+    I tried to setup a test that proves the @Transactional annotation on addResource() is working, but for the
+    life of me I couldn't get the SpringTransactionManager to play nice with our Liquibase extension and open a
+    transaction.  You can run the project locally, though, connect to the MySql DB and watch it to confirm it's
+    working.  If you force the insert to the issue table to fail it'll rollback the insert to resource.
+ */
 class ResourceControllerTest {
     lateinit var resourceDAO: ResourceDAO
     lateinit var issueDAO: IssueDAO
@@ -49,6 +60,30 @@ class ResourceControllerTest {
         reprocessDateTime = resource2ReprocessDtTm
         reprocessedBy = "Josh"
     }
+
+    private val newIssue1 = NewIssue(
+        severity = Severity.FAILED,
+        type = "pat-1",
+        description = "No contact details",
+        createDtTm = OffsetDateTime.now(),
+        location = "Patient.contact"
+    )
+
+    private val newIssue2 = NewIssue(
+        severity = Severity.WARNING,
+        type = "pat-2",
+        description = "No contact details",
+        createDtTm = OffsetDateTime.now(),
+        location = "Patient.contact"
+    )
+
+    private val newResource = NewResource(
+        organizationId = "testorg",
+        resourceType = "Patient",
+        resource = "the patient resource",
+        issues = listOf(newIssue1, newIssue2),
+        createDtTm = OffsetDateTime.now()
+    )
 
     @BeforeEach
     fun setup() {
@@ -375,5 +410,58 @@ class ResourceControllerTest {
 
         val response = controller.getResourceById(resource1Id)
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
+    }
+
+    @Test
+    fun `insertResource - can insert new resource`() {
+        val resourceUUID = UUID.randomUUID()
+        val issue1UUID = UUID.randomUUID()
+        val issue2UUID = UUID.randomUUID()
+
+        every {
+            resourceDAO.insertResource(newResource.toResourceDO())
+        } returns resourceUUID
+
+        every {
+            issueDAO.insertIssue(newIssue1.toIssueDO(resourceUUID))
+        } returns issue1UUID
+
+        every {
+            issueDAO.insertIssue(newIssue2.toIssueDO(resourceUUID))
+        } returns issue2UUID
+
+        val response = controller.addResource(newResource)
+        val generatedId = response.body!!
+
+        assertEquals(HttpStatus.OK, response.statusCode)
+        assertEquals(resourceUUID, generatedId.id)
+    }
+
+    @Test
+    fun `insertResource - handles error inserting resource`() {
+        every {
+            resourceDAO.insertResource(newResource.toResourceDO())
+        } throws IllegalStateException("Bad insert")
+
+        assertThrows<IllegalStateException> {
+            controller.addResource(newResource)
+        }
+    }
+
+    @Test
+    fun `insertResource - handles error inserting issue`() {
+        val resourceUUID = UUID.randomUUID()
+
+        every {
+            resourceDAO.insertResource(newResource.toResourceDO())
+        } returns resourceUUID
+
+        every {
+            issueDAO.insertIssue(newIssue1.toIssueDO(resourceUUID))
+        } throws IllegalStateException("Bad issue")
+
+        assertThrows<IllegalStateException> {
+            controller.addResource(newResource)
+        }
     }
 }

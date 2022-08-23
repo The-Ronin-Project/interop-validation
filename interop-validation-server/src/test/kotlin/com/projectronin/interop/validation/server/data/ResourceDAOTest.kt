@@ -2,9 +2,11 @@ package com.projectronin.interop.validation.server.data
 
 import com.github.database.rider.core.api.connection.ConnectionHolder
 import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.projectronin.interop.common.test.database.dbrider.DBRiderConnection
 import com.projectronin.interop.common.test.database.ktorm.KtormHelper
 import com.projectronin.interop.common.test.database.liquibase.LiquibaseTest
+import com.projectronin.interop.validation.server.data.model.ResourceDO
 import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -381,5 +383,44 @@ class ResourceDAOTest {
         assertNull(resource1.updateDateTime)
         assertNull(resource1.reprocessDateTime)
         assertNull(resource1.reprocessedBy)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/resource/NoResources.yaml"], cleanAfter = true)
+    @ExpectedDataSet(value = ["/dbunit/resource/SingleResource.yaml"], ignoreCols = ["resource_id"])
+    fun `insertResource - can insert`() {
+        resourceDAO.insertResource(
+            ResourceDO {
+                organizationId = "testorg"
+                resourceType = "Patient"
+                resource = "the patient resource"
+                status = ResourceStatus.REPROCESSED
+                createDateTime = OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+                updateDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
+                reprocessDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
+                reprocessedBy = "User 1"
+            }
+        )
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/resource/NoResources.yaml"], cleanAfter = true)
+    @ExpectedDataSet(value = ["/dbunit/resource/NoResources.yaml"], ignoreCols = ["resource_id"])
+    fun `insertResource - handles failed insert`() {
+        assertThrows<IllegalStateException> {
+            resourceDAO.insertResource(
+                // createDateTime is not nullable and MySql won't set a default value for times, so this should throw an exception
+                ResourceDO {
+                    organizationId = "testorg"
+                    resourceType = "Patient"
+                    resource = "the patient resource"
+                    status = ResourceStatus.REPROCESSED
+                    // createDateTime = OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+                    updateDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
+                    reprocessDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
+                    reprocessedBy = "User 1"
+                }
+            )
+        }
     }
 }

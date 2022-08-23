@@ -1,0 +1,36 @@
+package com.projectronin.interop.validation.server.data.model
+
+import com.projectronin.interop.validation.server.generated.models.IssueStatus
+import com.projectronin.interop.validation.server.generated.models.NewIssue
+import com.projectronin.interop.validation.server.generated.models.NewResource
+import com.projectronin.interop.validation.server.generated.models.ResourceStatus
+import java.time.OffsetDateTime
+import java.util.UUID
+
+/**
+ * Converts a [NewResource] into a [ResourceDO]
+ */
+fun NewResource.toResourceDO(): ResourceDO {
+    return ResourceDO {
+        organizationId = this@toResourceDO.organizationId
+        resourceType = this@toResourceDO.resourceType
+        resource = this@toResourceDO.resource
+        status = ResourceStatus.REPORTED
+        createDateTime = this@toResourceDO.createDtTm ?: OffsetDateTime.now()
+    }
+}
+
+/**
+ * Converts a [NewIssue] into a [IssueDO]
+ */
+fun NewIssue.toIssueDO(resourceId: UUID): IssueDO {
+    return IssueDO {
+        this@IssueDO.resourceId = resourceId
+        severity = this@toIssueDO.severity
+        type = this@toIssueDO.type
+        location = this@toIssueDO.location
+        description = this@toIssueDO.description
+        status = IssueStatus.REPORTED
+        createDateTime = this@toIssueDO.createDtTm ?: OffsetDateTime.now()
+    }
+}
