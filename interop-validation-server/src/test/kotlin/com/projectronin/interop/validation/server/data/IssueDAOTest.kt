@@ -8,8 +8,10 @@ import com.projectronin.interop.common.test.database.ktorm.KtormHelper
 import com.projectronin.interop.common.test.database.liquibase.LiquibaseTest
 import com.projectronin.interop.validation.server.data.model.IssueDO
 import com.projectronin.interop.validation.server.generated.models.IssueStatus
+import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.Severity
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.OffsetDateTime
@@ -76,6 +78,109 @@ class IssueDAOTest {
         assertEquals(2, severitiesByResource.size)
         assertEquals(setOf(Severity.FAILED, Severity.WARNING), severitiesByResource[resourceId1])
         assertEquals(setOf(Severity.WARNING), severitiesByResource[resourceId2])
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
+    fun `getIssue -  works`() {
+        val issueID = UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")
+        val issue = issueDAO.getIssue(issueID)
+        assertEquals(issueID.toString(), issue?.id.toString())
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
+    fun `getIssue - no issue found`() {
+        val resource = issueDAO.getIssue(UUID.randomUUID())
+        assertNull(resource)
+    }
+
+    @Test
+    fun `getIssue - exception thrown if no statuses provided`() {
+        val exception = assertThrows<IllegalArgumentException> {
+            issueDAO.getIssues(UUID.randomUUID(), listOf(), Order.ASC, 2, null)
+        }
+        assertEquals("At least one status must be provided", exception.message)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/MultipleIssuesWithDifferentTimestamps.yaml"], cleanAfter = true)
+    fun `getIssue - no issue found for requested statuses`() {
+        val resourceUUID = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val issues = issueDAO.getIssues(resourceUUID, listOf(IssueStatus.ADDRESSING), Order.ASC, 2, null)
+        assertEquals(0, issues.size)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/MultipleIssuesWithDifferentTimestamps.yaml"], cleanAfter = true)
+    fun `getIssue - throws error when no issue found for after`() {
+        val resourceUUID = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val after = UUID.randomUUID()
+        val exception = assertThrows<IllegalArgumentException> {
+            issueDAO.getIssues(resourceUUID, listOf(IssueStatus.ADDRESSING), Order.ASC, 2, after)
+        }
+        assertEquals("No issue found for $after", exception.message)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/MultipleIssuesWithDifferentTimestamps.yaml"], cleanAfter = true)
+    fun `getIssue - ASC order honors create date time`() {
+        val resourceUUID = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val issues = issueDAO.getIssues(resourceUUID, listOf(IssueStatus.REPORTED), Order.ASC, 100, null)
+        assertEquals(2, issues.size)
+
+        val issue1 = issues[0]
+        assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
+        assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/MultipleIssuesWithDifferentTimestamps.yaml"], cleanAfter = true)
+    fun `getIssue - DESC order honors create date time`() {
+        val resourceUUID = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val issues = issueDAO.getIssues(resourceUUID, listOf(IssueStatus.REPORTED), Order.DESC, 100, null)
+        assertEquals(2, issues.size)
+
+        val issue1 = issues[1]
+        assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
+        assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
+    }
+    @Test
+    @DataSet(value = ["/dbunit/issue/MultipleIssuesWithDifferentTimestamps.yaml"], cleanAfter = true)
+    fun `getIssue - after honored with asc`() {
+        val resourceUUID = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val issueID = UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")
+        val issues = issueDAO.getIssues(resourceUUID, listOf(IssueStatus.REPORTED), Order.ASC, 100, issueID)
+        assertEquals(1, issues.size)
+
+        val issue1 = issues[0]
+        assertEquals(UUID.fromString("897413b7-419f-4830-a20a-bf24aae16147"), issue1.id)
+        assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/MultipleIssuesWithDifferentTimestamps.yaml"], cleanAfter = true)
+    fun `getIssue - limit honored`() {
+        val resourceUUID = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val issues = issueDAO.getIssues(resourceUUID, listOf(IssueStatus.REPORTED), Order.ASC, 1, null)
+        assertEquals(1, issues.size)
+
+        val issue1 = issues[0]
+        assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
+        assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/MultipleIssuesWithDifferentTimestamps.yaml"], cleanAfter = true)
+    fun `getIssue - after honored with desc`() {
+        val resourceUUID = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val issueID = UUID.fromString("897413b7-419f-4830-a20a-bf24aae16147")
+        val issues = issueDAO.getIssues(resourceUUID, listOf(IssueStatus.REPORTED), Order.DESC, 100, issueID)
+        assertEquals(1, issues.size)
+
+        val issue1 = issues[0]
+        assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
+        assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
     }
 
     @Test

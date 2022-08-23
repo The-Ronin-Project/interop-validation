@@ -2,15 +2,27 @@ package com.projectronin.interop.validation.server.data
 
 import com.projectronin.interop.validation.server.data.binding.IssueDOs
 import com.projectronin.interop.validation.server.data.model.IssueDO
+import com.projectronin.interop.validation.server.generated.models.IssueStatus
+import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.Severity
 import mu.KotlinLogging
 import org.ktorm.database.Database
+import org.ktorm.dsl.and
+import org.ktorm.dsl.asc
+import org.ktorm.dsl.desc
+import org.ktorm.dsl.eq
 import org.ktorm.dsl.from
+import org.ktorm.dsl.greater
 import org.ktorm.dsl.inList
 import org.ktorm.dsl.insert
+import org.ktorm.dsl.less
+import org.ktorm.dsl.limit
 import org.ktorm.dsl.map
+import org.ktorm.dsl.or
+import org.ktorm.dsl.orderBy
 import org.ktorm.dsl.select
 import org.ktorm.dsl.where
+import org.ktorm.schema.ColumnDeclaring
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
@@ -52,5 +64,72 @@ class IssueDAO(private val database: Database) {
 
         logger.info { "Issue $newUUID inserted" }
         return newUUID
+    }
+
+    /**
+     * Retrieves the [IssueDO] for the [id].
+     */
+    fun getIssue(id: UUID): IssueDO? {
+        logger.info { "Looking up issue $id" }
+        val issue =
+            database.from(IssueDOs).select().where(IssueDOs.id eq id).map { IssueDOs.createEntity(it) }
+                .singleOrNull()
+
+        if (issue == null) {
+            logger.info { "No issue found for id $id" }
+            return null
+        }
+
+        logger.info { "Issue loaded for $id" }
+        return issue
+    }
+
+    /**
+     * Retrieves a [limit]ed number of issues for a specific [resourceUUID] and matching [statuses]
+     * sorted chronologically by [order], optionally starting at after [after]
+     */
+    fun getIssues(resourceUUID: UUID, statuses: List<IssueStatus>, order: Order, limit: Int, after: UUID?): List<IssueDO> {
+        require(statuses.isNotEmpty()) { "At least one status must be provided" }
+
+        logger.info { "Retrieving $limit issues in $order order after $after for following statuses: $statuses" }
+
+        val afterResource =
+            after?.let { getIssue(it) ?: throw IllegalArgumentException("No issue found for $after") }
+
+        // Ordering by create and then ID ensures that issues with the same create time will always be in the same order
+        val orderBy = when (order) {
+            Order.ASC -> listOf(IssueDOs.createDateTime.asc(), IssueDOs.id.asc())
+            Order.DESC -> listOf(IssueDOs.createDateTime.desc(), IssueDOs.id.desc())
+        }
+
+        val query = database.from(IssueDOs).select().where {
+            val conditions = mutableListOf<ColumnDeclaring<Boolean>>()
+
+            conditions += IssueDOs.status inList statuses
+            conditions += IssueDOs.resourceId eq resourceUUID
+
+            afterResource?.let {
+                // With an after resource, we care about 2 different conditions:
+                // 1. The time is "after" the "after issue's time". So for ASC, it's greater, and for DESC it's less.
+                // 2. If the time is the same, we need to check based off the ID, our secondary sort, to ensure that we
+                //    have retrieved all the issues that occurred at the same time as the "after issue".
+                conditions += when (order) {
+                    Order.ASC -> (
+                        (IssueDOs.createDateTime greater it.createDateTime) or
+                            ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id greater it.id))
+                        )
+                    Order.DESC -> (
+                        (IssueDOs.createDateTime less it.createDateTime) or
+                            ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id less it.id))
+                        )
+                }
+            }
+
+            conditions.reduce { a, b -> a and b }
+        }.limit(limit).orderBy(orderBy)
+
+        val resources = query.map { IssueDOs.createEntity(it) }
+        logger.info { "Found ${resources.size} issues" }
+        return resources
     }
 }
