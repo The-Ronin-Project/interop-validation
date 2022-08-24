@@ -94,13 +94,46 @@ class IssueControllerTest {
     @Test
     fun `getIssues - none found returns none`() {
         every {
-            issueDAO.getIssues(resourceId, IssueStatus.values().toList(), Order.ASC, 10, null)
+            issueDAO.getIssues(resourceId, listOf(IssueStatus.IGNORED), Order.ASC, 10, null)
         } returns emptyList()
 
-        val response = controller.getIssues(resourceId, emptyList(), Order.ASC, 10, null)
+        val response = controller.getIssues(resourceId, listOf(IssueStatus.IGNORED), Order.ASC, 10, null)
         assertEquals(HttpStatus.OK, response.statusCode)
 
         val issues = response.body!!
         assertEquals(0, issues.size)
+    }
+
+    @Test
+    fun `getIssueByID - returns 404 when not found`() {
+        every {
+            issueDAO.getIssue(issue1Id)
+        } returns null
+
+        val response = controller.getIssueById(resourceId, issue1Id)
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+    }
+
+    @Test
+    fun `getIssueByID - returns 400 when mismatch resource`() {
+        every {
+            issueDAO.getIssue(issue1Id)
+        } returns issue1
+        val wrongResourceID = UUID.randomUUID()
+        val response = controller.getIssueById(wrongResourceID, issue1Id)
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+    }
+
+    @Test
+    fun `getIssueByID - works`() {
+        every {
+            issueDAO.getIssue(issue1Id)
+        } returns issue1
+        val response = controller.getIssueById(resourceId, issue1Id)
+        assertEquals(HttpStatus.OK, response.statusCode)
+        val issue = response.body!!
+        assertEquals(issue1Id, issue.id)
+        assertEquals(Severity.FAILED, issue.severity)
+        assertEquals("Patient.contact", issue.location)
     }
 }

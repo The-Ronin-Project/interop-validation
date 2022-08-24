@@ -38,7 +38,16 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
     }
 
     override fun getIssueById(resourceId: UUID, issueId: UUID): ResponseEntity<Issue> {
-        TODO()
+        val issueDO = issueDAO.getIssue(issueId) ?: return ResponseEntity.notFound().build()
+        if (issueDO.resourceId != resourceId) {
+            logger.info {
+                "Mismatch between resource ID [${issueDO.resourceId}] on issue found [${issueDO.id}] " +
+                    "and resource ID [$resourceId] requested"
+            }
+            return ResponseEntity.badRequest().build()
+        }
+        val issue = createIssue(issueDO)
+        return ResponseEntity.ok(issue)
     }
 
     override fun updateIssue(resourceId: UUID, issueId: UUID, updateIssue: UpdateIssue): ResponseEntity<Issue> {
