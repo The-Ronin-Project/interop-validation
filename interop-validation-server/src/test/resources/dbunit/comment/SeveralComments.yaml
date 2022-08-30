@@ -1,0 +1,53 @@
+resource:
+  - resource_id: "X3gcMALzTwatz3BVvLxXcA=="
+    # UUID: 5f781c30-02f3-4f06-adcf-7055bcbc5770
+    organization_id: "testorg"
+    resource_type: "Appointment"
+    resource: "the appt resource"
+    status: "REPORTED"
+    create_dt_tm: "2022-08-01 11:18:00 +0000"
+
+issue:
+  - issue_id: "XyE58TUiR0aOuVYHueC2Yw=="
+    # UUID: 5f2139f1-3522-4746-8eb9-5607b9e0b663
+    resource_id: "X3gcMALzTwatz3BVvLxXcA=="
+    severity: "FAILED"
+    type: "appt-1"
+    location: "Appointment.participant"
+    description: "Appointment is scheduled in some interdimensional location only accessible by portal"
+    status: "REPORTED"
+    create_dt_tm: "2022-08-01 11:18:00 +0000"
+
+comment:
+  - comment_id: "mB0gSOtJS/26loKRKIZBww=="
+    # UUID: 981d2048-eb49-4bfd-ba96-8291288641c3
+    author: "Josh"
+    text: "This one seems bad. @Sam Felt can you handle it?"
+    create_dt_tm: "2022-08-01 11:18:00 +0000"
+  - comment_id: "DmbBoc0SR/WYvfT3jR8ZKQ=="
+    # UUID: 0e66c1a1-cd12-47f5-98bd-f4f78d1f1929
+    author: "Sam"
+    text: "No thanks. I'm going on vacation"
+    create_dt_tm: "2022-08-02 11:18:00 +0000"
+  - comment_id: "b+nX8+DhRZGLc5xUM5ro0Q=="
+    # UUID: 6fe9d7f3-e0e1-4591-8b73-9c54339ae8d1
+    author: "Mike"
+    text: "This whole resource is bad"
+    create_dt_tm: "2022-08-03 11:18:00 +0000"
+  - comment_id: "um7KRRXNRqel9V2NwsTZlA=="
+    # UUID: ba6eca45-15cd-46a7-a5f5-5d8dc2c4d994
+    author: "Jiahan"
+    text: "I just had the hospital move the appointment to a different date so it's fixed"
+    create_dt_tm: "2022-08-04 11:18:00 +0000"
+
+issue_comment_r:
+  - comment_id: "mB0gSOtJS/26loKRKIZBww=="
+    issue_id: "XyE58TUiR0aOuVYHueC2Yw=="
+  - comment_id: "DmbBoc0SR/WYvfT3jR8ZKQ=="
+    issue_id: "XyE58TUiR0aOuVYHueC2Yw=="
+
+resource_comment_r:
+  - comment_id: "b+nX8+DhRZGLc5xUM5ro0Q=="
+    resource_id: "X3gcMALzTwatz3BVvLxXcA=="
+  - comment_id: "um7KRRXNRqel9V2NwsTZlA=="
+    resource_id: "X3gcMALzTwatz3BVvLxXcA=="
