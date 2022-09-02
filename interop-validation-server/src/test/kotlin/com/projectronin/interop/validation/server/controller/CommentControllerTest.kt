@@ -6,7 +6,9 @@ import com.projectronin.interop.validation.server.data.ResourceDAO
 import com.projectronin.interop.validation.server.data.model.CommentDO
 import com.projectronin.interop.validation.server.data.model.IssueDO
 import com.projectronin.interop.validation.server.data.model.ResourceDO
+import com.projectronin.interop.validation.server.data.model.toCommentDO
 import com.projectronin.interop.validation.server.generated.models.IssueStatus
+import com.projectronin.interop.validation.server.generated.models.NewComment
 import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
 import com.projectronin.interop.validation.server.generated.models.Severity
@@ -31,14 +33,14 @@ class CommentControllerTest {
     private val issueId = UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")
     private val comment1ID = UUID.fromString("981d2048-eb49-4bfd-ba96-8291288641c3")
     private val comment2ID = UUID.fromString("0e66c1a1-cd12-47f5-98bd-f4f78d1f1929")
-    private val issueCreateTime = OffsetDateTime.now(ZoneOffset.UTC)
+    private val commentCreateTime = OffsetDateTime.now(ZoneOffset.UTC)
     private val resourceDO = ResourceDO {
         id = resourceId
         organizationId = "testorg"
         resourceType = "Patient"
         resource = "patient resource"
         status = ResourceStatus.REPORTED
-        createDateTime = issueCreateTime
+        createDateTime = commentCreateTime
     }
 
     private val issueDO = IssueDO {
@@ -49,21 +51,32 @@ class CommentControllerTest {
         location = "Patient.contact"
         description = "No contact details"
         status = IssueStatus.REPORTED
-        createDateTime = issueCreateTime
+        createDateTime = commentCreateTime
     }
 
     private val commentDO1 = CommentDO {
         id = comment1ID
         author = "Sam"
         text = "I give up"
-        createDateTime = issueCreateTime
+        createDateTime = commentCreateTime
     }
     private val commentDO2 = CommentDO {
         id = comment2ID
         author = "Sam 2"
         text = "I also give up"
-        createDateTime = issueCreateTime
+        createDateTime = commentCreateTime
     }
+
+    private val newComment1 = NewComment(
+        author = "Beau",
+        text = "I disagree with this error"
+    )
+
+    private val newComment2 = NewComment(
+        author = "Beau",
+        text = "I also disagree with this error",
+        createDtTm = commentCreateTime
+    )
 
     @BeforeEach
     fun setup() {
@@ -120,7 +133,7 @@ class CommentControllerTest {
         assertEquals(comment1ID, comment.id)
         assertEquals("Sam", comment.author)
         assertEquals("I give up", comment.text)
-        assertEquals(issueCreateTime, comment.createDtTm)
+        assertEquals(commentCreateTime, comment.createDtTm)
     }
 
     @Test
@@ -129,7 +142,7 @@ class CommentControllerTest {
             issueDAO.getIssue(issueId)
         } returns null
         val response = controller.getCommentsByIssue(resourceId, issueId, Order.ASC)
-        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
     }
 
     @Test
@@ -166,5 +179,30 @@ class CommentControllerTest {
         val comments = response.body!!
         assertEquals(2, comments.size)
         assertEquals(comment2ID, comments[1].id)
+    }
+
+    @Test
+    fun `addCommentForResource - ok`() {
+        every { commentDAO.insertResourceComment(any(), resourceId) } returns comment1ID
+        val response = controller.addCommentForResource(resourceId, newComment1)
+        assertEquals(HttpStatus.OK, response.statusCode)
+    }
+
+    @Test
+    fun `addCommentForIssue - ok`() {
+        every { commentDAO.insertIssueComment(newComment2.toCommentDO(), issueId) } returns comment2ID
+        every { issueDAO.getIssue(issueId) } returns issueDO
+        val response = controller.addCommentForIssue(resourceId, issueId, newComment2)
+        assertEquals(HttpStatus.OK, response.statusCode)
+    }
+
+    @Test
+    fun `addCommentForIssue - mismatch`() {
+        every { commentDAO.insertIssueComment(newComment2.toCommentDO(), issueId) } returns comment2ID
+        every { issueDAO.getIssue(issueId) } returns mockk {
+            every { resourceId } returns UUID.randomUUID()
+        }
+        val response = controller.addCommentForIssue(resourceId, issueId, newComment2)
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
     }
 }

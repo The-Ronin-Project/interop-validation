@@ -1,6 +1,7 @@
 package com.projectronin.interop.validation.server.data.model
 
 import com.projectronin.interop.validation.server.generated.models.IssueStatus
+import com.projectronin.interop.validation.server.generated.models.NewComment
 import com.projectronin.interop.validation.server.generated.models.NewIssue
 import com.projectronin.interop.validation.server.generated.models.NewResource
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
@@ -32,5 +33,16 @@ fun NewIssue.toIssueDO(resourceId: UUID): IssueDO {
         description = this@toIssueDO.description
         status = IssueStatus.REPORTED
         createDateTime = this@toIssueDO.createDtTm ?: OffsetDateTime.now()
+    }
+}
+
+/**
+ * Converts a [NewComment] into a [CommentDO]
+ */
+fun NewComment.toCommentDO(): CommentDO {
+    return CommentDO {
+        author = this@toCommentDO.author
+        text = this@toCommentDO.text
+        createDateTime = this@toCommentDO.createDtTm ?: OffsetDateTime.now()
     }
 }

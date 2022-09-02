@@ -4,6 +4,7 @@ import com.projectronin.interop.validation.server.data.CommentDAO
 import com.projectronin.interop.validation.server.data.IssueDAO
 import com.projectronin.interop.validation.server.data.ResourceDAO
 import com.projectronin.interop.validation.server.data.model.CommentDO
+import com.projectronin.interop.validation.server.data.model.toCommentDO
 import com.projectronin.interop.validation.server.generated.apis.CommentApi
 import com.projectronin.interop.validation.server.generated.models.Comment
 import com.projectronin.interop.validation.server.generated.models.GeneratedId
@@ -37,19 +38,11 @@ class CommentController(
     }
 
     override fun addCommentForResource(resourceId: UUID, newComment: NewComment): ResponseEntity<GeneratedId> {
-        TODO()
+        return ResponseEntity.ok(GeneratedId(commentDAO.insertResourceComment(newComment.toCommentDO(), resourceId)))
     }
 
     override fun getCommentsByIssue(resourceId: UUID, issueId: UUID, order: Order): ResponseEntity<List<Comment>> {
-        // this is annoying check to make sure the issue and the resource match from the caller
-        // when we get back the comments we can't actually check the resource of the issue they're attached to
-        // so just do it here first
-        val issueDO = issueDAO.getIssue(issueId) ?: return ResponseEntity.notFound().build()
-        if (issueDO.resourceId != resourceId) {
-            logger.info {
-                "Mismatch between resource ID [${issueDO.resourceId}] on issue found [${issueDO.id}] " +
-                    "and resource ID [$resourceId] requested"
-            }
+        if (!validateIssue(resourceId, issueId)) {
             return ResponseEntity.badRequest().build()
         }
 
@@ -69,7 +62,10 @@ class CommentController(
         issueId: UUID,
         newComment: NewComment
     ): ResponseEntity<GeneratedId> {
-        TODO()
+        if (!validateIssue(resourceId, issueId)) {
+            return ResponseEntity.badRequest().build()
+        }
+        return ResponseEntity.ok(GeneratedId(commentDAO.insertIssueComment(newComment.toCommentDO(), issueId)))
     }
 
     private fun createComment(commentDO: CommentDO): Comment {
@@ -79,5 +75,19 @@ class CommentController(
             text = commentDO.text,
             createDtTm = commentDO.createDateTime,
         )
+    }
+
+    private fun validateIssue(resourceId: UUID, issueId: UUID): Boolean {
+        // this is annoying check to make sure the issue and the resource match from the caller
+        // when we get back the comments we can't actually check the resource of the issue they're attached to
+        // so just do it here first
+        val issueDO = issueDAO.getIssue(issueId) ?: return false
+        return if (issueDO.resourceId != resourceId) {
+            logger.info {
+                "Mismatch between resource ID [${issueDO.resourceId}] on issue found [${issueDO.id}] " +
+                    "and resource ID [$resourceId] requested"
+            }
+            false
+        } else true
     }
 }

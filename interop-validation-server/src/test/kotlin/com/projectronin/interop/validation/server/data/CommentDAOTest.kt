@@ -5,6 +5,7 @@ import com.github.database.rider.core.api.dataset.DataSet
 import com.projectronin.interop.common.test.database.dbrider.DBRiderConnection
 import com.projectronin.interop.common.test.database.ktorm.KtormHelper
 import com.projectronin.interop.common.test.database.liquibase.LiquibaseTest
+import com.projectronin.interop.validation.server.data.model.CommentDO
 import com.projectronin.interop.validation.server.generated.models.Order
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -66,5 +67,33 @@ class CommentDAOTest {
         assertEquals("Sam", first.author)
         assertEquals("No thanks. I'm going on vacation", first.text)
         assertEquals(OffsetDateTime.of(2022, 8, 2, 11, 18, 0, 0, ZoneOffset.UTC), first.createDateTime)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/comment/NoComments.yaml"], cleanAfter = true)
+    fun `insert issue comment`() {
+        val commentDO = CommentDO {
+            author = "Beau"
+            text = "Oof this one is bad"
+            createDateTime = OffsetDateTime.of(2022, 8, 2, 11, 18, 0, 0, ZoneOffset.UTC)
+        }
+        val commentID = commentDAO.insertIssueComment(commentDO, issueId)
+        val commentsFromDB = commentDAO.getCommentsByIssue(issueId, order = Order.DESC)
+        assertEquals(commentID, commentsFromDB.first().id)
+        assertEquals("Beau", commentsFromDB.first().author)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/comment/NoComments.yaml"], cleanAfter = true)
+    fun `insert resource comment`() {
+        val commentDO = CommentDO {
+            author = "Beau"
+            text = "Oof this one is bad"
+            createDateTime = OffsetDateTime.of(2022, 8, 2, 11, 18, 0, 0, ZoneOffset.UTC)
+        }
+        val resourceID = commentDAO.insertResourceComment(commentDO, resourceId)
+        val resourcesFromDB = commentDAO.getCommentsByResource(resourceId, order = Order.DESC)
+        assertEquals(resourceID, resourcesFromDB.first().id)
+        assertEquals("Beau", resourcesFromDB.first().author)
     }
 }
