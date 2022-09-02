@@ -50,8 +50,21 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
         return ResponseEntity.ok(issue)
     }
 
-    override fun updateIssue(resourceId: UUID, issueId: UUID, updateIssue: UpdateIssue): ResponseEntity<Issue> {
-        TODO()
+    override fun updateIssue(resourceId: UUID, updateIssueId: UUID, updateIssue: UpdateIssue): ResponseEntity<Issue> {
+        val updatedIssueDO = issueDAO.updateIssue(
+            resourceId,
+            updateIssueId,
+            IssueDO {
+                severity = updateIssue.severity
+                type = updateIssue.type
+                location = updateIssue.location
+                description = updateIssue.description
+                status = updateIssue.status
+                updateDateTime = updateIssue.updateDtTm
+            }
+        ) ?: return ResponseEntity.notFound().build()
+        val issue = updatedIssueDO?.let { createIssue(it) }
+        return ResponseEntity.ok(issue)
     }
 
     private fun createIssue(issueDO: IssueDO): Issue {

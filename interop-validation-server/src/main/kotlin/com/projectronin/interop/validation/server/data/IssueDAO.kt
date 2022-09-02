@@ -21,6 +21,7 @@ import org.ktorm.dsl.map
 import org.ktorm.dsl.or
 import org.ktorm.dsl.orderBy
 import org.ktorm.dsl.select
+import org.ktorm.dsl.update
 import org.ktorm.dsl.where
 import org.ktorm.schema.ColumnDeclaring
 import org.springframework.stereotype.Repository
@@ -131,5 +132,29 @@ class IssueDAO(private val database: Database) {
         val resources = query.map { IssueDOs.createEntity(it) }
         logger.info { "Found ${resources.size} issues" }
         return resources
+    }
+
+    fun updateIssue(resourceId: UUID, issueId: UUID, issueDO: IssueDO): IssueDO? {
+        logger.info { "Updating issue $issueId" }
+
+        val issue = database.from(IssueDOs).select().where((IssueDOs.resourceId eq resourceId) and (IssueDOs.id eq issueId)).map { IssueDOs.createEntity(it) }.singleOrNull()
+
+        if (issue == null) {
+            logger.info { "No issue found for resource $resourceId and issue $issueId" }
+            return null
+        }
+
+        database.update(IssueDOs) {
+            set(it.severity, issueDO.severity)
+            set(it.type, issueDO.type)
+            set(it.location, issueDO.location)
+            set(it.description, issueDO.description)
+            set(it.status, issueDO.status)
+            set(it.updateDateTime, issueDO.updateDateTime)
+            where { it.id eq issue.id }
+        }
+
+        logger.info { "Issue $issueId updated" }
+        return issue
     }
 }

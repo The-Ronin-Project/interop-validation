@@ -219,4 +219,41 @@ class IssueDAOTest {
             )
         }
     }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
+    @ExpectedDataSet(value = ["/dbunit/issue/UpdatedIssue.yaml"], ignoreCols = ["issue_id"])
+    fun `updateIssue`() {
+        issueDAO.updateIssue(
+            UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"),
+            UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"),
+            IssueDO {
+                severity = Severity.WARNING
+                type = "pat-1"
+                location = "Patient.contact"
+                description = "No contact details"
+                status = IssueStatus.REPORTED
+                updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+            }
+        )
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
+    @ExpectedDataSet(value = ["/dbunit/issue/SingleIssue.yaml"], ignoreCols = ["issue_id"])
+    fun `updateIssue fails`() {
+        // issue with this UUID does not exist, therefore nothing gets updated.
+        issueDAO.updateIssue(
+            UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"),
+            UUID.randomUUID(),
+            IssueDO {
+                severity = Severity.WARNING
+                type = "pat-1"
+                location = "Patient.contact"
+                description = "No contact details"
+                status = IssueStatus.REPORTED
+                updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+            }
+        )
+    }
 }

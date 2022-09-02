@@ -7,6 +7,7 @@ import com.projectronin.interop.validation.server.generated.models.IssueStatus
 import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
 import com.projectronin.interop.validation.server.generated.models.Severity
+import com.projectronin.interop.validation.server.generated.models.UpdateIssue
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -135,5 +136,78 @@ class IssueControllerTest {
         assertEquals(issue1Id, issue.id)
         assertEquals(Severity.FAILED, issue.severity)
         assertEquals("Patient.contact", issue.location)
+    }
+
+    @Test
+    fun `updateIssue - works`() {
+        val updateIssue = IssueDO {
+            severity = Severity.FAILED
+            type = "pat-1"
+            location = "Patient.contact"
+            description = "No contact details"
+            status = IssueStatus.REPORTED
+            updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+        }
+        val updatedIssue = IssueDO {
+            id = issue2Id
+            resourceId = resourceDO.id
+            severity = Severity.FAILED
+            type = "pat-1"
+            location = "Patient.contact"
+            description = "No contact details"
+            status = IssueStatus.REPORTED
+            createDateTime = issueCreateTime
+            updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+        }
+        every {
+            issueDAO.updateIssue(resourceId, issue2Id, updateIssue)
+        } returns updatedIssue
+
+        val response = controller.updateIssue(
+            resourceId, issue2Id,
+            UpdateIssue(
+                severity = Severity.FAILED,
+                description = "No contact details",
+                type = "pat-1",
+                location = "Patient.contact",
+                status = IssueStatus.REPORTED,
+                updateDtTm = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+            )
+        )
+        assertEquals(HttpStatus.OK, response.statusCode)
+        val issue = response.body!!
+        assertEquals(issue.id, updatedIssue.id)
+        assertEquals(issue.severity, Severity.FAILED)
+        assertEquals(issue.status, IssueStatus.REPORTED)
+        assertEquals(issue.updateDtTm, OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC))
+    }
+
+    @Test
+    fun `updateIssue - fails`() {
+        val updateIssue = IssueDO {
+            severity = Severity.FAILED
+            type = "pat-1"
+            location = "Patient.contact"
+            description = "No contact details"
+            status = IssueStatus.REPORTED
+            updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+        }
+        every {
+            issueDAO.updateIssue(resourceId, issue2Id, updateIssue)
+        } returns null
+
+        val response = controller.updateIssue(
+            resourceId, issue2Id,
+            UpdateIssue(
+                severity = Severity.FAILED,
+                description = "No contact details",
+                type = "pat-1",
+                location = "Patient.contact",
+                status = IssueStatus.REPORTED,
+                updateDtTm = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+            )
+        )
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+        assertEquals(response.body, null)
     }
 }
