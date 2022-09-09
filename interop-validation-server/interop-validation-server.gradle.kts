@@ -1,14 +1,8 @@
-import org.jetbrains.gradle.ext.settings
-import org.jetbrains.gradle.ext.taskTriggers
-
 plugins {
     `maven-publish`
     id("com.projectronin.interop.gradle.junit")
     id("com.projectronin.interop.gradle.spring")
     id("org.springframework.boot")
-
-    id("org.openapi.generator")
-    id("org.jetbrains.gradle.plugin.idea-ext")
 }
 
 dependencies {
@@ -54,55 +48,6 @@ openApiGenerate {
             "gradleBuildFile" to "false"
         )
     )
-}
-
-tasks {
-    val openApiGenerate by getting
-
-    sourceSets {
-        main {
-            java {
-                srcDir(openApiGenerate)
-            }
-        }
-    }
-
-    val compileJava by getting
-
-    // Fixes some implicit dependency mess caused by the above
-    val sourcesJar by getting {
-        dependsOn(compileJava)
-    }
-
-    rootProject.idea.project.settings {
-        taskTriggers {
-            afterSync(openApiGenerate)
-        }
-    }
-}
-
-ktlint {
-    filter {
-        exclude {
-            it.file.path.contains("/generated/")
-        }
-    }
-}
-
-tasks.withType(JacocoReport::class.java).forEach {
-    afterEvaluate {
-        it.classDirectories.setFrom(
-            files(
-                it.classDirectories.files.map {
-                    fileTree(it).apply {
-                        exclude(
-                            "**/generated/**"
-                        )
-                    }
-                }
-            )
-        )
-    }
 }
 
 publishing {

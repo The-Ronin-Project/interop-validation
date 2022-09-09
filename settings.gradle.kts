@@ -1,6 +1,7 @@
 rootProject.name = "interop-validation"
 
 include("interop-validation-liquibase")
+include("interop-validation-client")
 include("interop-validation-server")
 
 for (project in rootProject.children) {

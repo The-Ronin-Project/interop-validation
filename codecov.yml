@@ -4,6 +4,11 @@ codecov:
 coverage:
   status:
     project:
+      validation-client:
+        target: auto
+        threshold: 1%
+        flags:
+          - validation-client
       validation-server:
         target: auto
         threshold: 1%
@@ -11,6 +16,10 @@ coverage:
           - validation-server
 
     patch:
+      validation-client:
+        target: 80
+        threshold: 1%
+        base: auto
       validation-server:
         target: 80
         threshold: 1%
@@ -26,6 +35,10 @@ comment:
   show_carryforward_flags: false
 
 flags:
+  validation-client:
+    paths:
+      - interop-validation-client/
+    carryforward: true
   validation-server:
     paths:
       - interop-validation-server/
