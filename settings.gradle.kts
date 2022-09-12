@@ -17,7 +17,7 @@ pluginManagement {
         id("com.projectronin.interop.gradle.version") version "2.0.2"
 
         id("org.jetbrains.gradle.plugin.idea-ext") version "1.1.6"
-        id("org.openapi.generator") version "6.0.1"
+        id("org.openapi.generator") version "6.1.0"
         id("org.springframework.boot") version "2.7.3"
     }
 
