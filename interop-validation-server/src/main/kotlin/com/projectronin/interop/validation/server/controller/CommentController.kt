@@ -12,6 +12,7 @@ import com.projectronin.interop.validation.server.generated.models.NewComment
 import com.projectronin.interop.validation.server.generated.models.Order
 import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
@@ -24,6 +25,7 @@ class CommentController(
     CommentApi {
     val logger = KotlinLogging.logger { }
 
+    @PreAuthorize("hasAuthority('SCOPE_read:comments')")
     override fun getCommentsByResource(resourceId: UUID, order: Order): ResponseEntity<List<Comment>> {
         resourceDAO.getResource(resourceId) ?: return ResponseEntity.notFound().build()
         val commentDOs = commentDAO.getCommentsByResource(resourceId, order)
@@ -37,10 +39,12 @@ class CommentController(
         return ResponseEntity.ok(comments)
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_create:comments')")
     override fun addCommentForResource(resourceId: UUID, newComment: NewComment): ResponseEntity<GeneratedId> {
         return ResponseEntity.ok(GeneratedId(commentDAO.insertResourceComment(newComment.toCommentDO(), resourceId)))
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_read:comments')")
     override fun getCommentsByIssue(resourceId: UUID, issueId: UUID, order: Order): ResponseEntity<List<Comment>> {
         if (!validateIssue(resourceId, issueId)) {
             return ResponseEntity.badRequest().build()
@@ -57,6 +61,7 @@ class CommentController(
         return ResponseEntity.ok(comments)
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_create:comments')")
     override fun addCommentForIssue(
         resourceId: UUID,
         issueId: UUID,

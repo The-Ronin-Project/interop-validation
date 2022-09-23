@@ -12,6 +12,9 @@ paths:
       operationId: getResources
       summary: Returns resources meeting the supplied filters.
       description: By default, this service will return a maximum of 25 resources. Resources are always returned based off creation date and the supplied order.
+      security:
+        - auth0:
+            - read:resources
       parameters:
         - name: status
           in: query
@@ -39,6 +42,9 @@ paths:
         - resource
       operationId: addResource
       summary: Adds the supplied resource and associated issues.
+      security:
+        - auth0:
+            - create:resources
       requestBody:
         required: true
         content:
@@ -59,6 +65,9 @@ paths:
         - resource
       operationId: getResourceById
       summary: Retrieves resource by ID.
+      security:
+        - auth0:
+            - read:resources
       parameters:
         - $ref: '#/components/parameters/ResourceId'
       responses:
@@ -75,6 +84,9 @@ paths:
         - comment
       operationId: getCommentsByResource
       summary: Returns comments associated to the supplied resource.
+      security:
+        - auth0:
+            - read:comments
       parameters:
         - $ref: '#/components/parameters/ResourceId'
         - $ref: '#/components/parameters/Order'
@@ -92,6 +104,9 @@ paths:
         - comment
       operationId: addCommentForResource
       summary: Adds the supplied comment to the resource.
+      security:
+        - auth0:
+            - create:comments
       parameters:
         - $ref: '#/components/parameters/ResourceId'
       requestBody:
@@ -115,6 +130,9 @@ paths:
       operationId: reprocessResource
       summary: Triggers a reprocessing event.
       description: A reprocessing event is not guaranteed to be immediate. This API will respond with success as long as it is able to properly mark the resource as ready for reprocessing, but does not guarantee reprocessing has yet occurred.
+      security:
+        - auth0:
+            - update:resources
       parameters:
         - $ref: '#/components/parameters/ResourceId'
       requestBody:
@@ -144,6 +162,9 @@ paths:
       operationId: getIssues
       summary: Returns resources meeting the supplied filters for this resource.
       description: By default, this service will return a maximum of 25 issues. Issues are always returned based off creation date and the supplied order.
+      security:
+        - auth0:
+            - read:issues
       parameters:
         - $ref: '#/components/parameters/ResourceId'
         - name: status
@@ -174,6 +195,9 @@ paths:
         - issue
       operationId: getIssueById
       summary: Retrieves issue by ID.
+      security:
+        - auth0:
+            - read:issues
       parameters:
         - $ref: '#/components/parameters/ResourceId'
         - $ref: '#/components/parameters/IssueId'
@@ -189,6 +213,9 @@ paths:
         - issue
       operationId: updateIssue
       summary: Updates the issue.
+      security:
+        - auth0:
+            - update:issues
       parameters:
         - $ref: '#/components/parameters/ResourceId'
         - $ref: '#/components/parameters/IssueId'
@@ -213,6 +240,9 @@ paths:
         - comment
       operationId: getCommentsByIssue
       summary: Returns comments associated to the supplied issue.
+      security:
+        - auth0:
+            - read:comments
       parameters:
         - $ref: '#/components/parameters/ResourceId'
         - $ref: '#/components/parameters/IssueId'
@@ -231,6 +261,9 @@ paths:
         - comment
       operationId: addCommentForIssue
       summary: Adds the supplied comment to the issue.
+      security:
+        - auth0:
+            - create:comments
       parameters:
         - $ref: '#/components/parameters/ResourceId'
         - $ref: '#/components/parameters/IssueId'
@@ -393,7 +426,7 @@ components:
       type: object
       properties:
         severity:
-            $ref: '#/components/schemas/Severity'
+          $ref: '#/components/schemas/Severity'
         type:
           type: string
           description: The type of issue. This should be treated as a codified field based off the resource's resource_type
@@ -530,3 +563,19 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/Id'
+
+  securitySchemes:
+    auth0:
+      type: oauth2
+      description: Auth0-based OAuth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://ronin-dev.auth0.com/authorize?audience=https://interop-validation.dev.projectronin.io
+          scopes:
+            read:resources: Read resources
+            create:resources: Create new resources
+            update:resources: Update existing resources
+            read:issues: Read issues associated to a resource
+            update:issues: Update issues
+            read:comments: Read comments associated to a resource or issue
+            create:comments: Create comments associated to a resource or issue

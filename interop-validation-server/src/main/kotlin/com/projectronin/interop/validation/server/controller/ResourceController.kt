@@ -15,6 +15,7 @@ import com.projectronin.interop.validation.server.generated.models.ResourceStatu
 import com.projectronin.interop.validation.server.generated.models.Severity
 import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
@@ -23,6 +24,7 @@ import java.util.UUID
 class ResourceController(private val resourceDAO: ResourceDAO, private val issueDAO: IssueDAO) : ResourceApi {
     val logger = KotlinLogging.logger { }
 
+    @PreAuthorize("hasAuthority('SCOPE_read:resources')")
     override fun getResources(
         status: List<ResourceStatus>?,
         order: Order,
@@ -52,6 +54,7 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
         return ResponseEntity.ok(resources)
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_read:resources')")
     override fun getResourceById(resourceId: UUID): ResponseEntity<Resource> {
         val resourceDO = resourceDAO.getResource(resourceId)
             ?: return ResponseEntity.notFound().build()
@@ -72,6 +75,7 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
             ?: ResponseEntity.internalServerError().build()
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_create:resources')")
     @Transactional
     override fun addResource(newResource: NewResource): ResponseEntity<GeneratedId> {
         val resourceUUID = resourceDAO.insertResource(newResource.toResourceDO())
@@ -83,6 +87,7 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
         return ResponseEntity.ok(GeneratedId(resourceUUID))
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_update:resources')")
     override fun reprocessResource(
         resourceId: UUID,
         reprocessResourceRequest: ReprocessResourceRequest

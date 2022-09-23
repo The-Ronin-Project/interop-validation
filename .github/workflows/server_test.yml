@@ -1,7 +1,7 @@
 name: Interop Validation Server Tests
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
 
 jobs:
