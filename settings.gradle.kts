@@ -18,7 +18,7 @@ pluginManagement {
 
         id("org.jetbrains.gradle.plugin.idea-ext") version "1.1.6"
         id("org.openapi.generator") version "6.1.0"
-        id("org.springframework.boot") version "2.7.3"
+        id("org.springframework.boot") version "2.7.4"
     }
 
     repositories {
