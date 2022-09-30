@@ -54,10 +54,10 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
     }
 
     @PreAuthorize("hasAuthority('SCOPE_update:issues')")
-    override fun updateIssue(resourceId: UUID, updateIssueId: UUID, updateIssue: UpdateIssue): ResponseEntity<Issue> {
+    override fun updateIssue(resourceId: UUID, issueId: UUID, updateIssue: UpdateIssue): ResponseEntity<Issue> {
         val updatedIssueDO = issueDAO.updateIssue(
             resourceId,
-            updateIssueId,
+            issueId,
             IssueDO {
                 severity = updateIssue.severity
                 type = updateIssue.type
@@ -67,7 +67,7 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
                 updateDateTime = updateIssue.updateDtTm
             }
         ) ?: return ResponseEntity.notFound().build()
-        val issue = updatedIssueDO?.let { createIssue(it) }
+        val issue = createIssue(updatedIssueDO)
         return ResponseEntity.ok(issue)
     }
 

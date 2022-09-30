@@ -4,9 +4,15 @@ plugins {
 
 dependencies {
     implementation(libs.bundles.jackson)
+    implementation(libs.bundles.ktor)
+    implementation(libs.interop.common)
+    implementation(libs.interop.commonHttp)
+    implementation(libs.interop.commonJackson)
     implementation(libs.jakarta.validation.api)
+    implementation(libs.spring.boot.actuator)
 
     testImplementation(libs.mockk)
+    testImplementation(libs.mockwebserver)
 }
 
 openApiGenerate {
