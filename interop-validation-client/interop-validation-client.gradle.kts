@@ -3,14 +3,8 @@ plugins {
 }
 
 dependencies {
-    // We don't actually use Spring Boot, but this parent can ensure our client and server are on the same versions.
-    implementation(platform(libs.spring.boot.parent))
-
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("jakarta.validation:jakarta.validation-api")
+    implementation(libs.bundles.jackson)
+    implementation(libs.jakarta.validation.api)
 
     testImplementation(libs.mockk)
 }
