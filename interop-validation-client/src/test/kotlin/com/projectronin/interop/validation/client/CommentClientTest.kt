@@ -5,10 +5,13 @@ import com.projectronin.interop.common.http.exceptions.ClientFailureException
 import com.projectronin.interop.common.http.exceptions.ServerFailureException
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
 import com.projectronin.interop.common.jackson.JacksonManager
+import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.Comment
 import com.projectronin.interop.validation.client.generated.models.GeneratedId
 import com.projectronin.interop.validation.client.generated.models.Order
 import io.ktor.http.HttpStatusCode
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -23,7 +26,13 @@ import java.util.UUID
 class CommentClientTest {
     private val mockWebServer = MockWebServer()
     private val hostUrl = mockWebServer.url("/test")
-    private val client = CommentClient("$hostUrl", HttpSpringConfig().getHttpClient())
+    private val authenticationToken = "123456"
+    private val authenticationService = mockk<ValidationAuthenticationService> {
+        every { getAuthentication() } returns mockk {
+            every { accessToken } returns authenticationToken
+        }
+    }
+    private val client = CommentClient("$hostUrl", HttpSpringConfig().getHttpClient(), authenticationService)
     private val expectedComment1 = Comment(
         id = UUID.fromString("573b456efca5-03d51d53-1a31-49a9-af74"),
         author = "tester 1",
@@ -56,6 +65,9 @@ class CommentClientTest {
             )
         }
         assertEquals(commentList, response)
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
@@ -79,6 +91,9 @@ class CommentClientTest {
         assertTrue(message.contains("Received 403 Client Error when calling Validation"))
         assertTrue(message.contains("for GET"))
         assertTrue(message.contains("/resources/00001a31-49a9-af74-1d53-573b456efca5/comments"))
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
@@ -99,6 +114,9 @@ class CommentClientTest {
             )
         }
         assertEquals(GeneratedId(expectedComment1.id), response)
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
@@ -122,6 +140,9 @@ class CommentClientTest {
         assertTrue(message.contains("Received 413 Client Error when calling Validation"))
         assertTrue(message.contains("for POST"))
         assertTrue(message.contains("/resources/00001a31-49a9-af74-1d53-573b456efca5/comments"))
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
@@ -144,6 +165,9 @@ class CommentClientTest {
             )
         }
         assertEquals(commentList, response)
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
@@ -168,6 +192,9 @@ class CommentClientTest {
         assertTrue(message.contains("Received 500 Server Error when calling Validation"))
         assertTrue(message.contains("for GET"))
         assertTrue(message.contains("/resources/000049a9-af74-1d53-1a31-573b456efca5/issues/00001a31-49a9-af74-fca5-000003d51d53/comments"))
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
@@ -189,6 +216,9 @@ class CommentClientTest {
             )
         }
         assertEquals(GeneratedId(expectedComment1.id), response)
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
@@ -215,5 +245,8 @@ class CommentClientTest {
         assertTrue(message.contains("Received 413 Client Error when calling Validation"))
         assertTrue(message.contains("for POST"))
         assertTrue(message.contains("/resources/000049a9-af74-1d53-1a31-573b456efca5/issues/00001a31-49a9-af74-fca5-000003d51d53/comments"))
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 }

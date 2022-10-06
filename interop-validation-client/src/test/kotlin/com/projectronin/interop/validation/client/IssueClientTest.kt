@@ -4,12 +4,15 @@ import com.projectronin.interop.common.http.exceptions.ClientAuthenticationExcep
 import com.projectronin.interop.common.http.exceptions.ClientFailureException
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
 import com.projectronin.interop.common.jackson.JacksonManager
+import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.Issue
 import com.projectronin.interop.validation.client.generated.models.IssueStatus
 import com.projectronin.interop.validation.client.generated.models.Order
 import com.projectronin.interop.validation.client.generated.models.Severity
 import com.projectronin.interop.validation.client.generated.models.UpdateIssue
 import io.ktor.http.HttpStatusCode
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -24,7 +27,13 @@ import java.util.UUID
 class IssueClientTest {
     private val mockWebServer = MockWebServer()
     private val hostUrl = mockWebServer.url("/test")
-    private val client = IssueClient("$hostUrl", HttpSpringConfig().getHttpClient())
+    private val authenticationToken = "123456"
+    private val authenticationService = mockk<ValidationAuthenticationService> {
+        every { getAuthentication() } returns mockk {
+            every { accessToken } returns authenticationToken
+        }
+    }
+    private val client = IssueClient("$hostUrl", HttpSpringConfig().getHttpClient(), authenticationService)
     private val created = OffsetDateTime.now(ZoneOffset.UTC)
     private val updated = OffsetDateTime.now(ZoneOffset.UTC)
     private val expectedIssue1 = Issue(
@@ -76,6 +85,9 @@ class IssueClientTest {
             )
         }
         assertEquals(issueList, response)
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
@@ -99,6 +111,9 @@ class IssueClientTest {
         assertTrue(message.contains("Received 403 Client Error when calling Validation"))
         assertTrue(message.contains("for GET"))
         assertTrue(message.contains("/resources/00001a31-49a9-af74-1d53-573b456efca5/issues"))
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
@@ -120,6 +135,9 @@ class IssueClientTest {
             )
         }
         assertEquals(expectedIssue2, response)
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
@@ -144,5 +162,8 @@ class IssueClientTest {
         assertTrue(message.contains("Received 413 Client Error when calling Validation"))
         assertTrue(message.contains("for PATCH"))
         assertTrue(message.contains("/resources/000049a9-af74-1d53-1a31-573b456efca5/issues/00001a31-49a9-af74-fca5-000003d51d53"))
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 }
