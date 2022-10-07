@@ -1,5 +1,6 @@
 plugins {
     `maven-publish`
+    id("com.projectronin.interop.gradle.integration")
     id("com.projectronin.interop.gradle.junit")
     id("com.projectronin.interop.gradle.spring")
     id("org.springframework.boot")
@@ -27,11 +28,19 @@ dependencies {
     runtimeOnly(libs.liquibase.core)
     runtimeOnly(libs.mysql.connector.java)
 
+    testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.interop.commonTestDb)
     testImplementation(libs.mockk)
     testImplementation(libs.rider.core)
 
-    testRuntimeOnly(libs.testcontainers.mysql)
+    testRuntimeOnly("org.testcontainers:mysql")
+
+    itImplementation(project(":interop-validation-client"))
+    itImplementation(libs.interop.commonHttp)
+    itImplementation(libs.interop.fhir)
+    itImplementation(libs.ktor.client.core)
+    itImplementation("org.testcontainers:testcontainers")
+    itImplementation("org.testcontainers:junit-jupiter")
 }
 
 openApiGenerate {
@@ -71,4 +80,29 @@ publishing {
             artifact(tasks.getByName("bootJar"))
         }
     }
+}
+
+var itSetup = tasks.create("itSetup") {
+    dependsOn(tasks.clean)
+    dependsOn(tasks.bootJar)
+
+    tasks.bootJar.get().mustRunAfter(tasks.clean)
+
+    doLast {
+        exec {
+            commandLine("docker compose build --no-cache".split(" "))
+        }
+    }
+}
+
+tasks.it.get().dependsOn(itSetup)
+
+// We should set at least the Logging in the junit plugin.
+tasks.withType(Test::class) {
+    testLogging {
+        events("passed", "skipped", "failed", "standardOut", "standardError")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+
+    jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED")
 }

@@ -90,7 +90,6 @@ class ResourceClientTest {
 
     @Test
     fun `getResources - works for getting 1 type of status`() {
-
         val resourceList = listOf(expectedResource, expectedresource2)
         val resourceJson = JacksonManager.objectMapper.writeValueAsString(resourceList)
 
@@ -113,12 +112,12 @@ class ResourceClientTest {
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources?status=REPORTED&order=ASC&limit=2"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
     fun `getResources - works for getting all type of statuses`() {
-
         val resourceList = listOf(expectedResource, expectedresource2, expectedResource3, expectedResource4)
         val resourceJson = JacksonManager.objectMapper.writeValueAsString(resourceList)
 
@@ -141,6 +140,65 @@ class ResourceClientTest {
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources?order=ASC&limit=10"))
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
+    }
+
+    @Test
+    fun `getResources - works for null statuses`() {
+        val resourceList = listOf(expectedResource, expectedresource2, expectedResource3, expectedResource4)
+        val resourceJson = JacksonManager.objectMapper.writeValueAsString(resourceList)
+
+        val mockWebServer = MockWebServer()
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(HttpStatusCode.OK.value)
+                .setBody(resourceJson)
+                .setHeader("Content-Type", "application/json")
+        )
+        val url = mockWebServer.url("/test")
+        val response = runBlocking {
+            val resources = ResourceClient(url.toString(), client, authenticationService).getResources(
+                null,
+                Order.ASC,
+                10
+            )
+            resources
+        }
+        assertEquals(resourceList, response)
+
+        val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources?order=ASC&limit=10"))
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
+    }
+
+    @Test
+    fun `getResources - works with provided after`() {
+        val resourceList = listOf(expectedResource, expectedresource2, expectedResource3, expectedResource4)
+        val resourceJson = JacksonManager.objectMapper.writeValueAsString(resourceList)
+
+        val mockWebServer = MockWebServer()
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(HttpStatusCode.OK.value)
+                .setBody(resourceJson)
+                .setHeader("Content-Type", "application/json")
+        )
+        val url = mockWebServer.url("/test")
+        val after = UUID.randomUUID()
+        val response = runBlocking {
+            val resources = ResourceClient(url.toString(), client, authenticationService).getResources(
+                listOf(),
+                Order.ASC,
+                10,
+                after
+            )
+            resources
+        }
+        assertEquals(resourceList, response)
+
+        val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources?order=ASC&limit=10&after=$after"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -166,6 +224,7 @@ class ResourceClientTest {
         exception.message?.let { assertTrue(it.contains("504")) }
 
         val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources?status=REPORTED&order=ASC&limit=1"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -189,6 +248,7 @@ class ResourceClientTest {
         assertEquals(expectedResource, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources/$resource1Id"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -211,6 +271,7 @@ class ResourceClientTest {
         exception.message?.let { assertTrue(it.contains("400")) }
 
         val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources/$resource1Id"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -253,6 +314,7 @@ class ResourceClientTest {
         assertEquals(resourceId1.id, response.id)
 
         val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -295,6 +357,7 @@ class ResourceClientTest {
         exception.message?.let { assertTrue(it.contains("400")) }
 
         val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -311,13 +374,15 @@ class ResourceClientTest {
                 .setHeader("Content-Type", "application/json")
         )
         val url = mockWebServer.url("/test")
+        val uuid = UUID.randomUUID()
         runBlocking {
             ResourceClient(url.toString(), client, authenticationService).reprocessResource(
-                UUID.randomUUID(), reprocessResourceRequest
+                uuid, reprocessResourceRequest
             )
         }
 
         val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources/$uuid/reprocess"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -334,10 +399,11 @@ class ResourceClientTest {
                 .setHeader("Content-Type", "application/json")
         )
         val url = mockWebServer.url("/test")
+        val uuid = UUID.randomUUID()
         val exception = assertThrows<ServiceUnavailableException> {
             runBlocking {
                 ResourceClient(url.toString(), client, authenticationService).reprocessResource(
-                    UUID.randomUUID(), reprocessResourceRequest
+                    uuid, reprocessResourceRequest
                 )
             }
         }
@@ -345,6 +411,7 @@ class ResourceClientTest {
         exception.message?.let { assertTrue(it.contains("503")) }
 
         val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources/$uuid/reprocess"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 }

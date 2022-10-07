@@ -41,17 +41,17 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: create_dt_tm
-                  type: DATETIME
+                  type: DATETIME(6)
                   constraints:
                     nullable: false
               - column:
                   name: update_dt_tm
-                  type: DATETIME
+                  type: DATETIME(6)
                   constraints:
                     nullable: true
               - column:
                   name: reprocess_dt_tm
-                  type: DATETIME
+                  type: DATETIME(6)
                   constraints:
                     nullable: true
               - column:

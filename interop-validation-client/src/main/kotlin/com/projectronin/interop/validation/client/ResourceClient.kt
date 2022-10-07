@@ -13,7 +13,6 @@ import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
-import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -43,15 +42,24 @@ class ResourceClient(
         val authentication = authenticationService.getAuthentication()
 
         val response: HttpResponse = client.get(resourceUrl) {
+            url {
+                parameters.apply {
+                    if (status?.isNotEmpty() == true) {
+                        appendAll("status", status.map { it.value })
+                    }
+
+                    append("order", order.name)
+                    append("limit", limit.toString())
+
+                    after?.let { append("after", it.toString()) }
+                }
+            }
+
             headers {
                 append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
             }
             accept(ContentType.Application.Json)
             contentType(ContentType.Application.Json)
-            parameter("status", status)
-            parameter("order", order)
-            parameter("limit", limit)
-            parameter("after", after)
         }
         response.throwExceptionFromHttpStatus("Validation", "GET $resourceUrl")
         return response.body()

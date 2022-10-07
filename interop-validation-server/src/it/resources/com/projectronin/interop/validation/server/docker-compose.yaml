@@ -1,0 +1,41 @@
+services:
+  validation-server:
+    restart: on-failure
+    image: interop-validation-server:local
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://springuser:ThePassword@validation-db:3306/validation-db
+      - AUTH0_AUDIENCE=https://interop-validation.dev.projectronin.io
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://mock-oauth2:8080/validation
+    ports:
+      - "8080:8080"
+    depends_on:
+      mock-oauth2:
+        condition: service_started
+      validation-db:
+        condition: service_healthy
+
+  validation-db:
+    restart: always
+    image: mysql/mysql-server:latest
+    environment:
+      - MYSQL_DATABASE=validation-db
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_USER=springuser
+      - MYSQL_PASSWORD=ThePassword
+    ports:
+      - "3306:3306"
+    expose:
+      - 3306
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "springuser", "-pThePassword" ]
+      timeout: 5s
+      retries: 3
+
+  mock-oauth2:
+    image: ghcr.io/navikt/mock-oauth2-server:0.5.4
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./:/host
+    environment:
+      - JSON_CONFIG_PATH=/host/mock-oauth2-config.json

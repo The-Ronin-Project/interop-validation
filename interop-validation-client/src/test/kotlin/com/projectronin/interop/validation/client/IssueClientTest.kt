@@ -80,13 +80,14 @@ class IssueClientTest {
 
         val response = runBlocking {
             client.getResourceIssues(
-                UUID.fromString("1a31-49a9-af74-03d51d53-573b456efca5"),
+                UUID.fromString("12341a31-49a9-af74-03d5-573b456efca5"),
                 Order.ASC
             )
         }
         assertEquals(issueList, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources/12341a31-49a9-af74-03d5-573b456efca5/issues?order=ASC"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -102,7 +103,7 @@ class IssueClientTest {
         val exception = assertThrows<ClientAuthenticationException> {
             runBlocking {
                 client.getResourceIssues(
-                    UUID.fromString("1a31-49a9-af74-03d51d53-573b456efca5"),
+                    UUID.fromString("12341a31-49a9-af74-03d5-573b456efca5"),
                     Order.ASC
                 )
             }
@@ -110,9 +111,10 @@ class IssueClientTest {
         val message = exception.message!!
         assertTrue(message.contains("Received 403 Client Error when calling Validation"))
         assertTrue(message.contains("for GET"))
-        assertTrue(message.contains("/resources/00001a31-49a9-af74-1d53-573b456efca5/issues"))
+        assertTrue(message.contains("/resources/12341a31-49a9-af74-03d5-573b456efca5/issues"))
 
         val request = mockWebServer.takeRequest()
+        assertEquals(true, request.path?.endsWith("/resources/12341a31-49a9-af74-03d5-573b456efca5/issues?order=ASC"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -129,14 +131,18 @@ class IssueClientTest {
 
         val response = runBlocking {
             client.updateResourceIssue(
-                UUID.fromString("49a9-af74-03d51d53-1a31-573b456efca5"),
-                UUID.fromString("1a31-49a9-af74-573b456efca5-03d51d53"),
+                UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
+                UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
                 updateIssue
             )
         }
         assertEquals(expectedIssue2, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals(
+            true,
+            request.path?.endsWith("/resources/123449a9-af74-03d5-1a31-573b456efca5/issues/12341a31-49a9-af74-573b-456e03d51d53")
+        )
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -152,8 +158,8 @@ class IssueClientTest {
         val exception = assertThrows<ClientFailureException> {
             runBlocking {
                 client.updateResourceIssue(
-                    UUID.fromString("49a9-af74-03d51d53-1a31-573b456efca5"),
-                    UUID.fromString("1a31-49a9-af74-573b456efca5-03d51d53"),
+                    UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
+                    UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
                     updateIssue
                 )
             }
@@ -161,9 +167,13 @@ class IssueClientTest {
         val message = exception.message!!
         assertTrue(message.contains("Received 413 Client Error when calling Validation"))
         assertTrue(message.contains("for PATCH"))
-        assertTrue(message.contains("/resources/000049a9-af74-1d53-1a31-573b456efca5/issues/00001a31-49a9-af74-fca5-000003d51d53"))
+        assertTrue(message.contains("/resources/123449a9-af74-03d5-1a31-573b456efca5/issues/12341a31-49a9-af74-573b-456e03d51d53"))
 
         val request = mockWebServer.takeRequest()
+        assertEquals(
+            true,
+            request.path?.endsWith("/resources/123449a9-af74-03d5-1a31-573b456efca5/issues/12341a31-49a9-af74-573b-456e03d51d53")
+        )
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 }

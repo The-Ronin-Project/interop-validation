@@ -31,6 +31,6 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: create_dt_tm
-                  type: DATETIME
+                  type: DATETIME(6)
                   constraints:
                     nullable: false

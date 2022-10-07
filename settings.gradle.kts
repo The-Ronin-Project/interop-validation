@@ -10,6 +10,7 @@ for (project in rootProject.children) {
 
 pluginManagement {
     plugins {
+        id("com.projectronin.interop.gradle.integration") version "2.0.2"
         id("com.projectronin.interop.gradle.jacoco") version "2.0.2"
         id("com.projectronin.interop.gradle.junit") version "2.0.2"
         id("com.projectronin.interop.gradle.publish") version "2.0.2"
