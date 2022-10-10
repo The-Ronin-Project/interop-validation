@@ -41,33 +41,18 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
 
     @PreAuthorize("hasAuthority('SCOPE_read:issues')")
     override fun getIssueById(resourceId: UUID, issueId: UUID): ResponseEntity<Issue> {
-        val issueDO = issueDAO.getIssue(issueId) ?: return ResponseEntity.notFound().build()
-        if (issueDO.resourceId != resourceId) {
-            logger.info {
-                "Mismatch between resource ID [${issueDO.resourceId}] on issue found [${issueDO.id}] " +
-                    "and resource ID [$resourceId] requested"
-            }
-            return ResponseEntity.badRequest().build()
-        }
+        val issueDO = issueDAO.getIssue(resourceId, issueId) ?: return ResponseEntity.notFound().build()
         val issue = createIssue(issueDO)
         return ResponseEntity.ok(issue)
     }
 
     @PreAuthorize("hasAuthority('SCOPE_update:issues')")
     override fun updateIssue(resourceId: UUID, issueId: UUID, updateIssue: UpdateIssue): ResponseEntity<Issue> {
-        val updatedIssueDO = issueDAO.updateIssue(
-            resourceId,
-            issueId,
-            IssueDO {
-                severity = updateIssue.severity
-                type = updateIssue.type
-                location = updateIssue.location
-                description = updateIssue.description
-                status = updateIssue.status
-                updateDateTime = updateIssue.updateDtTm
-            }
-        ) ?: return ResponseEntity.notFound().build()
-        val issue = createIssue(updatedIssueDO)
+        val updatedIssue = issueDAO.updateIssue(resourceId, issueId) {
+            it.status = updateIssue.status
+        } ?: return ResponseEntity.notFound().build()
+
+        val issue = createIssue(updatedIssue)
         return ResponseEntity.ok(issue)
     }
 

@@ -11,6 +11,7 @@ import com.projectronin.interop.validation.server.generated.models.IssueStatus
 import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.Severity
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -83,16 +84,26 @@ class IssueDAOTest {
     @Test
     @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
     fun `getIssue -  works`() {
+        val resourceID = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
         val issueID = UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")
-        val issue = issueDAO.getIssue(issueID)
+        val issue = issueDAO.getIssue(resourceID, issueID)
         assertEquals(issueID.toString(), issue?.id.toString())
     }
 
     @Test
     @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
+    fun `getIssue -  for wrong resourceID`() {
+        val resourceID = UUID.randomUUID()
+        val issueID = UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")
+        val issue = issueDAO.getIssue(resourceID, issueID)
+        assertNull(issue)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
     fun `getIssue - no issue found`() {
-        val resource = issueDAO.getIssue(UUID.randomUUID())
-        assertNull(resource)
+        val issue = issueDAO.getIssue(UUID.randomUUID(), UUID.randomUUID())
+        assertNull(issue)
     }
 
     @Test
@@ -145,6 +156,7 @@ class IssueDAOTest {
         assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
         assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
     }
+
     @Test
     @DataSet(value = ["/dbunit/issue/MultipleIssuesWithDifferentTimestamps.yaml"], cleanAfter = true)
     fun `getIssue - after honored with asc`() {
@@ -222,38 +234,75 @@ class IssueDAOTest {
 
     @Test
     @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
-    @ExpectedDataSet(value = ["/dbunit/issue/UpdatedIssue.yaml"], ignoreCols = ["issue_id"])
+    @ExpectedDataSet(value = ["/dbunit/issue/UpdatedIssue.yaml"])
     fun `updateIssue`() {
-        issueDAO.updateIssue(
-            UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"),
-            UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"),
-            IssueDO {
-                severity = Severity.WARNING
-                type = "pat-1"
-                location = "Patient.contact"
-                description = "No contact details"
-                status = IssueStatus.REPORTED
-                updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-            }
-        )
+        val resourceId = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val issueId = UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")
+        val issue = issueDAO.updateIssue(resourceId, issueId) {
+            it.severity = Severity.WARNING
+            it.type = "pat-2"
+            it.location = "Patient.telecom"
+            it.description = "No telecom details"
+            it.status = IssueStatus.ADDRESSED
+            it.updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+        }
+
+        issue!!
+        assertEquals(issueId, issue.id)
+        assertEquals(resourceId, issue.resourceId)
+        assertEquals(Severity.WARNING, issue.severity)
+        assertEquals("pat-2", issue.type)
+        assertEquals("Patient.telecom", issue.location)
+        assertEquals("No telecom details", issue.description)
+        assertEquals(IssueStatus.ADDRESSED, issue.status)
+        assertEquals(OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC), issue.createDateTime)
+        assertEquals(OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC), issue.updateDateTime)
     }
 
     @Test
     @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
-    @ExpectedDataSet(value = ["/dbunit/issue/SingleIssue.yaml"], ignoreCols = ["issue_id"])
-    fun `updateIssue fails`() {
+    @ExpectedDataSet(value = ["/dbunit/issue/UpdatedIssue.yaml"], ignoreCols = ["update_dt_tm"])
+    fun `updateIssue with no provided updateDateTime`() {
+        val resourceId = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val issueId = UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")
+        val issue = issueDAO.updateIssue(resourceId, issueId) {
+            it.severity = Severity.WARNING
+            it.type = "pat-2"
+            it.location = "Patient.telecom"
+            it.description = "No telecom details"
+            it.status = IssueStatus.ADDRESSED
+        }
+
+        issue!!
+        assertEquals(issueId, issue.id)
+        assertEquals(resourceId, issue.resourceId)
+        assertEquals(Severity.WARNING, issue.severity)
+        assertEquals("pat-2", issue.type)
+        assertEquals("Patient.telecom", issue.location)
+        assertEquals("No telecom details", issue.description)
+        assertEquals(IssueStatus.ADDRESSED, issue.status)
+        assertEquals(OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC), issue.createDateTime)
+        assertNotNull(issue.updateDateTime)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
+    @ExpectedDataSet(value = ["/dbunit/issue/SingleIssue.yaml"])
+    fun `updateIssue for unknown resource`() {
+        val issue = issueDAO.updateIssue(UUID.randomUUID(), UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")) {
+            it.severity = Severity.FAILED
+        }
+        assertNull(issue)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
+    @ExpectedDataSet(value = ["/dbunit/issue/SingleIssue.yaml"])
+    fun `updateIssue for unknown issue`() {
         // issue with this UUID does not exist, therefore nothing gets updated.
-        issueDAO.updateIssue(
-            UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"),
-            UUID.randomUUID(),
-            IssueDO {
-                severity = Severity.WARNING
-                type = "pat-1"
-                location = "Patient.contact"
-                description = "No contact details"
-                status = IssueStatus.REPORTED
-                updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-            }
-        )
+        val issue = issueDAO.updateIssue(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), UUID.randomUUID()) {
+            it.severity = Severity.FAILED
+        }
+        assertNull(issue)
     }
 }

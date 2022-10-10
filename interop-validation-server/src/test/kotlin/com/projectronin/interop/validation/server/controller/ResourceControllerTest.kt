@@ -11,6 +11,8 @@ import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.Resource
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
 import com.projectronin.interop.validation.server.generated.models.Severity
+import com.projectronin.interop.validation.server.generated.models.UpdatableResourceStatus
+import com.projectronin.interop.validation.server.generated.models.UpdateResource
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -463,5 +465,90 @@ class ResourceControllerTest {
         assertThrows<IllegalStateException> {
             controller.addResource(newResource)
         }
+    }
+
+    @Test
+    fun `updateResource returns error when no resource found`() {
+        val resourceId = UUID.randomUUID()
+        every { resourceDAO.getResource(resourceId) } returns null
+
+        val response =
+            controller.updateResource(resourceId, UpdateResource(status = UpdatableResourceStatus.ADDRESSING))
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+    }
+
+    @Test
+    fun `updateResource returns error when attempting to update a reprocessed resource`() {
+        val resourceId = UUID.randomUUID()
+        every { resourceDAO.getResource(resourceId) } returns mockk {
+            every { status } returns ResourceStatus.REPROCESSED
+        }
+
+        val response =
+            controller.updateResource(resourceId, UpdateResource(status = UpdatableResourceStatus.ADDRESSING))
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+    }
+
+    @Test
+    fun `updateResource returns error when update fails`() {
+        val resourceId = UUID.randomUUID()
+        every { resourceDAO.getResource(resourceId) } returns mockk {
+            every { status } returns ResourceStatus.REPORTED
+        }
+        every { resourceDAO.updateResource(resourceId, captureLambda()) } returns null
+
+        val response =
+            controller.updateResource(resourceId, UpdateResource(status = UpdatableResourceStatus.ADDRESSING))
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
+    }
+
+    @Test
+    fun `updateResource returns error when issue severities not found`() {
+        every { resourceDAO.getResource(resource1Id) } returns mockk {
+            every { status } returns ResourceStatus.REPORTED
+        }
+
+        every { resourceDAO.updateResource(resource1Id, captureLambda()) } returns resourceDO1
+        every { issueDAO.getIssueSeveritiesForResources(listOf(resource1Id)) } returns emptyMap()
+
+        val response =
+            controller.updateResource(resource1Id, UpdateResource(status = UpdatableResourceStatus.ADDRESSING))
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
+    }
+
+    @Test
+    fun `updateResource can update the resource`() {
+        val resourceId = UUID.randomUUID()
+        every { resourceDAO.getResource(resourceId) } returns mockk {
+            every { status } returns ResourceStatus.REPORTED
+        }
+
+        val resourceDO = ResourceDO {
+            id = resourceId
+            organizationId = "testorg"
+            resourceType = "Patient"
+            resource = "patient resource"
+            status = ResourceStatus.ADDRESSING
+            createDateTime = resource2CreateDtTm
+            updateDateTime = resource2UpdateDtTm
+        }
+        every { resourceDAO.updateResource(resourceId, captureLambda()) } returns resourceDO
+        every { issueDAO.getIssueSeveritiesForResources(listOf(resourceId)) } returns mapOf(
+            resourceId to setOf(Severity.FAILED)
+        )
+
+        val response =
+            controller.updateResource(resourceId, UpdateResource(status = UpdatableResourceStatus.ADDRESSING))
+        assertEquals(HttpStatus.OK, response.statusCode)
+
+        val resource = response.body!!
+        assertEquals(resourceId, resource.id)
+        assertEquals("testorg", resource.organizationId)
+        assertEquals("Patient", resource.resourceType)
+        assertEquals("patient resource", resource.resource)
+        assertEquals(ResourceStatus.ADDRESSING, resource.status)
+        assertEquals(resource2CreateDtTm, resource.createDtTm)
+        assertEquals(resource2UpdateDtTm, resource.updateDtTm)
+        assertEquals(Severity.FAILED, resource.severity)
     }
 }

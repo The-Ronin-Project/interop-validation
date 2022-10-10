@@ -12,9 +12,9 @@ issue:
     # UUID: 5f2139f1-3522-4746-8eb9-5607b9e0b663
     resource_id: "X3gcMALzTwatz3BVvLxXcA=="
     severity: "WARNING"
-    type: "pat-1"
-    location: "Patient.contact"
-    description: "No contact details"
-    status: "REPORTED"
+    type: "pat-2"
+    location: "Patient.telecom"
+    description: "No telecom details"
+    status: "ADDRESSED"
     create_dt_tm: "2022-08-01 11:18:00 +0000"
     update_dt_tm: "2022-09-01 11:18:00 +0000"

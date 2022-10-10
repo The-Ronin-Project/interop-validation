@@ -23,6 +23,8 @@ import org.ktorm.dsl.select
 import org.ktorm.dsl.where
 import org.ktorm.schema.ColumnDeclaring
 import org.springframework.stereotype.Repository
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.UUID
 
 /**
@@ -119,5 +121,33 @@ class ResourceDAO(private val database: Database) {
 
         logger.info { "Resource $newUUID inserted" }
         return newUUID
+    }
+
+    /**
+     * Updates the resource with [resourceId] based off the provided [updateFunction]. [updateFunction] should
+     * use the provided resource's setter functions to provide an updated view of the issue.
+     */
+    fun updateResource(resourceId: UUID, updateFunction: (ResourceDO) -> Unit): ResourceDO? {
+        logger.info { "Updating resource $resourceId" }
+
+        val resource =
+            database.from(ResourceDOs).select().where(ResourceDOs.id eq resourceId)
+                .map { ResourceDOs.createEntity(it) }.singleOrNull()
+
+        if (resource == null) {
+            logger.info { "No issue found for resource $resourceId" }
+            return null
+        }
+
+        updateFunction(resource)
+
+        if (resource.updateDateTime == null) {
+            resource.updateDateTime = OffsetDateTime.now(ZoneOffset.UTC)
+        }
+
+        resource.flushChanges()
+
+        logger.info { "Resource $resource updated" }
+        return resource
     }
 }

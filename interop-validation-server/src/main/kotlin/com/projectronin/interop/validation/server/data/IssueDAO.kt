@@ -21,10 +21,11 @@ import org.ktorm.dsl.map
 import org.ktorm.dsl.or
 import org.ktorm.dsl.orderBy
 import org.ktorm.dsl.select
-import org.ktorm.dsl.update
 import org.ktorm.dsl.where
 import org.ktorm.schema.ColumnDeclaring
 import org.springframework.stereotype.Repository
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.UUID
 
 /**
@@ -68,20 +69,21 @@ class IssueDAO(private val database: Database) {
     }
 
     /**
-     * Retrieves the [IssueDO] for the [id].
+     * Retrieves the [IssueDO] for the [resourceId] and [issueId].
      */
-    fun getIssue(id: UUID): IssueDO? {
-        logger.info { "Looking up issue $id" }
+    fun getIssue(resourceId: UUID, issueId: UUID): IssueDO? {
+        logger.info { "Looking up issue $issueId within resource $resourceId" }
         val issue =
-            database.from(IssueDOs).select().where(IssueDOs.id eq id).map { IssueDOs.createEntity(it) }
+            database.from(IssueDOs).select().where((IssueDOs.id eq issueId) and (IssueDOs.resourceId eq resourceId))
+                .map { IssueDOs.createEntity(it) }
                 .singleOrNull()
 
         if (issue == null) {
-            logger.info { "No issue found for id $id" }
+            logger.info { "No issue found for resource $resourceId and issue $issueId" }
             return null
         }
 
-        logger.info { "Issue loaded for $id" }
+        logger.info { "Issue loaded for resource $resourceId and issue $issueId" }
         return issue
     }
 
@@ -89,13 +91,19 @@ class IssueDAO(private val database: Database) {
      * Retrieves a [limit]ed number of issues for a specific [resourceUUID] and matching [statuses]
      * sorted chronologically by [order], optionally starting at after [after]
      */
-    fun getIssues(resourceUUID: UUID, statuses: List<IssueStatus>, order: Order, limit: Int, after: UUID?): List<IssueDO> {
+    fun getIssues(
+        resourceUUID: UUID,
+        statuses: List<IssueStatus>,
+        order: Order,
+        limit: Int,
+        after: UUID?
+    ): List<IssueDO> {
         require(statuses.isNotEmpty()) { "At least one status must be provided" }
 
         logger.info { "Retrieving $limit issues in $order order after $after for following statuses: $statuses" }
 
         val afterResource =
-            after?.let { getIssue(it) ?: throw IllegalArgumentException("No issue found for $after") }
+            after?.let { getIssue(resourceUUID, it) ?: throw IllegalArgumentException("No issue found for $after") }
 
         // Ordering by create and then ID ensures that issues with the same create time will always be in the same order
         val orderBy = when (order) {
@@ -134,25 +142,29 @@ class IssueDAO(private val database: Database) {
         return resources
     }
 
-    fun updateIssue(resourceId: UUID, issueId: UUID, issueDO: IssueDO): IssueDO? {
+    /**
+     * Updates the issue with [resourceId] and [issueId] based off the provided [updateFunction]. [updateFunction] should
+     * use the provided issue's setter functions to provide an updated view of the issue.
+     */
+    fun updateIssue(resourceId: UUID, issueId: UUID, updateFunction: (IssueDO) -> Unit): IssueDO? {
         logger.info { "Updating issue $issueId" }
 
-        val issue = database.from(IssueDOs).select().where((IssueDOs.resourceId eq resourceId) and (IssueDOs.id eq issueId)).map { IssueDOs.createEntity(it) }.singleOrNull()
+        val issue =
+            database.from(IssueDOs).select().where((IssueDOs.resourceId eq resourceId) and (IssueDOs.id eq issueId))
+                .map { IssueDOs.createEntity(it) }.singleOrNull()
 
         if (issue == null) {
             logger.info { "No issue found for resource $resourceId and issue $issueId" }
             return null
         }
 
-        database.update(IssueDOs) {
-            set(it.severity, issueDO.severity)
-            set(it.type, issueDO.type)
-            set(it.location, issueDO.location)
-            set(it.description, issueDO.description)
-            set(it.status, issueDO.status)
-            set(it.updateDateTime, issueDO.updateDateTime)
-            where { it.id eq issue.id }
+        updateFunction(issue)
+
+        if (issue.updateDateTime == null) {
+            issue.updateDateTime = OffsetDateTime.now(ZoneOffset.UTC)
         }
+
+        issue.flushChanges()
 
         logger.info { "Issue $issueId updated" }
         return issue

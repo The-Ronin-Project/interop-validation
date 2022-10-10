@@ -9,6 +9,9 @@ import com.projectronin.interop.validation.client.generated.models.NewResource
 import com.projectronin.interop.validation.client.generated.models.Order
 import com.projectronin.interop.validation.client.generated.models.ResourceStatus
 import com.projectronin.interop.validation.client.generated.models.Severity
+import com.projectronin.interop.validation.client.generated.models.UpdatableResourceStatus
+import com.projectronin.interop.validation.client.generated.models.UpdateResource
+import com.projectronin.interop.validation.server.data.binding.ResourceDOs
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -16,6 +19,8 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.ktorm.dsl.eq
+import org.ktorm.dsl.update
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.UUID
@@ -229,5 +234,56 @@ class ResourceIT : BaseValidationIT() {
         assertNull(readResource.updateDtTm)
         assertNull(readResource.reprocessDtTm)
         assertNull(readResource.reprocessedBy)
+    }
+
+    @Test
+    fun `updateResource works for a non-reprocessed resource`() {
+        val resourceId = addResource(newFailedResource)
+
+        // Verify initial status
+        val initialResource = runBlocking { resourceClient.getResourceById(resourceId) }
+        assertEquals(ResourceStatus.REPORTED, initialResource.status)
+        assertNull(initialResource.updateDtTm)
+
+        val update = UpdateResource(status = UpdatableResourceStatus.ADDRESSING)
+        val updatedResource = runBlocking { resourceClient.updateResource(resourceId, update) }
+        assertEquals(ResourceStatus.ADDRESSING, updatedResource.status)
+        assertNotNull(updatedResource.updateDtTm)
+
+        val recheckResource = runBlocking { resourceClient.getResourceById(resourceId) }
+        assertEquals(resourceId, recheckResource.id)
+        assertEquals(newFailedResource.organizationId, recheckResource.organizationId)
+        assertEquals(newFailedResource.resourceType, recheckResource.resourceType)
+        assertEquals(newFailedResource.resource, recheckResource.resource)
+        assertEquals(ResourceStatus.ADDRESSING, recheckResource.status)
+        assertEquals(Severity.FAILED, recheckResource.severity)
+        assertNotNull(recheckResource.createDtTm)
+        assertNotNull(recheckResource.updateDtTm)
+        assertNull(recheckResource.reprocessDtTm)
+        assertNull(recheckResource.reprocessedBy)
+    }
+
+    @Test
+    fun `updateResource fails for a reprocessed resource`() {
+        val resourceId = addResource(newFailedResource)
+
+        // Mark as Reprocessed (this currently requires modifying the DB directly)
+        database.update(ResourceDOs) {
+            set(it.status, com.projectronin.interop.validation.server.generated.models.ResourceStatus.REPROCESSED)
+            where {
+                it.id eq resourceId
+            }
+        }
+
+        // Verify initial status
+        val initialResource = runBlocking { resourceClient.getResourceById(resourceId) }
+        assertEquals(ResourceStatus.REPROCESSED, initialResource.status)
+
+        val update = UpdateResource(status = UpdatableResourceStatus.ADDRESSING)
+        val exception = assertThrows<ClientFailureException> {
+            runBlocking { resourceClient.updateResource(resourceId, update) }
+        }
+        println(exception.message)
+        assertEquals(true, exception.message?.contains("400"))
     }
 }

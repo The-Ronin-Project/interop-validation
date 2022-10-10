@@ -423,4 +423,59 @@ class ResourceDAOTest {
             )
         }
     }
+
+    @Test
+    @DataSet(value = ["/dbunit/resource/InitialResource.yaml"], cleanAfter = true)
+    @ExpectedDataSet(value = ["/dbunit/resource/UpdatedResource.yaml"])
+    fun `updateResource`() {
+        val resourceId = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val resource = resourceDAO.updateResource(resourceId) {
+            it.organizationId = "newtest"
+            it.status = ResourceStatus.IGNORED
+            it.updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+        }
+
+        resource!!
+        assertEquals(resourceId, resource.id)
+        assertEquals("newtest", resource.organizationId)
+        assertEquals("Patient", resource.resourceType)
+        assertEquals("the patient resource", resource.resource)
+        assertEquals(ResourceStatus.IGNORED, resource.status)
+        assertEquals(OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC), resource.createDateTime)
+        assertEquals(OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC), resource.updateDateTime)
+        assertNull(resource.reprocessDateTime)
+        assertNull(resource.reprocessedBy)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/resource/InitialResource.yaml"], cleanAfter = true)
+    @ExpectedDataSet(value = ["/dbunit/resource/UpdatedResource.yaml"], ignoreCols = ["update_dt_tm"])
+    fun `updateResource with no provided updateDateTime`() {
+        val resourceId = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val resource = resourceDAO.updateResource(resourceId) {
+            it.organizationId = "newtest"
+            it.status = ResourceStatus.IGNORED
+        }
+
+        resource!!
+        assertEquals(resourceId, resource.id)
+        assertEquals("newtest", resource.organizationId)
+        assertEquals("Patient", resource.resourceType)
+        assertEquals("the patient resource", resource.resource)
+        assertEquals(ResourceStatus.IGNORED, resource.status)
+        assertEquals(OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC), resource.createDateTime)
+        assertNotNull(resource.updateDateTime)
+        assertNull(resource.reprocessDateTime)
+        assertNull(resource.reprocessedBy)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/resource/InitialResource.yaml"], cleanAfter = true)
+    @ExpectedDataSet(value = ["/dbunit/resource/InitialResource.yaml"])
+    fun `updateResource for unknown resource`() {
+        val resource = resourceDAO.updateResource(UUID.randomUUID()) {
+            it.status = ResourceStatus.IGNORED
+        }
+        assertNull(resource)
+    }
 }

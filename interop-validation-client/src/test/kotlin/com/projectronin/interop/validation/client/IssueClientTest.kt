@@ -56,15 +56,7 @@ class IssueClientTest {
         location = "anywhere",
         updateDtTm = updated,
     )
-    private val updateIssue = UpdateIssue(
-        severity = Severity.FAILED,
-        type = "Validation",
-        description = "murky",
-        status = IssueStatus.IGNORED,
-        createDtTm = created,
-        location = "anywhere",
-        updateDtTm = updated,
-    )
+    private val updateIssue = UpdateIssue(status = IssueStatus.IGNORED)
 
     @Test
     fun `getResourceIssues - works`() {

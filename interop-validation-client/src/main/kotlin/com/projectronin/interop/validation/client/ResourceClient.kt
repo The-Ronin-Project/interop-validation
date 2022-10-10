@@ -8,11 +8,13 @@ import com.projectronin.interop.validation.client.generated.models.Order
 import com.projectronin.interop.validation.client.generated.models.ReprocessResourceRequest
 import com.projectronin.interop.validation.client.generated.models.Resource
 import com.projectronin.interop.validation.client.generated.models.ResourceStatus
+import com.projectronin.interop.validation.client.generated.models.UpdateResource
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -91,6 +93,21 @@ class ResourceClient(
             setBody(newResource)
         }
         response.throwExceptionFromHttpStatus("Validation", "POST $resourceUrl")
+        return response.body()
+    }
+
+    suspend fun updateResource(resourceId: UUID, updateResource: UpdateResource): Resource {
+        val authentication = authenticationService.getAuthentication()
+
+        val response: HttpResponse = client.patch("$resourceUrl/$resourceId") {
+            headers {
+                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+            }
+            accept(ContentType.Application.Json)
+            contentType(ContentType.Application.Json)
+            setBody(updateResource)
+        }
+        response.throwExceptionFromHttpStatus("Validation", "PATCH $resourceUrl/$resourceId")
         return response.body()
     }
 

@@ -82,7 +82,7 @@ class CommentControllerTest {
     fun setup() {
         issueDAO = mockk<IssueDAO> {
             every {
-                getIssue(issueId)
+                getIssue(resourceId, issueId)
             } returns issueDO
         }
         commentDAO = mockk()
@@ -139,21 +139,19 @@ class CommentControllerTest {
     @Test
     fun `getCommentsByIssue - bad issue returns 404`() {
         every {
-            issueDAO.getIssue(issueId)
+            issueDAO.getIssue(resourceId, issueId)
         } returns null
         val response = controller.getCommentsByIssue(resourceId, issueId, Order.ASC)
-        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
     }
 
     @Test
     fun `getCommentsByIssue - mismatch resource returns bad call`() {
         every {
-            issueDAO.getIssue(issueId)
-        } returns mockk {
-            every { resourceId } returns UUID.randomUUID()
-        }
+            issueDAO.getIssue(resourceId, issueId)
+        } returns null
         val response = controller.getCommentsByIssue(resourceId, issueId, Order.ASC)
-        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
     }
 
     @Test
@@ -191,7 +189,7 @@ class CommentControllerTest {
     @Test
     fun `addCommentForIssue - ok`() {
         every { commentDAO.insertIssueComment(newComment2.toCommentDO(), issueId) } returns comment2ID
-        every { issueDAO.getIssue(issueId) } returns issueDO
+        every { issueDAO.getIssue(resourceId, issueId) } returns issueDO
         val response = controller.addCommentForIssue(resourceId, issueId, newComment2)
         assertEquals(HttpStatus.OK, response.statusCode)
     }
@@ -199,10 +197,8 @@ class CommentControllerTest {
     @Test
     fun `addCommentForIssue - mismatch`() {
         every { commentDAO.insertIssueComment(newComment2.toCommentDO(), issueId) } returns comment2ID
-        every { issueDAO.getIssue(issueId) } returns mockk {
-            every { resourceId } returns UUID.randomUUID()
-        }
+        every { issueDAO.getIssue(resourceId, issueId) } returns null
         val response = controller.addCommentForIssue(resourceId, issueId, newComment2)
-        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
     }
 }

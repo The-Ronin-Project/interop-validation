@@ -108,7 +108,7 @@ class IssueControllerTest {
     @Test
     fun `getIssueByID - returns 404 when not found`() {
         every {
-            issueDAO.getIssue(issue1Id)
+            issueDAO.getIssue(resourceId, issue1Id)
         } returns null
 
         val response = controller.getIssueById(resourceId, issue1Id)
@@ -116,19 +116,20 @@ class IssueControllerTest {
     }
 
     @Test
-    fun `getIssueByID - returns 400 when mismatch resource`() {
-        every {
-            issueDAO.getIssue(issue1Id)
-        } returns issue1
+    fun `getIssueByID - returns 404 when mismatch resource`() {
         val wrongResourceID = UUID.randomUUID()
+        every {
+            issueDAO.getIssue(wrongResourceID, issue1Id)
+        } returns null
+
         val response = controller.getIssueById(wrongResourceID, issue1Id)
-        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
     }
 
     @Test
     fun `getIssueByID - works`() {
         every {
-            issueDAO.getIssue(issue1Id)
+            issueDAO.getIssue(resourceId, issue1Id)
         } returns issue1
         val response = controller.getIssueById(resourceId, issue1Id)
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -140,14 +141,6 @@ class IssueControllerTest {
 
     @Test
     fun `updateIssue - works`() {
-        val updateIssue = IssueDO {
-            severity = Severity.FAILED
-            type = "pat-1"
-            location = "Patient.contact"
-            description = "No contact details"
-            status = IssueStatus.REPORTED
-            updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-        }
         val updatedIssue = IssueDO {
             id = issue2Id
             resourceId = resourceDO.id
@@ -160,21 +153,12 @@ class IssueControllerTest {
             updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
         }
         every {
-            issueDAO.updateIssue(resourceId, issue2Id, updateIssue)
+            issueDAO.updateIssue(resourceId, issue2Id, captureLambda())
         } returns updatedIssue
 
-        val response = controller.updateIssue(
-            resourceId, issue2Id,
-            UpdateIssue(
-                severity = Severity.FAILED,
-                description = "No contact details",
-                type = "pat-1",
-                location = "Patient.contact",
-                status = IssueStatus.REPORTED,
-                updateDtTm = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-            )
-        )
+        val response = controller.updateIssue(resourceId, issue2Id, UpdateIssue(status = IssueStatus.REPORTED))
         assertEquals(HttpStatus.OK, response.statusCode)
+
         val issue = response.body!!
         assertEquals(issue.id, updatedIssue.id)
         assertEquals(issue.severity, Severity.FAILED)
@@ -193,20 +177,10 @@ class IssueControllerTest {
             updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
         }
         every {
-            issueDAO.updateIssue(resourceId, issue2Id, updateIssue)
+            issueDAO.updateIssue(resourceId, issue2Id, captureLambda())
         } returns null
 
-        val response = controller.updateIssue(
-            resourceId, issue2Id,
-            UpdateIssue(
-                severity = Severity.FAILED,
-                description = "No contact details",
-                type = "pat-1",
-                location = "Patient.contact",
-                status = IssueStatus.REPORTED,
-                updateDtTm = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-            )
-        )
+        val response = controller.updateIssue(resourceId, issue2Id, UpdateIssue(status = IssueStatus.REPORTED))
         assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
         assertEquals(response.body, null)
     }

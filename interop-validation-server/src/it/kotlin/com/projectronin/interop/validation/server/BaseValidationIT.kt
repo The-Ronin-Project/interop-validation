@@ -30,7 +30,7 @@ abstract class BaseValidationIT {
                 .waitingFor("validation-server", Wait.forLogMessage(".*Started ValidationServerKt.*", 1))
     }
 
-    private val database = Database.connect(url = "jdbc:mysql://springuser:ThePassword@localhost:3306/validation-db")
+    protected val database = Database.connect(url = "jdbc:mysql://springuser:ThePassword@localhost:3306/validation-db")
 
     protected val serverUrl = "http://localhost:8080"
     protected val httpClient = HttpSpringConfig().getHttpClient()

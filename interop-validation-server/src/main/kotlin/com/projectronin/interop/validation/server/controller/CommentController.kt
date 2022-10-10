@@ -47,7 +47,7 @@ class CommentController(
     @PreAuthorize("hasAuthority('SCOPE_read:comments')")
     override fun getCommentsByIssue(resourceId: UUID, issueId: UUID, order: Order): ResponseEntity<List<Comment>> {
         if (!validateIssue(resourceId, issueId)) {
-            return ResponseEntity.badRequest().build()
+            return ResponseEntity.notFound().build()
         }
 
         // now retrieve the actual comments
@@ -68,7 +68,7 @@ class CommentController(
         newComment: NewComment
     ): ResponseEntity<GeneratedId> {
         if (!validateIssue(resourceId, issueId)) {
-            return ResponseEntity.badRequest().build()
+            return ResponseEntity.notFound().build()
         }
         return ResponseEntity.ok(GeneratedId(commentDAO.insertIssueComment(newComment.toCommentDO(), issueId)))
     }
@@ -86,13 +86,7 @@ class CommentController(
         // this is annoying check to make sure the issue and the resource match from the caller
         // when we get back the comments we can't actually check the resource of the issue they're attached to
         // so just do it here first
-        val issueDO = issueDAO.getIssue(issueId) ?: return false
-        return if (issueDO.resourceId != resourceId) {
-            logger.info {
-                "Mismatch between resource ID [${issueDO.resourceId}] on issue found [${issueDO.id}] " +
-                    "and resource ID [$resourceId] requested"
-            }
-            false
-        } else true
+        val issueDO = issueDAO.getIssue(resourceId, issueId)
+        return issueDO != null
     }
 }

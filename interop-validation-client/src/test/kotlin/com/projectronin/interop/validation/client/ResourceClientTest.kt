@@ -14,6 +14,8 @@ import com.projectronin.interop.validation.client.generated.models.ReprocessReso
 import com.projectronin.interop.validation.client.generated.models.Resource
 import com.projectronin.interop.validation.client.generated.models.ResourceStatus
 import com.projectronin.interop.validation.client.generated.models.Severity
+import com.projectronin.interop.validation.client.generated.models.UpdatableResourceStatus
+import com.projectronin.interop.validation.client.generated.models.UpdateResource
 import io.ktor.client.HttpClient
 import io.ktor.http.HttpStatusCode
 import io.mockk.every
@@ -412,6 +414,66 @@ class ResourceClientTest {
 
         val request = mockWebServer.takeRequest()
         assertEquals(true, request.path?.endsWith("/resources/$uuid/reprocess"))
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
+    }
+
+    @Test
+    fun `updateResource works`() {
+        val resourceId = UUID.randomUUID()
+        val updateResource = UpdateResource(status = UpdatableResourceStatus.IGNORED)
+        val updatedResource = Resource(
+            id = resourceId,
+            organizationId = "test",
+            resourceType = "Patient",
+            resource = "{}",
+            status = ResourceStatus.IGNORED,
+            severity = Severity.FAILED,
+            createDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusHours(2),
+            updateDtTm = OffsetDateTime.now(ZoneOffset.UTC)
+        )
+
+        val mockWebServer = MockWebServer()
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(HttpStatusCode.OK.value)
+                .setBody(JacksonManager.objectMapper.writeValueAsString(updatedResource))
+                .setHeader("Content-Type", "application/json")
+        )
+        val url = mockWebServer.url("/test")
+        val response = runBlocking {
+            ResourceClient(url.toString(), client, authenticationService).updateResource(resourceId, updateResource)
+        }
+        assertEquals(updatedResource, response)
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("PATCH", request.method)
+        assertEquals(true, request.path?.endsWith("/resources/$resourceId"))
+        assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
+    }
+
+    @Test
+    fun `updateResource handles exceptions`() {
+        val resourceId = UUID.randomUUID()
+        val updateResource = UpdateResource(status = UpdatableResourceStatus.IGNORED)
+
+        val mockWebServer = MockWebServer()
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(HttpStatusCode.ServiceUnavailable.value)
+                .setHeader("Content-Type", "application/json")
+        )
+        val url = mockWebServer.url("/test")
+        val exception = assertThrows<ServiceUnavailableException> {
+            runBlocking {
+                ResourceClient(url.toString(), client, authenticationService).updateResource(resourceId, updateResource)
+            }
+        }
+        assertNotNull(exception.message)
+        exception.message?.let { assertTrue(it.contains("503")) }
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("PATCH", request.method)
+        assertEquals(true, request.path?.endsWith("/resources/$resourceId"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 }

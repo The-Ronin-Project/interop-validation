@@ -13,6 +13,7 @@ import com.projectronin.interop.validation.server.generated.models.ReprocessReso
 import com.projectronin.interop.validation.server.generated.models.Resource
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
 import com.projectronin.interop.validation.server.generated.models.Severity
+import com.projectronin.interop.validation.server.generated.models.UpdateResource
 import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -38,19 +39,7 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
             return ResponseEntity.ok(listOf())
         }
 
-        val resourceIds = resourceDOs.map { it.id }
-        val issueSeveritiesByResource = issueDAO.getIssueSeveritiesForResources(resourceIds)
-
-        val resources = resourceDOs.mapNotNull {
-            val issueSeverities = issueSeveritiesByResource[it.id]
-            if (issueSeverities == null) {
-                logger.warn { "No issue severities found for resource ${it.id}" }
-                null
-            } else {
-                createResource(it, issueSeverities)
-            }
-        }
-
+        val resources = createResources(resourceDOs)
         return ResponseEntity.ok(resources)
     }
 
@@ -59,16 +48,7 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
         val resourceDO = resourceDAO.getResource(resourceId)
             ?: return ResponseEntity.notFound().build()
 
-        val issueSeverities = issueDAO.getIssueSeveritiesForResources(listOf(resourceDO.id))[resourceDO.id]
-
-        val resource = if (issueSeverities == null) {
-            // Once we figure out how we're going to handle logging errors in DAOs, this will need to be changed.  For
-            // now, I'm leaving it as a warning.
-            logger.warn { "No issue severities found for resource ${resourceDO.id}" }
-            null
-        } else {
-            createResource(resourceDO, issueSeverities)
-        }
+        val resource = createResource(resourceDO)
 
         // We either have a good resource, or our resource didn't have any issues assigned to it.
         return resource?.let { ResponseEntity.ok(it) }
@@ -88,12 +68,46 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
     }
 
     @PreAuthorize("hasAuthority('SCOPE_update:resources')")
+    override fun updateResource(resourceId: UUID, updateResource: UpdateResource): ResponseEntity<Resource> {
+        val resource = resourceDAO.getResource(resourceId) ?: return ResponseEntity.notFound().build()
+        if (resource.status == ResourceStatus.REPROCESSED) {
+            logger.info { "Unable to update $resourceId as it has already been reprocessed" }
+            return ResponseEntity.badRequest().build()
+        }
+
+        val updatedResource = resourceDAO.updateResource(resourceId) {
+            it.status = ResourceStatus.valueOf(updateResource.status.value)
+        }
+
+        val responseResource = updatedResource?.let { createResource(updatedResource) }
+        return responseResource?.let { ResponseEntity.ok(responseResource) } ?: ResponseEntity.internalServerError()
+            .build()
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_update:resources')")
     override fun reprocessResource(
         resourceId: UUID,
         reprocessResourceRequest: ReprocessResourceRequest
     ): ResponseEntity<Unit> {
         TODO()
     }
+
+    private fun createResources(resourceDOs: List<ResourceDO>): List<Resource> {
+        val resourceIds = resourceDOs.map { it.id }
+        val issueSeveritiesByResource = issueDAO.getIssueSeveritiesForResources(resourceIds)
+
+        return resourceDOs.mapNotNull {
+            val issueSeverities = issueSeveritiesByResource[it.id]
+            if (issueSeverities == null) {
+                logger.warn { "No issue severities found for resource ${it.id}" }
+                null
+            } else {
+                createResource(it, issueSeverities)
+            }
+        }
+    }
+
+    private fun createResource(resourceDO: ResourceDO): Resource? = createResources(listOf(resourceDO)).firstOrNull()
 
     private fun createResource(resourceDO: ResourceDO, issueSeverities: Set<Severity>): Resource {
         val resourceSeverity = if (issueSeverities.contains(Severity.FAILED)) Severity.FAILED else Severity.WARNING
