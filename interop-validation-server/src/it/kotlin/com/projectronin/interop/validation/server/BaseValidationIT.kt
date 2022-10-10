@@ -1,6 +1,7 @@
 package com.projectronin.interop.validation.server
 
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
+import com.projectronin.interop.validation.client.IssueClient
 import com.projectronin.interop.validation.client.ResourceClient
 import com.projectronin.interop.validation.client.generated.models.NewResource
 import com.projectronin.interop.validation.server.auth.LocalAuthService
@@ -15,19 +16,16 @@ import org.ktorm.database.Database
 import org.ktorm.dsl.deleteAll
 import org.testcontainers.containers.DockerComposeContainer
 import org.testcontainers.containers.wait.strategy.Wait
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.io.File
 import java.time.OffsetDateTime
 import java.util.UUID
 
-@Testcontainers
 abstract class BaseValidationIT {
     companion object {
-        @Container
         val docker =
             DockerComposeContainer(File(ResourceIT::class.java.getResource("docker-compose.yaml")!!.file))
                 .waitingFor("validation-server", Wait.forLogMessage(".*Started ValidationServerKt.*", 1))
+                .start()
     }
 
     protected val database = Database.connect(url = "jdbc:mysql://springuser:ThePassword@localhost:3306/validation-db")
@@ -37,6 +35,7 @@ abstract class BaseValidationIT {
     protected val authenticationService = LocalAuthService(httpClient)
 
     protected val resourceClient = ResourceClient(serverUrl, httpClient, authenticationService)
+    protected val issueClient = IssueClient(serverUrl, httpClient, authenticationService)
 
     @AfterEach
     fun tearDown() {
