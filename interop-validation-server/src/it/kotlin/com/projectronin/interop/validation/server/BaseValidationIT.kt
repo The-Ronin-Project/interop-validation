@@ -1,6 +1,7 @@
 package com.projectronin.interop.validation.server
 
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
+import com.projectronin.interop.validation.client.CommentClient
 import com.projectronin.interop.validation.client.IssueClient
 import com.projectronin.interop.validation.client.ResourceClient
 import com.projectronin.interop.validation.client.generated.models.NewResource
@@ -36,6 +37,7 @@ abstract class BaseValidationIT {
 
     protected val resourceClient = ResourceClient(serverUrl, httpClient, authenticationService)
     protected val issueClient = IssueClient(serverUrl, httpClient, authenticationService)
+    protected val commentClient = CommentClient(serverUrl, httpClient, authenticationService)
 
     @AfterEach
     fun tearDown() {
@@ -50,9 +52,9 @@ abstract class BaseValidationIT {
     }
 
     private fun purgeData() {
-        database.deleteAll(CommentDOs)
         database.deleteAll(IssueCommentDOs)
         database.deleteAll(ResourceCommentDOs)
+        database.deleteAll(CommentDOs) // this has to be after the linking tables or you'll get fk errors
         database.deleteAll(IssueDOs)
         database.deleteAll(ResourceDOs)
     }

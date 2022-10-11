@@ -185,6 +185,12 @@ class CommentControllerTest {
         val response = controller.addCommentForResource(resourceId, newComment1)
         assertEquals(HttpStatus.OK, response.statusCode)
     }
+    @Test
+    fun `addCommentForResource - resource not found`() {
+        every { resourceDAO.getResource(resourceId) } returns null
+        val response = controller.addCommentForResource(resourceId, newComment1)
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+    }
 
     @Test
     fun `addCommentForIssue - ok`() {

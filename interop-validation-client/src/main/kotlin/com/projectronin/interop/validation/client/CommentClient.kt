@@ -4,6 +4,7 @@ import com.projectronin.interop.common.http.throwExceptionFromHttpStatus
 import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.Comment
 import com.projectronin.interop.validation.client.generated.models.GeneratedId
+import com.projectronin.interop.validation.client.generated.models.NewComment
 import com.projectronin.interop.validation.client.generated.models.Order
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -53,7 +54,7 @@ class CommentClient(
     /**
      * Posts a new comment to this resource.
      */
-    suspend fun addResourceComment(resourceId: UUID, newComment: Comment): GeneratedId {
+    suspend fun addResourceComment(resourceId: UUID, newComment: NewComment): GeneratedId {
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/comments"
@@ -91,7 +92,7 @@ class CommentClient(
     /**
      * Posts a new comment to an issue
      */
-    suspend fun addResourceIssueComment(resourceId: UUID, issueId: UUID, newComment: Comment): GeneratedId {
+    suspend fun addResourceIssueComment(resourceId: UUID, issueId: UUID, newComment: NewComment): GeneratedId {
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/issues/$issueId/comments"

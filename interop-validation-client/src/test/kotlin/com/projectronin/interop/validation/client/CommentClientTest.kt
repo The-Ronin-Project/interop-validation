@@ -8,6 +8,7 @@ import com.projectronin.interop.common.jackson.JacksonManager
 import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.Comment
 import com.projectronin.interop.validation.client.generated.models.GeneratedId
+import com.projectronin.interop.validation.client.generated.models.NewComment
 import com.projectronin.interop.validation.client.generated.models.Order
 import io.ktor.http.HttpStatusCode
 import io.mockk.every
@@ -100,6 +101,11 @@ class CommentClientTest {
 
     @Test
     fun `addResourceComment - works`() {
+        val newComment1 = NewComment(
+            author = "tester 1",
+            text = "mysterious",
+            createDtTm = OffsetDateTime.now(ZoneOffset.UTC)
+        )
         val commentJson = JacksonManager.objectMapper.writeValueAsString(expectedComment1)
 
         mockWebServer.enqueue(
@@ -112,7 +118,7 @@ class CommentClientTest {
         val response = runBlocking {
             client.addResourceComment(
                 UUID.fromString("1d531a31-49a9-af74-03d5-573b456efca5"),
-                expectedComment1
+                newComment1
             )
         }
         assertEquals(GeneratedId(expectedComment1.id), response)
@@ -124,6 +130,11 @@ class CommentClientTest {
 
     @Test
     fun `addResourceComment - exception`() {
+        val newComment1 = NewComment(
+            author = "tester 1",
+            text = "mysterious",
+            createDtTm = OffsetDateTime.now(ZoneOffset.UTC)
+        )
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.PayloadTooLarge.value)
@@ -135,7 +146,7 @@ class CommentClientTest {
             runBlocking {
                 client.addResourceComment(
                     UUID.fromString("1d531a31-49a9-af74-03d5-573b456efca5"),
-                    expectedComment1
+                    newComment1
                 )
             }
         }
@@ -205,6 +216,11 @@ class CommentClientTest {
 
     @Test
     fun `addResourceIssueComment - works`() {
+        val newComment1 = NewComment(
+            author = "tester 1",
+            text = "mysterious",
+            createDtTm = OffsetDateTime.now(ZoneOffset.UTC)
+        )
         val commentJson = JacksonManager.objectMapper.writeValueAsString(expectedComment1)
 
         mockWebServer.enqueue(
@@ -218,7 +234,7 @@ class CommentClientTest {
             client.addResourceIssueComment(
                 UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
                 UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
-                expectedComment1
+                newComment1
             )
         }
         assertEquals(GeneratedId(expectedComment1.id), response)
@@ -230,6 +246,11 @@ class CommentClientTest {
 
     @Test
     fun `addResourceIssueComment - exception`() {
+        val newComment1 = NewComment(
+            author = "tester 1",
+            text = "mysterious",
+            createDtTm = OffsetDateTime.now(ZoneOffset.UTC)
+        )
         val commentJson = JacksonManager.objectMapper.writeValueAsString(expectedComment1)
 
         mockWebServer.enqueue(
@@ -244,7 +265,7 @@ class CommentClientTest {
                 client.addResourceIssueComment(
                     UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
                     UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
-                    expectedComment1
+                    newComment1
                 )
             }
         }

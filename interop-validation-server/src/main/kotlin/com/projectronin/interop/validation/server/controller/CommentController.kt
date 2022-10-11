@@ -41,6 +41,7 @@ class CommentController(
 
     @PreAuthorize("hasAuthority('SCOPE_create:comments')")
     override fun addCommentForResource(resourceId: UUID, newComment: NewComment): ResponseEntity<GeneratedId> {
+        resourceDAO.getResource(resourceId) ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(GeneratedId(commentDAO.insertResourceComment(newComment.toCommentDO(), resourceId)))
     }
 
