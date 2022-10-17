@@ -1,0 +1,45 @@
+name: build-deploy-dev
+run-name: Build and deploy to DEV by @${{ github.actor }}
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Interop Validation Server Tests"]
+    types: [completed]
+    branches:
+      - main
+
+jobs:
+  image-push-latest:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: Push Docker:latest to Nexus
+    uses: projectronin/github/.github/workflows/image_push_nexus.yml@master
+    with:
+      base-directory: ./interop-validation-server
+      image-tag: latest
+      repo: "interop-validation"
+      build_boot_jar: true
+    secrets:
+      username: ${{ secrets.NEXUS_DOCKER_USERNAME }}
+      password: ${{ secrets.NEXUS_DOCKER_PASSWORD }}
+
+  image-push-sha:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: Push Docker:SHA to Nexus
+    uses: projectronin/github/.github/workflows/image_push_nexus.yml@master
+    with:
+      base-directory: ./interop-validation-server
+      image-tag: ${{ github.sha }}
+      repo: "interop-validation"
+      build_boot_jar: true
+    secrets:
+      username: ${{ secrets.NEXUS_DOCKER_USERNAME }}
+      password: ${{ secrets.NEXUS_DOCKER_PASSWORD }}
+
+  argocd_dev:
+    uses: projectronin/github/.github/workflows/argocd_deploy.yml@master
+    needs: [image-push-sha]
+    with:
+      environment: dev
+      image-tag: ${{ github.sha }}
+    secrets:
+      argocd-svc-automation: ${{ secrets.ARGOCD_SVC_AUTOMATION }}
