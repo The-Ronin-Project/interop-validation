@@ -23,7 +23,7 @@ rider-core = "com.github.database-rider:rider-core:1.35.0"
 springdoc-openapi-ui = "org.springdoc:springdoc-openapi-ui:1.6.12"
 spring-boot-parent = "org.springframework.boot:spring-boot-parent:2.7.5"
 spring-boot-actuator = "org.springframework.boot:spring-boot-starter-actuator:2.7.5"
-testcontainers-bom = "org.testcontainers:testcontainers-bom:1.17.5"
+testcontainers-bom = "org.testcontainers:testcontainers-bom:1.17.6"
 uuid-creator = "com.github.f4b6a3:uuid-creator:5.2.0"
 
 [bundles]
