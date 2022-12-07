@@ -3,7 +3,7 @@ package com.projectronin.interop.validation.client
 import com.projectronin.interop.common.http.exceptions.ClientFailureException
 import com.projectronin.interop.common.http.exceptions.ServerFailureException
 import com.projectronin.interop.common.http.exceptions.ServiceUnavailableException
-import com.projectronin.interop.common.http.spring.HttpSpringConfig
+import com.projectronin.interop.common.http.ktor.ContentLengthSupplier
 import com.projectronin.interop.common.jackson.JacksonManager
 import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.GeneratedId
@@ -17,7 +17,10 @@ import com.projectronin.interop.validation.client.generated.models.Severity
 import com.projectronin.interop.validation.client.generated.models.UpdatableResourceStatus
 import com.projectronin.interop.validation.client.generated.models.UpdateResource
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.jackson.jackson
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -39,7 +42,14 @@ class ResourceClientTest {
             every { accessToken } returns authenticationToken
         }
     }
-    private val client: HttpClient = HttpSpringConfig().getHttpClient()
+    private val client: HttpClient = HttpClient(OkHttp) {
+        install(ContentNegotiation) {
+            jackson {
+                JacksonManager.setUpMapper(this)
+            }
+        }
+        install(ContentLengthSupplier)
+    }
     private val resource1Id = UUID.fromString("03d51d53-1a31-49a9-af74-573b456efca5")
     private val resource1CreateDtTm = OffsetDateTime.now(ZoneOffset.UTC)
     private val expectedResource = Resource(

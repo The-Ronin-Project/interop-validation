@@ -1,6 +1,6 @@
 package com.projectronin.interop.validation.client
 
-import com.projectronin.interop.common.http.throwExceptionFromHttpStatus
+import com.projectronin.interop.common.http.request
 import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.Comment
 import com.projectronin.interop.validation.client.generated.models.GeneratedId
@@ -39,15 +39,16 @@ class CommentClient(
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/comments"
-        val response: HttpResponse = client.get(urlString) {
-            headers {
-                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse = client.request("Validation", urlString) { url ->
+            get(url) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                }
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
+                parameter("order", order)
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-            parameter("order", order)
         }
-        response.throwExceptionFromHttpStatus("Validation", "GET $urlString")
         return response.body()
     }
 
@@ -58,15 +59,16 @@ class CommentClient(
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/comments"
-        val response: HttpResponse = client.post(urlString) {
-            headers {
-                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse = client.request("Validation", urlString) { url ->
+            post(url) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                }
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
+                setBody(newComment)
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-            setBody(newComment)
         }
-        response.throwExceptionFromHttpStatus("Validation", "POST $urlString")
         return response.body()
     }
 
@@ -77,15 +79,16 @@ class CommentClient(
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/issues/$issueId/comments"
-        val response: HttpResponse = client.get(urlString) {
-            headers {
-                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse = client.request("Validation", urlString) { url ->
+            get(url) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                }
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
+                parameter("order", order)
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-            parameter("order", order)
         }
-        response.throwExceptionFromHttpStatus("Validation", "GET $urlString")
         return response.body()
     }
 
@@ -96,15 +99,16 @@ class CommentClient(
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/issues/$issueId/comments"
-        val response: HttpResponse = client.post(urlString) {
-            headers {
-                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse = client.request("Validation", urlString) { url ->
+            post(url) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                }
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
+                setBody(newComment)
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-            setBody(newComment)
         }
-        response.throwExceptionFromHttpStatus("Validation", "POST $urlString")
         return response.body()
     }
 }

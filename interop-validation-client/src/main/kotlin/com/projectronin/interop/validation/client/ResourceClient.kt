@@ -1,6 +1,6 @@
 package com.projectronin.interop.validation.client
 
-import com.projectronin.interop.common.http.throwExceptionFromHttpStatus
+import com.projectronin.interop.common.http.request
 import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.GeneratedId
 import com.projectronin.interop.validation.client.generated.models.NewResource
@@ -43,85 +43,90 @@ class ResourceClient(
     ): List<Resource> {
         val authentication = authenticationService.getAuthentication()
 
-        val response: HttpResponse = client.get(resourceUrl) {
-            url {
-                parameters.apply {
-                    if (status?.isNotEmpty() == true) {
-                        appendAll("status", status.map { it.value })
+        val response: HttpResponse = client.request("Validation", resourceUrl) { url ->
+            get(url) {
+                url {
+                    parameters.apply {
+                        if (status?.isNotEmpty() == true) {
+                            appendAll("status", status.map { it.value })
+                        }
+
+                        append("order", order.name)
+                        append("limit", limit.toString())
+
+                        after?.let { append("after", it.toString()) }
                     }
-
-                    append("order", order.name)
-                    append("limit", limit.toString())
-
-                    after?.let { append("after", it.toString()) }
                 }
-            }
 
-            headers {
-                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                }
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
         }
-        response.throwExceptionFromHttpStatus("Validation", "GET $resourceUrl")
         return response.body()
     }
 
     suspend fun getResourceById(resourceId: UUID): Resource {
         val authentication = authenticationService.getAuthentication()
 
-        val response: HttpResponse = client.get("$resourceUrl/$resourceId") {
-            headers {
-                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse = client.request("Validation", "$resourceUrl/$resourceId") { url ->
+            get(url) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                }
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
         }
-        response.throwExceptionFromHttpStatus("Validation", "GET $resourceUrl/$resourceId")
         return response.body()
     }
 
     suspend fun addResource(newResource: NewResource): GeneratedId {
         val authentication = authenticationService.getAuthentication()
 
-        val response: HttpResponse = client.post(resourceUrl) {
-            headers {
-                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse = client.request("Validation", resourceUrl) { url ->
+            post(url) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                }
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
+                setBody(newResource)
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-            setBody(newResource)
         }
-        response.throwExceptionFromHttpStatus("Validation", "POST $resourceUrl")
         return response.body()
     }
 
     suspend fun updateResource(resourceId: UUID, updateResource: UpdateResource): Resource {
         val authentication = authenticationService.getAuthentication()
 
-        val response: HttpResponse = client.patch("$resourceUrl/$resourceId") {
-            headers {
-                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse = client.request("Validation", "$resourceUrl/$resourceId") { url ->
+            patch(url) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                }
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
+                setBody(updateResource)
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-            setBody(updateResource)
         }
-        response.throwExceptionFromHttpStatus("Validation", "PATCH $resourceUrl/$resourceId")
         return response.body()
     }
 
     suspend fun reprocessResource(resourceId: UUID, reprocessResourceRequest: ReprocessResourceRequest) {
         val authentication = authenticationService.getAuthentication()
 
-        val response: HttpResponse = client.put("$resourceUrl/$resourceId/reprocess") {
-            headers {
-                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        client.request("Validation", "$resourceUrl/$resourceId/reprocess") { url ->
+            put(url) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                }
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
+                setBody(reprocessResourceRequest)
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-            setBody(reprocessResourceRequest)
         }
-        response.throwExceptionFromHttpStatus("Validation", "Put $resourceUrl/$resourceId/reprocess")
     }
 }

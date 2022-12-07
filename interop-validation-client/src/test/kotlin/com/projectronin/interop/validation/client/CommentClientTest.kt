@@ -3,14 +3,18 @@ package com.projectronin.interop.validation.client
 import com.projectronin.interop.common.http.exceptions.ClientAuthenticationException
 import com.projectronin.interop.common.http.exceptions.ClientFailureException
 import com.projectronin.interop.common.http.exceptions.ServerFailureException
-import com.projectronin.interop.common.http.spring.HttpSpringConfig
+import com.projectronin.interop.common.http.ktor.ContentLengthSupplier
 import com.projectronin.interop.common.jackson.JacksonManager
 import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.Comment
 import com.projectronin.interop.validation.client.generated.models.GeneratedId
 import com.projectronin.interop.validation.client.generated.models.NewComment
 import com.projectronin.interop.validation.client.generated.models.Order
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.jackson.jackson
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -33,7 +37,15 @@ class CommentClientTest {
             every { accessToken } returns authenticationToken
         }
     }
-    private val client = CommentClient("$hostUrl", HttpSpringConfig().getHttpClient(), authenticationService)
+    private val httpClient = HttpClient(OkHttp) {
+        install(ContentNegotiation) {
+            jackson {
+                JacksonManager.setUpMapper(this)
+            }
+        }
+        install(ContentLengthSupplier)
+    }
+    private val client = CommentClient("$hostUrl", httpClient, authenticationService)
     private val expectedComment1 = Comment(
         id = UUID.fromString("573b456efca5-03d51d53-1a31-49a9-af74"),
         author = "tester 1",
@@ -91,7 +103,7 @@ class CommentClientTest {
         }
         val message = exception.message!!
         assertTrue(message.contains("Received 403 Client Error when calling Validation"))
-        assertTrue(message.contains("for GET"))
+        assertTrue(message.contains("for "))
         assertTrue(message.contains("/resources/1d531a31-49a9-af74-03d5-573b456efca5/comments"))
 
         val request = mockWebServer.takeRequest()
@@ -152,7 +164,7 @@ class CommentClientTest {
         }
         val message = exception.message!!
         assertTrue(message.contains("Received 413 Client Error when calling Validation"))
-        assertTrue(message.contains("for POST"))
+        assertTrue(message.contains("for "))
         assertTrue(message.contains("/resources/1d531a31-49a9-af74-03d5-573b456efca5/comments"))
 
         val request = mockWebServer.takeRequest()
@@ -206,7 +218,7 @@ class CommentClientTest {
         }
         val message = exception.message!!
         assertTrue(message.contains("Received 500 Server Error when calling Validation"))
-        assertTrue(message.contains("for GET"))
+        assertTrue(message.contains("for "))
         assertTrue(message.contains("/resources/123449a9-af74-03d5-1a31-573b456efca5/issues/12341a31-49a9-af74-573b-456e03d51d53/comments"))
 
         val request = mockWebServer.takeRequest()
@@ -271,7 +283,7 @@ class CommentClientTest {
         }
         val message = exception.message!!
         assertTrue(message.contains("Received 413 Client Error when calling Validation"))
-        assertTrue(message.contains("for POST"))
+        assertTrue(message.contains("for "))
         assertTrue(message.contains("/resources/123449a9-af74-03d5-1a31-573b456efca5/issues/12341a31-49a9-af74-573b-456e03d51d53/comments"))
 
         val request = mockWebServer.takeRequest()

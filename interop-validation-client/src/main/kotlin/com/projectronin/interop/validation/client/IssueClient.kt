@@ -1,6 +1,6 @@
 package com.projectronin.interop.validation.client
 
-import com.projectronin.interop.common.http.throwExceptionFromHttpStatus
+import com.projectronin.interop.common.http.request
 import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.Issue
 import com.projectronin.interop.validation.client.generated.models.Order
@@ -37,15 +37,16 @@ class IssueClient(
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/issues"
-        val response: HttpResponse = client.get(urlString) {
-            headers {
-                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse = client.request("Validation", urlString) { url ->
+            get(url) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                }
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
+                parameter("order", order)
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-            parameter("order", order)
         }
-        response.throwExceptionFromHttpStatus("Validation", "GET $urlString")
         return response.body()
     }
 
@@ -56,15 +57,16 @@ class IssueClient(
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/issues/$issueId"
-        val response: HttpResponse = client.patch(urlString) {
-            headers {
-                append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse = client.request("Validation", urlString) { url ->
+            patch(url) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                }
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
+                setBody(updateIssue)
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-            setBody(updateIssue)
         }
-        response.throwExceptionFromHttpStatus("Validation", "PATCH $urlString")
         return response.body()
     }
 }

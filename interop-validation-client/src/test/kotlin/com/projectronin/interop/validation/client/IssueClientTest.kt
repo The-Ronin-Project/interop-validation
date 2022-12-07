@@ -2,7 +2,7 @@ package com.projectronin.interop.validation.client
 
 import com.projectronin.interop.common.http.exceptions.ClientAuthenticationException
 import com.projectronin.interop.common.http.exceptions.ClientFailureException
-import com.projectronin.interop.common.http.spring.HttpSpringConfig
+import com.projectronin.interop.common.http.ktor.ContentLengthSupplier
 import com.projectronin.interop.common.jackson.JacksonManager
 import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.Issue
@@ -10,7 +10,11 @@ import com.projectronin.interop.validation.client.generated.models.IssueStatus
 import com.projectronin.interop.validation.client.generated.models.Order
 import com.projectronin.interop.validation.client.generated.models.Severity
 import com.projectronin.interop.validation.client.generated.models.UpdateIssue
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.jackson.jackson
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -33,7 +37,15 @@ class IssueClientTest {
             every { accessToken } returns authenticationToken
         }
     }
-    private val client = IssueClient("$hostUrl", HttpSpringConfig().getHttpClient(), authenticationService)
+    private val httpClient = HttpClient(OkHttp) {
+        install(ContentNegotiation) {
+            jackson {
+                JacksonManager.setUpMapper(this)
+            }
+        }
+        install(ContentLengthSupplier)
+    }
+    private val client = IssueClient("$hostUrl", httpClient, authenticationService)
     private val created = OffsetDateTime.now(ZoneOffset.UTC)
     private val updated = OffsetDateTime.now(ZoneOffset.UTC)
     private val expectedIssue1 = Issue(
@@ -102,7 +114,7 @@ class IssueClientTest {
         }
         val message = exception.message!!
         assertTrue(message.contains("Received 403 Client Error when calling Validation"))
-        assertTrue(message.contains("for GET"))
+        assertTrue(message.contains("for "))
         assertTrue(message.contains("/resources/12341a31-49a9-af74-03d5-573b456efca5/issues"))
 
         val request = mockWebServer.takeRequest()
@@ -158,7 +170,7 @@ class IssueClientTest {
         }
         val message = exception.message!!
         assertTrue(message.contains("Received 413 Client Error when calling Validation"))
-        assertTrue(message.contains("for PATCH"))
+        assertTrue(message.contains("for "))
         assertTrue(message.contains("/resources/123449a9-af74-03d5-1a31-573b456efca5/issues/12341a31-49a9-af74-573b-456e03d51d53"))
 
         val request = mockWebServer.takeRequest()
