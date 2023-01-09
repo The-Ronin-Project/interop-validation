@@ -56,7 +56,14 @@ class ResourceDAO(private val database: Database) {
      * Retrieves [limit] number of [ResourceDO]s with the [statuses] in the requested [order].
      * If an [after] is provided, the resources returned will all be considered logically after it based on the [order].
      */
-    fun getResources(statuses: List<ResourceStatus>, order: Order, limit: Int, after: UUID?): List<ResourceDO> {
+    fun getResources(
+        statuses: List<ResourceStatus>,
+        order: Order,
+        limit: Int,
+        after: UUID?,
+        organizationId: String?,
+        resourceType: String?
+    ): List<ResourceDO> {
         require(statuses.isNotEmpty()) { "At least one status must be provided" }
 
         logger.info { "Retrieving $limit resources in $order order after $after for following statuses: $statuses" }
@@ -75,6 +82,9 @@ class ResourceDAO(private val database: Database) {
 
             conditions += ResourceDOs.status inList statuses
 
+            organizationId?.let { conditions += ResourceDOs.organizationId eq it }
+            resourceType?.let { conditions += ResourceDOs.resourceType eq it }
+
             afterResource?.let {
                 // With an after resource, we care about 2 different conditions:
                 // 1. The time is "after" the "after resource's time". So for ASC, it's greater, and for DESC it's less.
@@ -85,6 +95,7 @@ class ResourceDAO(private val database: Database) {
                         (ResourceDOs.createDateTime greater it.createDateTime) or
                             ((ResourceDOs.createDateTime eq it.createDateTime) and (ResourceDOs.id greater it.id))
                         )
+
                     Order.DESC -> (
                         (ResourceDOs.createDateTime less it.createDateTime) or
                             ((ResourceDOs.createDateTime eq it.createDateTime) and (ResourceDOs.id less it.id))

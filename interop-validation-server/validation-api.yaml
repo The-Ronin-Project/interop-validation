@@ -28,6 +28,16 @@ paths:
         - $ref: '#/components/parameters/Order'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/After'
+        - name: organization_id
+          in: query
+          description: The ID of the organization for which to return resources. If not provided, all organizations will be returned.
+          schema:
+            type: string
+        - name: resource_type
+          in: query
+          description: The type of resources to return. If not provided, all resource typess will be returned.
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully returned a list of Resources.

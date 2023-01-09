@@ -30,11 +30,13 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
         status: List<ResourceStatus>?,
         order: Order,
         limit: Int,
-        after: UUID?
+        after: UUID?,
+        organizationId: String?,
+        resourceType: String?
     ): ResponseEntity<List<Resource>> {
-        val statuses = if (status == null || status.isEmpty()) ResourceStatus.values().toList() else status
+        val statuses = if (status.isNullOrEmpty()) ResourceStatus.values().toList() else status
 
-        val resourceDOs = resourceDAO.getResources(statuses, order, limit, after)
+        val resourceDOs = resourceDAO.getResources(statuses, order, limit, after, organizationId, resourceType)
         if (resourceDOs.isEmpty()) {
             return ResponseEntity.ok(listOf())
         }

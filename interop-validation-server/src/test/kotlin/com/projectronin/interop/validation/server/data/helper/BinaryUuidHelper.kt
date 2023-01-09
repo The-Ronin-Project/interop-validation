@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import java.util.Base64
 import java.util.UUID
 
-// This is a healper class for generting UUIDs for use in the DBUnit files. It is disabled by default and should only be removed for local uses of generting a new sample ID.
+// This is a helper class for generating UUIDs for use in the DBUnit files. It is disabled by default and should only be removed for local uses of generting a new sample ID.
 @Disabled
 class BinaryUuidHelper {
     @Test

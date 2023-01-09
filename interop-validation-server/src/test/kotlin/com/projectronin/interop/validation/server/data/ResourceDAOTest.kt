@@ -60,7 +60,7 @@ class ResourceDAOTest {
     @Test
     fun `getResources - exception thrown if no statuses provided`() {
         val exception = assertThrows<IllegalArgumentException> {
-            resourceDAO.getResources(listOf(), Order.ASC, 2, null)
+            resourceDAO.getResources(listOf(), Order.ASC, 2, null, null, null)
         }
         assertEquals("At least one status must be provided", exception.message)
     }
@@ -68,14 +68,14 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MultipleResources.yaml"], cleanAfter = true)
     fun `getResources - no resources found for requested statuses`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.ADDRESSING), Order.ASC, 2, null)
+        val resources = resourceDAO.getResources(listOf(ResourceStatus.ADDRESSING), Order.ASC, 2, null, null, null)
         assertEquals(0, resources.size)
     }
 
     @Test
     @DataSet(value = ["/dbunit/resource/MultipleResources.yaml"], cleanAfter = true)
     fun `getResources - ASC order honors create date time`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 100, null)
+        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 100, null, null, null)
         assertEquals(4, resources.size)
 
         val resource1 = resources[0]
@@ -126,7 +126,7 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MatchingDateTimeResources.yaml"], cleanAfter = true)
     fun `getResources - ASC order honors id`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 100, null)
+        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 100, null, null, null)
         assertEquals(2, resources.size)
 
         val resource1 = resources[0]
@@ -155,7 +155,7 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MultipleResources.yaml"], cleanAfter = true)
     fun `getResources - DESC order honors create date time`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.DESC, 100, null)
+        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.DESC, 100, null, null, null)
         assertEquals(4, resources.size)
 
         val resource1 = resources[0]
@@ -206,7 +206,7 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MatchingDateTimeResources.yaml"], cleanAfter = true)
     fun `getResources - DESC order honors id`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.DESC, 100, null)
+        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.DESC, 100, null, null, null)
         assertEquals(2, resources.size)
 
         val resource1 = resources[0]
@@ -235,7 +235,7 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MultipleResources.yaml"], cleanAfter = true)
     fun `getResources - limit is honored`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 2, null)
+        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 2, null, null, null)
         assertEquals(2, resources.size)
 
         val resource1 = resources[0]
@@ -266,7 +266,7 @@ class ResourceDAOTest {
     fun `getResources - no resources found for after UUID`() {
         val uuid = UUID.randomUUID()
         val exception = assertThrows<IllegalArgumentException> {
-            resourceDAO.getResources(listOf(ResourceStatus.ADDRESSING), Order.ASC, 2, uuid)
+            resourceDAO.getResources(listOf(ResourceStatus.ADDRESSING), Order.ASC, 2, uuid, null, null)
         }
         assertEquals("No resource found for $uuid", exception.message)
     }
@@ -278,7 +278,7 @@ class ResourceDAOTest {
             listOf(ResourceStatus.REPORTED),
             Order.ASC,
             100,
-            UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7")
+            UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7"), null, null
         )
         assertEquals(2, resources.size)
 
@@ -312,7 +312,7 @@ class ResourceDAOTest {
             listOf(ResourceStatus.REPORTED),
             Order.DESC,
             100,
-            UUID.fromString("9691d550-90f5-4fb8-83f9-e4a3840e37eb")
+            UUID.fromString("9691d550-90f5-4fb8-83f9-e4a3840e37eb"), null, null
         )
         assertEquals(2, resources.size)
 
@@ -346,7 +346,7 @@ class ResourceDAOTest {
             listOf(ResourceStatus.REPORTED),
             Order.ASC,
             100,
-            UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7")
+            UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7"), null, null
         )
         assertEquals(1, resources.size)
 
@@ -369,7 +369,7 @@ class ResourceDAOTest {
             listOf(ResourceStatus.REPORTED),
             Order.DESC,
             100,
-            UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+            UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), null, null
         )
         assertEquals(1, resources.size)
 
@@ -380,6 +380,59 @@ class ResourceDAOTest {
         assertEquals("the appointment resource", resource1.resource)
         assertEquals(ResourceStatus.REPORTED, resource1.status)
         assertEquals(OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC), resource1.createDateTime)
+        assertNull(resource1.updateDateTime)
+        assertNull(resource1.reprocessDateTime)
+        assertNull(resource1.reprocessedBy)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/resource/FilteringResources.yaml"], cleanAfter = true)
+    fun `getResources - no resources found for requested organization`() {
+        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 2, null, "unknown", null)
+        assertEquals(0, resources.size)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/resource/FilteringResources.yaml"], cleanAfter = true)
+    fun `getResources - resources found for requested organization`() {
+        val resources =
+            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 2, null, "testorg2", null)
+        assertEquals(1, resources.size)
+
+        val resource1 = resources[0]
+        assertEquals(UUID.fromString("c59976b1-bb22-41c8-8a00-8b15c37b2d06"), resource1.id)
+        assertEquals("testorg2", resource1.organizationId)
+        assertEquals("Location", resource1.resourceType)
+        assertEquals("A Location resource", resource1.resource)
+        assertEquals(ResourceStatus.REPORTED, resource1.status)
+        assertEquals(OffsetDateTime.of(2023, 1, 6, 17, 0, 0, 0, ZoneOffset.UTC), resource1.createDateTime)
+        assertNull(resource1.updateDateTime)
+        assertNull(resource1.reprocessDateTime)
+        assertNull(resource1.reprocessedBy)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/resource/FilteringResources.yaml"], cleanAfter = true)
+    fun `getResources - no resources found for requested resource type`() {
+        val resources =
+            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 2, null, null, "DocumentReference")
+        assertEquals(0, resources.size)
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/resource/FilteringResources.yaml"], cleanAfter = true)
+    fun `getResources - resources found for requested resource type`() {
+        val resources =
+            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 2, null, null, "Location")
+        assertEquals(1, resources.size)
+
+        val resource1 = resources[0]
+        assertEquals(UUID.fromString("c59976b1-bb22-41c8-8a00-8b15c37b2d06"), resource1.id)
+        assertEquals("testorg2", resource1.organizationId)
+        assertEquals("Location", resource1.resourceType)
+        assertEquals("A Location resource", resource1.resource)
+        assertEquals(ResourceStatus.REPORTED, resource1.status)
+        assertEquals(OffsetDateTime.of(2023, 1, 6, 17, 0, 0, 0, ZoneOffset.UTC), resource1.createDateTime)
         assertNull(resource1.updateDateTime)
         assertNull(resource1.reprocessDateTime)
         assertNull(resource1.reprocessedBy)

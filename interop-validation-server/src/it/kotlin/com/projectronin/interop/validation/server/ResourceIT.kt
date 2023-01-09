@@ -3,6 +3,7 @@ package com.projectronin.interop.validation.server
 import com.projectronin.interop.common.http.exceptions.ClientFailureException
 import com.projectronin.interop.common.jackson.JacksonManager.Companion.objectMapper
 import com.projectronin.interop.fhir.r4.datatype.primitive.Id
+import com.projectronin.interop.fhir.r4.resource.Location
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.validation.client.generated.models.NewIssue
 import com.projectronin.interop.validation.client.generated.models.NewResource
@@ -29,6 +30,9 @@ class ResourceIT : BaseValidationIT() {
     private val patient = Patient(
         id = Id("12345"),
         name = listOf()
+    )
+    private val location = Location(
+        id = Id("67890")
     )
 
     private val failedIssue = NewIssue(
@@ -60,6 +64,25 @@ class ResourceIT : BaseValidationIT() {
         resourceType = "Patient",
         resource = objectMapper.writeValueAsString(patient),
         issues = listOf(warningIssue, failedIssue)
+    )
+    private val newOtherTenantFailedResource = NewResource(
+        organizationId = "other",
+        resourceType = "Patient",
+        resource = objectMapper.writeValueAsString(patient),
+        issues = listOf(failedIssue)
+    )
+    private val newLocationFailedResource = NewResource(
+        organizationId = "ronin",
+        resourceType = "Location",
+        resource = objectMapper.writeValueAsString(location),
+        issues = listOf(
+            NewIssue(
+                severity = Severity.FAILED,
+                type = "LOC_001",
+                description = "No name",
+                location = "Location.name"
+            )
+        )
     )
 
     @Test
@@ -144,6 +167,42 @@ class ResourceIT : BaseValidationIT() {
                     order = Order.ASC,
                     limit = 10,
                     after = newResource1Id
+                )
+            }
+        assertEquals(1, ascendingResources.size)
+        assertEquals(newResource2Id, ascendingResources[0].id)
+    }
+
+    @Test
+    fun `getResources honors organization id`() {
+        val newResource1Id = addResource(newFailedResource)
+        val newResource2Id = addResource(newOtherTenantFailedResource)
+
+        val ascendingResources =
+            runBlocking {
+                resourceClient.getResources(
+                    status = null,
+                    order = Order.ASC,
+                    limit = 10,
+                    organizationId = "other"
+                )
+            }
+        assertEquals(1, ascendingResources.size)
+        assertEquals(newResource2Id, ascendingResources[0].id)
+    }
+
+    @Test
+    fun `getResources honors resource type`() {
+        val newResource1Id = addResource(newFailedResource)
+        val newResource2Id = addResource(newLocationFailedResource)
+
+        val ascendingResources =
+            runBlocking {
+                resourceClient.getResources(
+                    status = null,
+                    order = Order.ASC,
+                    limit = 10,
+                    resourceType = "Location"
                 )
             }
         assertEquals(1, ascendingResources.size)

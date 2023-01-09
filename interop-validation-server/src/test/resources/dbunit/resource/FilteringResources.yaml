@@ -1,0 +1,8 @@
+resource:
+  - resource_id: "xZl2sbsiQciKAIsVw3stBg=="
+    # UUID: c59976b1-bb22-41c8-8a00-8b15c37b2d06
+    organization_id: "testorg2"
+    resource_type: "Location"
+    resource: "A Location resource"
+    status: "REPORTED"
+    create_dt_tm: "2023-01-06 17:00:00 +0000"
