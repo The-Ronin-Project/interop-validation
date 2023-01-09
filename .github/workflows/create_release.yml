@@ -60,7 +60,7 @@ jobs:
              -Prelease.customUsername=${{ github.actor }} \
              -Prelease.customPassword=${{ github.token }}
     outputs:
-      tag: ${{ steps.get-version.outputs.version }}
+      tag: "v${{ steps.get-version.outputs.version }}"
 
   release:
     runs-on: self-hosted
