@@ -38,8 +38,10 @@ dependencies {
     itImplementation(libs.interop.commonHttp)
     itImplementation(libs.interop.fhir)
     itImplementation(libs.ktor.client.core)
-    itImplementation("org.testcontainers:testcontainers")
-    itImplementation("org.testcontainers:junit-jupiter")
+    itImplementation(platform(libs.testcontainers.bom))
+    itImplementation("org.testcontainers:mysql")
+    itImplementation(libs.ktorm.core)
+    itImplementation(project)
 }
 
 openApiGenerate {

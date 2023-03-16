@@ -56,7 +56,7 @@ class IssueClientTest {
         status = IssueStatus.REPORTED,
         createDtTm = created,
         location = "everywhere",
-        updateDtTm = updated,
+        updateDtTm = updated
     )
     private val expectedIssue2 = Issue(
         id = UUID.fromString("03d51d53-1a31-49a9-af74-573b456efca5"),
@@ -66,7 +66,7 @@ class IssueClientTest {
         status = IssueStatus.IGNORED,
         createDtTm = created,
         location = "anywhere",
-        updateDtTm = updated,
+        updateDtTm = updated
     )
     private val updateIssue = UpdateIssue(status = IssueStatus.IGNORED)
 

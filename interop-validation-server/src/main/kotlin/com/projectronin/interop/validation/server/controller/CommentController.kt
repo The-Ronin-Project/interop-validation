@@ -79,7 +79,7 @@ class CommentController(
             id = commentDO.id,
             author = commentDO.author,
             text = commentDO.text,
-            createDtTm = commentDO.createDateTime,
+            createDtTm = commentDO.createDateTime
         )
     }
 

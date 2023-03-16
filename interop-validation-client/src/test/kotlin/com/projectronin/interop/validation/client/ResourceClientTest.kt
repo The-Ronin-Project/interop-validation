@@ -300,7 +300,6 @@ class ResourceClientTest {
 
     @Test
     fun `getResourceById - works`() {
-
         val resourceJson = JacksonManager.objectMapper.writeValueAsString(expectedResource)
         val mockWebServer = MockWebServer()
         mockWebServer.enqueue(
@@ -447,7 +446,8 @@ class ResourceClientTest {
         val uuid = UUID.randomUUID()
         runBlocking {
             ResourceClient(url.toString(), client, authenticationService).reprocessResource(
-                uuid, reprocessResourceRequest
+                uuid,
+                reprocessResourceRequest
             )
         }
 
@@ -473,7 +473,8 @@ class ResourceClientTest {
         val exception = assertThrows<ServiceUnavailableException> {
             runBlocking {
                 ResourceClient(url.toString(), client, authenticationService).reprocessResource(
-                    uuid, reprocessResourceRequest
+                    uuid,
+                    reprocessResourceRequest
                 )
             }
         }

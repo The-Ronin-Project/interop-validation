@@ -65,7 +65,7 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
             description = issueDO.description,
             status = issueDO.status,
             createDtTm = issueDO.createDateTime,
-            updateDtTm = issueDO.updateDateTime,
+            updateDtTm = issueDO.updateDateTime
         )
     }
 }

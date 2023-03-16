@@ -1,6 +1,6 @@
 pluginManagement {
     plugins {
-        id("com.projectronin.interop.gradle.base") version "2.2.0"
+        id("com.projectronin.interop.gradle.base") version "3.0.0"
     }
 
     repositories {

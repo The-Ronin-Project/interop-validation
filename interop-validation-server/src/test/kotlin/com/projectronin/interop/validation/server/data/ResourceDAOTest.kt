@@ -278,7 +278,9 @@ class ResourceDAOTest {
             listOf(ResourceStatus.REPORTED),
             Order.ASC,
             100,
-            UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7"), null, null
+            UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7"),
+            null,
+            null
         )
         assertEquals(2, resources.size)
 
@@ -312,7 +314,9 @@ class ResourceDAOTest {
             listOf(ResourceStatus.REPORTED),
             Order.DESC,
             100,
-            UUID.fromString("9691d550-90f5-4fb8-83f9-e4a3840e37eb"), null, null
+            UUID.fromString("9691d550-90f5-4fb8-83f9-e4a3840e37eb"),
+            null,
+            null
         )
         assertEquals(2, resources.size)
 
@@ -346,7 +350,9 @@ class ResourceDAOTest {
             listOf(ResourceStatus.REPORTED),
             Order.ASC,
             100,
-            UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7"), null, null
+            UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7"),
+            null,
+            null
         )
         assertEquals(1, resources.size)
 
@@ -369,7 +375,9 @@ class ResourceDAOTest {
             listOf(ResourceStatus.REPORTED),
             Order.DESC,
             100,
-            UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), null, null
+            UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"),
+            null,
+            null
         )
         assertEquals(1, resources.size)
 
