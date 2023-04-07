@@ -1,0 +1,3 @@
+databaseChangeLog:
+  - include:
+      file: validation/db/changelog/databasechangelog/databasechangelog-01.yaml
