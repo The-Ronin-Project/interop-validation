@@ -9,6 +9,7 @@ dependencies {
     implementation(platform(libs.spring.boot.parent))
     implementation(libs.springdoc.openapi.ui)
 
+    implementation(libs.interop.commonKtorm)
     implementation(libs.ktorm.core)
     implementation(libs.ktorm.support.mysql)
     implementation(libs.uuid.creator)

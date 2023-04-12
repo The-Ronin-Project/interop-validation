@@ -1,8 +1,9 @@
 [libraries]
-interop-common = "com.projectronin.interop:interop-common:3.4.0"
-interop-commonHttp = "com.projectronin.interop:interop-common-http:3.4.0"
-interop-commonJackson = "com.projectronin.interop:interop-common-jackson:3.4.0"
-interop-commonTestDb = "com.projectronin.interop:interop-common-test-db:3.4.0"
+interop-common = "com.projectronin.interop:interop-common:3.5.0"
+interop-commonHttp = "com.projectronin.interop:interop-common-http:3.5.0"
+interop-commonJackson = "com.projectronin.interop:interop-common-jackson:3.5.0"
+interop-commonKtorm = "com.projectronin.interop:interop-common-ktorm:3.5.0"
+interop-commonTestDb = "com.projectronin.interop:interop-common-test-db:3.5.0"
 
 interop-fhir = "com.projectronin.interop.fhir:interop-fhir:7.7.0"
 jackson-dataformat-xml = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.2"

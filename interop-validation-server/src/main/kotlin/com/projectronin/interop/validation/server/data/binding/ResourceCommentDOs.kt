@@ -1,5 +1,6 @@
 package com.projectronin.interop.validation.server.data.binding
 
+import com.projectronin.interop.common.ktorm.binding.binaryUuid
 import com.projectronin.interop.validation.server.data.model.ResourceCommentDO
 import org.ktorm.schema.Table
 

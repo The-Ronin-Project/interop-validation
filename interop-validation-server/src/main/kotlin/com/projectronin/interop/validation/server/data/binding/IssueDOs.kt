@@ -1,5 +1,7 @@
 package com.projectronin.interop.validation.server.data.binding
 
+import com.projectronin.interop.common.ktorm.binding.binaryUuid
+import com.projectronin.interop.common.ktorm.binding.utcDateTime
 import com.projectronin.interop.validation.server.data.model.IssueDO
 import com.projectronin.interop.validation.server.generated.models.IssueStatus
 import com.projectronin.interop.validation.server.generated.models.Severity
