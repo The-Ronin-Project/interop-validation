@@ -1,23 +1,28 @@
-package com.projectronin.interop.validation.client.auth.auth0
+package com.projectronin.interop.validation.client.auth
 
 import com.projectronin.interop.common.http.exceptions.ClientAuthenticationException
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
+import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService.Auth0Authentication
+import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService.FormBasedAuthentication
 import io.ktor.http.HttpStatusCode
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class ValidationAuth0ServiceTest {
+class ValidationAuthenticationServiceTest {
     private val mockWebServer = MockWebServer()
     private val authUrl = mockWebServer.url("/oauth2/token").toString()
     private val httpClient = HttpSpringConfig().getHttpClient()
     private val audience = "audience"
     private val clientId = "MyTestClientId"
     private val clientSecret = "SuperSecretAndSafe"
-    private val service = ValidationAuth0Service(httpClient, authUrl, audience, clientId, clientSecret)
+    private val service = ValidationAuthenticationService(httpClient, authUrl, audience, clientId, clientSecret, true)
 
     private val expectedPayload =
         """{"client_id":"$clientId","client_secret":"$clientSecret","audience":"$audience","grant_type":"client_credentials"}"""
@@ -49,15 +54,46 @@ class ValidationAuth0ServiceTest {
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
+                .setBody("""{"access_token":"YouShallPass","token_type":"Bearer","expires_in":180}""")
+                .setHeader("Content-Type", "application/json")
+        )
+
+        val authentication = service.getAuthentication()
+        assertInstanceOf(Auth0Authentication::class.java, authentication)
+        assertEquals("YouShallPass", authentication.accessToken)
+        assertEquals("Bearer", authentication.tokenType)
+        assertNotNull(authentication.expiresAt)
+        assertNull(authentication.refreshToken)
+        assertNull(authentication.scope)
+
+        val request = mockWebServer.takeRequest()
+        assertEquals("application/json", request.getHeader("Content-Type"))
+        assertEquals(expectedPayload, request.body.readUtf8())
+    }
+
+    @Test
+    fun `retrieves form-based authentication`() {
+        val service = ValidationAuthenticationService(httpClient, authUrl, audience, clientId, clientSecret, false)
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(HttpStatusCode.OK.value)
                 .setBody("""{"access_token":"YouShallPass","token_type":"Bearer"}""")
                 .setHeader("Content-Type", "application/json")
         )
 
         val authentication = service.getAuthentication()
-        assertEquals(Auth0Authentication("YouShallPass", "Bearer"), authentication)
+        assertInstanceOf(FormBasedAuthentication::class.java, authentication)
+        assertEquals("YouShallPass", authentication.accessToken)
+        assertEquals("Bearer", authentication.tokenType)
+        assertNull(authentication.expiresAt)
+        assertNull(authentication.refreshToken)
+        assertNull(authentication.scope)
 
         val request = mockWebServer.takeRequest()
-        assertEquals("application/json", request.getHeader("Content-Type"))
-        assertEquals(expectedPayload, request.body.readUtf8())
+        assertEquals("application/x-www-form-urlencoded; charset=UTF-8", request.getHeader("Content-Type"))
+        assertEquals(
+            "grant_type=client_credentials&client_id=$clientId&client_secret=$clientSecret",
+            request.body.readUtf8()
+        )
     }
 }

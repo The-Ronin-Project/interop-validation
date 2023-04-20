@@ -4,8 +4,8 @@ import com.projectronin.interop.common.http.spring.HttpSpringConfig
 import com.projectronin.interop.validation.client.CommentClient
 import com.projectronin.interop.validation.client.IssueClient
 import com.projectronin.interop.validation.client.ResourceClient
+import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.NewResource
-import com.projectronin.interop.validation.server.auth.LocalAuthService
 import com.projectronin.interop.validation.server.data.binding.CommentDOs
 import com.projectronin.interop.validation.server.data.binding.IssueCommentDOs
 import com.projectronin.interop.validation.server.data.binding.IssueDOs
@@ -33,7 +33,15 @@ abstract class BaseValidationIT {
 
     protected val serverUrl = "http://localhost:8080"
     protected val httpClient = HttpSpringConfig().getHttpClient()
-    protected val authenticationService = LocalAuthService(httpClient)
+    protected val authenticationService =
+        ValidationAuthenticationService(
+            httpClient,
+            "http://localhost:8081/validation/token",
+            "https://interop-validation.dev.projectronin.io",
+            "id",
+            "secret",
+            false
+        )
 
     protected val resourceClient = ResourceClient(serverUrl, httpClient, authenticationService)
     protected val issueClient = IssueClient(serverUrl, httpClient, authenticationService)
