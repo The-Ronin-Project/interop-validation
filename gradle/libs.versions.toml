@@ -29,7 +29,7 @@ spring-boot-parent = "org.springframework.boot:spring-boot-parent:2.7.5"
 spring-boot-actuator = "org.springframework.boot:spring-boot-starter-actuator:2.7.5"
 testcontainers-bom = "org.testcontainers:testcontainers-bom:1.18.0"
 testcontainers-mysql = "org.testcontainers:mysql:1.18.0"
-uuid-creator = "com.github.f4b6a3:uuid-creator:5.2.1"
+uuid-creator = "com.github.f4b6a3:uuid-creator:5.3.2"
 
 [bundles]
 jackson = ["jackson-dataformat-xml", "jackson-dataformat-yaml", "jackson-datatype-jsr310", "jackson-module-kotlin"]
