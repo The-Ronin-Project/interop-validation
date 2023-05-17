@@ -10,7 +10,7 @@ jackson-dataformat-xml = "com.fasterxml.jackson.dataformat:jackson-dataformat-xm
 jackson-dataformat-yaml = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.0"
 
 jackson-datatype-jsr310 = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0"
-jackson-module-kotlin = "com.fasterxml.jackson.module:jackson-module-kotlin:2.15.0"
+jackson-module-kotlin = "com.fasterxml.jackson.module:jackson-module-kotlin:2.15.1"
 
 jakarta-validation-api = "jakarta.validation:jakarta.validation-api:2.0.2"
 ktor-client-cio = "io.ktor:ktor-client-cio:2.3.0"
