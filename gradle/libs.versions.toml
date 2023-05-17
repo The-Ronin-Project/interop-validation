@@ -6,8 +6,8 @@ interop-commonKtorm = "com.projectronin.interop:interop-common-ktorm:3.7.0"
 interop-commonTestDb = "com.projectronin.interop:interop-common-test-db:3.7.0"
 
 interop-fhir = "com.projectronin.interop.fhir:interop-fhir:8.1.0"
-jackson-dataformat-xml = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.0"
-jackson-dataformat-yaml = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.0"
+jackson-dataformat-xml = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.1"
+jackson-dataformat-yaml = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.1"
 
 jackson-datatype-jsr310 = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0"
 jackson-module-kotlin = "com.fasterxml.jackson.module:jackson-module-kotlin:2.15.1"
