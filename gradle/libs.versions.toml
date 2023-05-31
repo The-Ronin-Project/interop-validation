@@ -9,7 +9,7 @@ interop-fhir = "com.projectronin.interop.fhir:interop-fhir:8.2.0"
 jackson-dataformat-xml = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.1"
 jackson-dataformat-yaml = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.1"
 
-jackson-datatype-jsr310 = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.1"
+jackson-datatype-jsr310 = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2"
 jackson-module-kotlin = "com.fasterxml.jackson.module:jackson-module-kotlin:2.15.1"
 
 jakarta-validation-api = "jakarta.validation:jakarta.validation-api:2.0.2"
