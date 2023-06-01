@@ -41,7 +41,8 @@ class ResourceClient(
         limit: Int,
         after: UUID? = null,
         organizationId: String? = null,
-        resourceType: String? = null
+        resourceType: String? = null,
+        issueType: List<String>? = null
     ): List<Resource> {
         val authentication = authenticationService.getAuthentication()
 
@@ -52,6 +53,8 @@ class ResourceClient(
                         if (status?.isNotEmpty() == true) {
                             appendAll("status", status.map { it.value })
                         }
+
+                        issueType?.let { appendAll("issue_type", it) }
 
                         organizationId?.let { append("organization_id", it) }
                         resourceType?.let { append("resource_type", it) }

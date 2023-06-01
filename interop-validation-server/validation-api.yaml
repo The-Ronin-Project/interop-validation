@@ -38,6 +38,13 @@ paths:
           description: The type of resources to return. If not provided, all resource typess will be returned.
           schema:
             type: string
+        - name: issue_type
+          in: query
+          description: The issue type of the resources to return.
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         '200':
           description: Successfully returned a list of Resources.

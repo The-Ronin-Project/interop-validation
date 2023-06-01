@@ -41,6 +41,12 @@ class ResourceIT : BaseValidationIT() {
         description = "No names",
         location = "Patient.name"
     )
+    private val failedIssue2 = NewIssue(
+        severity = Severity.FAILED,
+        type = "PAT_002",
+        description = "No names",
+        location = "Patient.name"
+    )
     private val warningIssue = NewIssue(
         severity = Severity.WARNING,
         type = "PAT_001",
@@ -52,6 +58,18 @@ class ResourceIT : BaseValidationIT() {
         resourceType = "Patient",
         resource = objectMapper.writeValueAsString(patient),
         issues = listOf(failedIssue)
+    )
+    private val newFailedResource2 = NewResource(
+        organizationId = "ronin",
+        resourceType = "Patient",
+        resource = objectMapper.writeValueAsString(patient),
+        issues = listOf(failedIssue2)
+    )
+    private val newFailedResource3 = NewResource(
+        organizationId = "ronin",
+        resourceType = "Patient",
+        resource = objectMapper.writeValueAsString(patient),
+        issues = listOf(failedIssue, failedIssue2)
     )
     private val newWarningResource = NewResource(
         organizationId = "ronin",
@@ -87,7 +105,7 @@ class ResourceIT : BaseValidationIT() {
 
     @Test
     fun `getResources when none exist`() {
-        val resources = runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 10) }
+        val resources = runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 10, issueType = null) }
 
         assertTrue(resources.isEmpty())
     }
@@ -96,7 +114,7 @@ class ResourceIT : BaseValidationIT() {
     fun `getResources returns less than limit if not enough qualify`() {
         val newResource1Id = addResource(newFailedResource)
 
-        val resources = runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 10) }
+        val resources = runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 10, issueType = null) }
         assertEquals(1, resources.size)
         assertEquals(newResource1Id, resources[0].id)
     }
@@ -107,7 +125,7 @@ class ResourceIT : BaseValidationIT() {
         val newResource2Id = addResource(newWarningResource)
         val newResource3Id = addResource(newWarningAndFailedResource)
 
-        val resources = runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 2) }
+        val resources = runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 2, issueType = null) }
         assertEquals(2, resources.size)
         assertEquals(newResource1Id, resources[0].id)
         assertEquals(newResource2Id, resources[1].id)
@@ -121,7 +139,8 @@ class ResourceIT : BaseValidationIT() {
             resourceClient.getResources(
                 status = listOf(ResourceStatus.REPORTED),
                 order = Order.ASC,
-                limit = 10
+                limit = 10,
+                issueType = null
             )
         }
         assertEquals(1, reportedResources.size)
@@ -131,10 +150,75 @@ class ResourceIT : BaseValidationIT() {
             resourceClient.getResources(
                 status = listOf(ResourceStatus.ADDRESSING),
                 order = Order.ASC,
-                limit = 10
+                limit = 10,
+                issueType = null
             )
         }
         assertEquals(0, addressingResources.size)
+    }
+
+    @Test
+    fun `getResources returns one resource with requested issue types`() {
+        val resource1Id = addResource(newFailedResource)
+        val reportedResources = runBlocking {
+            resourceClient.getResources(
+                status = listOf(ResourceStatus.REPORTED),
+                order = Order.ASC,
+                limit = 10,
+                issueType = listOf("PAT_001")
+            )
+        }
+        assertEquals(1, reportedResources.size)
+        assertEquals(reportedResources[0].id, resource1Id)
+    }
+
+    @Test
+    fun `getResources returns multiple resources with requested issue types`() {
+        val resource1Id = addResource(newFailedResource)
+        val resource2Id = addResource(newFailedResource)
+        val reportedResources = runBlocking {
+            resourceClient.getResources(
+                status = listOf(ResourceStatus.REPORTED),
+                order = Order.ASC,
+                limit = 10,
+                issueType = listOf("PAT_001")
+            )
+        }
+        assertEquals(2, reportedResources.size)
+        assertEquals(reportedResources[0].id, resource1Id)
+        assertEquals(reportedResources[1].id, resource2Id)
+    }
+
+    @Test
+    fun `getResources returns multiple resources with multiple requested issue types`() {
+        val resource1Id = addResource(newFailedResource)
+        val resource2Id = addResource(newFailedResource2)
+        val reportedResources = runBlocking {
+            resourceClient.getResources(
+                status = listOf(ResourceStatus.REPORTED),
+                order = Order.ASC,
+                limit = 10,
+                issueType = listOf("PAT_001", "PAT_002")
+            )
+        }
+        assertEquals(2, reportedResources.size)
+        assertEquals(reportedResources[0].id, resource1Id)
+        assertEquals(reportedResources[1].id, resource2Id)
+    }
+
+    @Test
+    fun `getResources returns one resource with multiple requested issue types`() {
+        val resource1Id = addResource(newFailedResource3)
+        val reportedResources = runBlocking {
+            resourceClient.getResources(
+                status = listOf(ResourceStatus.REPORTED),
+                order = Order.ASC,
+                limit = 10,
+                issueType = listOf("PAT_001", "PAT_002")
+            )
+        }
+        assertEquals(1, reportedResources.size)
+        assertEquals(reportedResources[0].id, resource1Id)
     }
 
     @Test
@@ -143,13 +227,13 @@ class ResourceIT : BaseValidationIT() {
         val newResource2Id = addResource(newWarningResource)
 
         val ascendingResources =
-            runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 2) }
+            runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 2, issueType = null) }
         assertEquals(2, ascendingResources.size)
         assertEquals(newResource1Id, ascendingResources[0].id)
         assertEquals(newResource2Id, ascendingResources[1].id)
 
         val descendingResources =
-            runBlocking { resourceClient.getResources(status = null, order = Order.DESC, limit = 2) }
+            runBlocking { resourceClient.getResources(status = null, order = Order.DESC, limit = 2, issueType = null) }
         assertEquals(2, descendingResources.size)
         assertEquals(newResource2Id, descendingResources[0].id)
         assertEquals(newResource1Id, descendingResources[1].id)
@@ -166,7 +250,8 @@ class ResourceIT : BaseValidationIT() {
                     status = null,
                     order = Order.ASC,
                     limit = 10,
-                    after = newResource1Id
+                    after = newResource1Id,
+                    issueType = null
                 )
             }
         assertEquals(1, ascendingResources.size)
@@ -184,7 +269,8 @@ class ResourceIT : BaseValidationIT() {
                     status = null,
                     order = Order.ASC,
                     limit = 10,
-                    organizationId = "other"
+                    organizationId = "other",
+                    issueType = null
                 )
             }
         assertEquals(1, ascendingResources.size)
@@ -202,7 +288,8 @@ class ResourceIT : BaseValidationIT() {
                     status = null,
                     order = Order.ASC,
                     limit = 10,
-                    resourceType = "Location"
+                    resourceType = "Location",
+                    issueType = null
                 )
             }
         assertEquals(1, ascendingResources.size)

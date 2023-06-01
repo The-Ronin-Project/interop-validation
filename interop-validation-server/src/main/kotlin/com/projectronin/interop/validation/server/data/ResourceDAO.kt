@@ -1,5 +1,6 @@
 package com.projectronin.interop.validation.server.data
 
+import com.projectronin.interop.validation.server.data.binding.IssueDOs
 import com.projectronin.interop.validation.server.data.binding.ResourceDOs
 import com.projectronin.interop.validation.server.data.model.ResourceDO
 import com.projectronin.interop.validation.server.generated.models.Order
@@ -14,12 +15,14 @@ import org.ktorm.dsl.from
 import org.ktorm.dsl.greater
 import org.ktorm.dsl.inList
 import org.ktorm.dsl.insert
+import org.ktorm.dsl.leftJoin
 import org.ktorm.dsl.less
 import org.ktorm.dsl.limit
 import org.ktorm.dsl.map
 import org.ktorm.dsl.or
 import org.ktorm.dsl.orderBy
 import org.ktorm.dsl.select
+import org.ktorm.dsl.selectDistinct
 import org.ktorm.dsl.where
 import org.ktorm.schema.ColumnDeclaring
 import org.springframework.stereotype.Repository
@@ -62,7 +65,8 @@ class ResourceDAO(private val database: Database) {
         limit: Int,
         after: UUID?,
         organizationId: String?,
-        resourceType: String?
+        resourceType: String?,
+        issueType: List<String>?
     ): List<ResourceDO> {
         require(statuses.isNotEmpty()) { "At least one status must be provided" }
 
@@ -76,35 +80,39 @@ class ResourceDAO(private val database: Database) {
             Order.ASC -> listOf(ResourceDOs.createDateTime.asc(), ResourceDOs.id.asc())
             Order.DESC -> listOf(ResourceDOs.createDateTime.desc(), ResourceDOs.id.desc())
         }
+        val query = database.from(ResourceDOs)
+            .leftJoin(IssueDOs, on = ResourceDOs.id eq IssueDOs.resourceId)
+            .selectDistinct(ResourceDOs.columns) // if multiple issues found for a resource, return the resource once
+            .where {
+                val conditions = mutableListOf<ColumnDeclaring<Boolean>>()
 
-        val query = database.from(ResourceDOs).select().where {
-            val conditions = mutableListOf<ColumnDeclaring<Boolean>>()
+                conditions += ResourceDOs.status inList statuses
 
-            conditions += ResourceDOs.status inList statuses
+                if (issueType != null) conditions += IssueDOs.type inList issueType
 
-            organizationId?.let { conditions += ResourceDOs.organizationId eq it }
-            resourceType?.let { conditions += ResourceDOs.resourceType eq it }
+                organizationId?.let { conditions += ResourceDOs.organizationId eq it }
+                resourceType?.let { conditions += ResourceDOs.resourceType eq it }
 
-            afterResource?.let {
-                // With an after resource, we care about 2 different conditions:
-                // 1. The time is "after" the "after resource's time". So for ASC, it's greater, and for DESC it's less.
-                // 2. If the time is the same, we need to check based off the ID, our secondary sort, to ensure that we
-                //    have retrieved all the resources that occurred at the same time as the "after resource".
-                conditions += when (order) {
-                    Order.ASC -> (
-                        (ResourceDOs.createDateTime greater it.createDateTime) or
-                            ((ResourceDOs.createDateTime eq it.createDateTime) and (ResourceDOs.id greater it.id))
-                        )
+                afterResource?.let {
+                    // With an after resource, we care about 2 different conditions:
+                    // 1. The time is "after" the "after resource's time". So for ASC, it's greater, and for DESC it's less.
+                    // 2. If the time is the same, we need to check based off the ID, our secondary sort, to ensure that we
+                    //    have retrieved all the resources that occurred at the same time as the "after resource".
+                    conditions += when (order) {
+                        Order.ASC -> (
+                            (ResourceDOs.createDateTime greater it.createDateTime) or
+                                ((ResourceDOs.createDateTime eq it.createDateTime) and (ResourceDOs.id greater it.id))
+                            )
 
-                    Order.DESC -> (
-                        (ResourceDOs.createDateTime less it.createDateTime) or
-                            ((ResourceDOs.createDateTime eq it.createDateTime) and (ResourceDOs.id less it.id))
-                        )
+                        Order.DESC -> (
+                            (ResourceDOs.createDateTime less it.createDateTime) or
+                                ((ResourceDOs.createDateTime eq it.createDateTime) and (ResourceDOs.id less it.id))
+                            )
+                    }
                 }
-            }
 
-            conditions.reduce { a, b -> a and b }
-        }.limit(limit).orderBy(orderBy)
+                conditions.reduce { a, b -> a and b }
+            }.limit(limit).orderBy(orderBy)
 
         val resources = query.map { ResourceDOs.createEntity(it) }
         logger.info { "Found ${resources.size} resources" }
