@@ -2,9 +2,8 @@ import org.jetbrains.gradle.ext.settings
 import org.jetbrains.gradle.ext.taskTriggers
 
 plugins {
-    id("com.projectronin.interop.gradle.base")
-    id("validation-publish") apply false
-    id("validation-version")
+    id("com.projectronin.interop.gradle.server-publish") apply false
+    id("com.projectronin.interop.gradle.server-version")
 
     id("org.openapi.generator") apply false
 
@@ -16,7 +15,7 @@ subprojects {
     apply(plugin = "com.projectronin.interop.gradle.base")
 
     if (project.name != "interop-validation-server") {
-        apply(plugin = "validation-publish")
+        apply(plugin = "com.projectronin.interop.gradle.server-publish")
     }
 
     // Disable releases hub from running on the subprojects. Main project will handle it all.
