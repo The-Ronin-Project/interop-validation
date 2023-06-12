@@ -2,6 +2,7 @@ package com.projectronin.interop.validation.server.data.model
 
 import com.projectronin.interop.validation.server.generated.models.IssueStatus
 import com.projectronin.interop.validation.server.generated.models.NewIssue
+import com.projectronin.interop.validation.server.generated.models.NewMetadata
 import com.projectronin.interop.validation.server.generated.models.NewResource
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
 import com.projectronin.interop.validation.server.generated.models.Severity
@@ -27,6 +28,29 @@ class ConversionUtilsTest {
         issues = listOf(newIssue),
         createDtTm = OffsetDateTime.now()
     )
+
+    private val newMeta = NewMetadata(
+        registryEntryType = "value-set-test",
+        valueSetName = "name-of-value-set",
+        valueSetUuid = UUID.fromString("49e67956-393c-4d64-b99a-6e1e04e26c4e"),
+        conceptMapName = "name-of-concept-map",
+        conceptMapUuid = UUID.fromString("65508c9e-bfae-4401-8d1e-89f21f7049ce"),
+        version = "1"
+    )
+
+    @Test
+    fun `can convert NewMetadata to MetadataDO`() {
+        val issueId = UUID.randomUUID()
+        val metaDo = newMeta.toMetadataDO(issueId)
+
+        assertEquals(issueId, metaDo.issueId)
+        assertEquals(newMeta.registryEntryType, metaDo.registryEntryType)
+        assertEquals(newMeta.valueSetName, metaDo.valueSetName)
+        assertEquals(newMeta.valueSetUuid, metaDo.valueSetUuid)
+        assertEquals(newMeta.conceptMapName, metaDo.conceptMapName)
+        assertEquals(newMeta.conceptMapUuid, metaDo.conceptMapUuid)
+        assertEquals(newMeta.version, metaDo.version)
+    }
 
     @Test
     fun `can convert NewIssue to IssueDO`() {

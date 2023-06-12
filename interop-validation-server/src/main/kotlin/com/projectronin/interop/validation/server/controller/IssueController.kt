@@ -2,9 +2,11 @@ package com.projectronin.interop.validation.server.controller
 
 import com.projectronin.interop.validation.server.data.IssueDAO
 import com.projectronin.interop.validation.server.data.model.IssueDO
+import com.projectronin.interop.validation.server.data.model.MetadataDO
 import com.projectronin.interop.validation.server.generated.apis.IssueApi
 import com.projectronin.interop.validation.server.generated.models.Issue
 import com.projectronin.interop.validation.server.generated.models.IssueStatus
+import com.projectronin.interop.validation.server.generated.models.Metadata
 import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.UpdateIssue
 import mu.KotlinLogging
@@ -26,7 +28,6 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
         after: UUID?
     ): ResponseEntity<List<Issue>> {
         val statuses = if (status == null || status.isEmpty()) IssueStatus.values().toList() else status
-
         val issueDOs = issueDAO.getIssues(resourceId, statuses, order, limit, after)
         if (issueDOs.isEmpty()) {
             return ResponseEntity.ok(listOf())
@@ -65,7 +66,22 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
             description = issueDO.description,
             status = issueDO.status,
             createDtTm = issueDO.createDateTime,
-            updateDtTm = issueDO.updateDateTime
+            updateDtTm = issueDO.updateDateTime,
+            metadata = issueDO.metadata?.let { createMetadata(it) }
+        )
+    }
+
+    private fun createMetadata(metadataDO: MetadataDO): List<Metadata> {
+        return listOf(
+            Metadata(
+                id = metadataDO.id,
+                registryEntryType = metadataDO.registryEntryType,
+                valueSetName = metadataDO.valueSetName,
+                valueSetUuid = metadataDO.valueSetUuid,
+                conceptMapName = metadataDO.conceptMapName,
+                conceptMapUuid = metadataDO.conceptMapUuid,
+                version = metadataDO.version
+            )
         )
     }
 }

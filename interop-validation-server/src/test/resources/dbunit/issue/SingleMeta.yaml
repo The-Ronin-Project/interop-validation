@@ -1,0 +1,8 @@
+meta:
+  - meta_id: "7EF2HHYhRfe81gpC7b/P+A=="
+    issue_id: "XyE58TUiR0aOuVYHueC2Yw=="
+    registry_entry_type: "value-set"
+    value_set_name: "thisIsTheValueSetBeingUsed"
+    value_set_uuid: "d4r7LowORKithgAAkFi87A=="
+    # UUID: 778afb2e-8c0e-44a8-ad86-9058bcec
+    version: "1"

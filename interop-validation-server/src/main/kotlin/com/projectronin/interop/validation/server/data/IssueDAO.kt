@@ -1,7 +1,9 @@
 package com.projectronin.interop.validation.server.data
 
 import com.projectronin.interop.validation.server.data.binding.IssueDOs
+import com.projectronin.interop.validation.server.data.binding.MetadataDOs
 import com.projectronin.interop.validation.server.data.model.IssueDO
+import com.projectronin.interop.validation.server.data.model.MetadataDO
 import com.projectronin.interop.validation.server.generated.models.IssueStatus
 import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.Severity
@@ -15,6 +17,7 @@ import org.ktorm.dsl.from
 import org.ktorm.dsl.greater
 import org.ktorm.dsl.inList
 import org.ktorm.dsl.insert
+import org.ktorm.dsl.leftJoin
 import org.ktorm.dsl.less
 import org.ktorm.dsl.limit
 import org.ktorm.dsl.map
@@ -68,14 +71,40 @@ class IssueDAO(private val database: Database) {
         return newUUID
     }
 
+    fun insertMetadata(metadataDO: MetadataDO): UUID {
+        val newUUID = UUID.randomUUID()
+        logger.info { "Inserting metadata related to issue ${metadataDO.issueId} with UUID $newUUID" }
+
+        database.insert(MetadataDOs) {
+            set(it.id, newUUID)
+            set(it.issueId, metadataDO.issueId)
+            set(it.registryEntryType, metadataDO.registryEntryType)
+            set(it.valueSetName, metadataDO.valueSetName)
+            set(it.valueSetUuid, metadataDO.valueSetUuid)
+            set(it.conceptMapName, metadataDO.conceptMapName)
+            set(it.conceptMapUuid, metadataDO.conceptMapUuid)
+            set(it.version, metadataDO.version)
+        }
+        logger.info { "Meta $newUUID inserted" }
+        return newUUID
+    }
+
     /**
      * Retrieves the [IssueDO] for the [resourceId] and [issueId].
      */
     fun getIssue(resourceId: UUID, issueId: UUID): IssueDO? {
         logger.info { "Looking up issue $issueId within resource $resourceId" }
         val issue =
-            database.from(IssueDOs).select().where((IssueDOs.id eq issueId) and (IssueDOs.resourceId eq resourceId))
-                .map { IssueDOs.createEntity(it) }
+            database.from(IssueDOs)
+                .leftJoin(MetadataDOs, on = IssueDOs.id eq MetadataDOs.issueId)
+                .select()
+                .where((IssueDOs.id eq issueId) and (IssueDOs.resourceId eq resourceId))
+                .map {
+                    val meta = MetadataDOs.createEntity(it)
+                    val issue = IssueDOs.createEntity(it)
+                    issue.metadata = meta
+                    issue
+                }
                 .singleOrNull()
 
         if (issue == null) {
@@ -99,7 +128,6 @@ class IssueDAO(private val database: Database) {
         after: UUID?
     ): List<IssueDO> {
         require(statuses.isNotEmpty()) { "At least one status must be provided" }
-
         logger.info { "Retrieving $limit issues in $order order after $after for following statuses: $statuses" }
 
         val afterResource =
@@ -111,33 +139,42 @@ class IssueDAO(private val database: Database) {
             Order.DESC -> listOf(IssueDOs.createDateTime.desc(), IssueDOs.id.desc())
         }
 
-        val query = database.from(IssueDOs).select().where {
-            val conditions = mutableListOf<ColumnDeclaring<Boolean>>()
+        val query = database.from(IssueDOs)
+            .leftJoin(MetadataDOs, on = IssueDOs.id eq MetadataDOs.issueId)
+            .select()
+            .where {
+                val conditions = mutableListOf<ColumnDeclaring<Boolean>>()
 
-            conditions += IssueDOs.status inList statuses
-            conditions += IssueDOs.resourceId eq resourceUUID
+                conditions += IssueDOs.status inList statuses
+                conditions += IssueDOs.resourceId eq resourceUUID
 
-            afterResource?.let {
-                // With an after resource, we care about 2 different conditions:
-                // 1. The time is "after" the "after issue's time". So for ASC, it's greater, and for DESC it's less.
-                // 2. If the time is the same, we need to check based off the ID, our secondary sort, to ensure that we
-                //    have retrieved all the issues that occurred at the same time as the "after issue".
-                conditions += when (order) {
-                    Order.ASC -> (
-                        (IssueDOs.createDateTime greater it.createDateTime) or
-                            ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id greater it.id))
-                        )
-                    Order.DESC -> (
-                        (IssueDOs.createDateTime less it.createDateTime) or
-                            ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id less it.id))
-                        )
+                afterResource?.let {
+                    // With an after resource, we care about 2 different conditions:
+                    // 1. The time is "after" the "after issue's time". So for ASC, it's greater, and for DESC it's less.
+                    // 2. If the time is the same, we need to check based off the ID, our secondary sort, to ensure that we
+                    //    have retrieved all the issues that occurred at the same time as the "after issue".
+                    conditions += when (order) {
+                        Order.ASC -> (
+                            (IssueDOs.createDateTime greater it.createDateTime) or
+                                ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id greater it.id))
+                            )
+                        Order.DESC -> (
+                            (IssueDOs.createDateTime less it.createDateTime) or
+                                ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id less it.id))
+                            )
+                    }
                 }
-            }
 
-            conditions.reduce { a, b -> a and b }
-        }.limit(limit).orderBy(orderBy)
+                conditions.reduce { a, b -> a and b }
+            }.limit(limit).orderBy(orderBy)
 
-        val resources = query.map { IssueDOs.createEntity(it) }
+        val resources = query.map {
+            val meta: MetadataDO = MetadataDOs.createEntity(it)
+            val issue = IssueDOs.createEntity(it)
+            issue.metadata = meta
+            issue
+        }
+
         logger.info { "Found ${resources.size} issues" }
         return resources
     }
@@ -150,8 +187,17 @@ class IssueDAO(private val database: Database) {
         logger.info { "Updating issue $issueId" }
 
         val issue =
-            database.from(IssueDOs).select().where((IssueDOs.resourceId eq resourceId) and (IssueDOs.id eq issueId))
-                .map { IssueDOs.createEntity(it) }.singleOrNull()
+            database.from(IssueDOs)
+                .leftJoin(MetadataDOs, on = IssueDOs.id eq MetadataDOs.issueId)
+                .select()
+                .where((IssueDOs.resourceId eq resourceId) and (IssueDOs.id eq issueId))
+                .map {
+                    val meta: MetadataDO? = MetadataDOs.createEntity(it)
+                    val issue = IssueDOs.createEntity(it)
+                    issue.metadata = meta
+                    issue
+                }
+                .singleOrNull()
 
         if (issue == null) {
             logger.info { "No issue found for resource $resourceId and issue $issueId" }

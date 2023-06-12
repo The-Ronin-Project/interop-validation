@@ -9,6 +9,7 @@ import com.projectronin.interop.validation.client.generated.models.NewResource
 import com.projectronin.interop.validation.server.data.binding.CommentDOs
 import com.projectronin.interop.validation.server.data.binding.IssueCommentDOs
 import com.projectronin.interop.validation.server.data.binding.IssueDOs
+import com.projectronin.interop.validation.server.data.binding.MetadataDOs
 import com.projectronin.interop.validation.server.data.binding.ResourceCommentDOs
 import com.projectronin.interop.validation.server.data.binding.ResourceDOs
 import kotlinx.coroutines.runBlocking
@@ -63,6 +64,7 @@ abstract class BaseValidationIT {
         database.deleteAll(IssueCommentDOs)
         database.deleteAll(ResourceCommentDOs)
         database.deleteAll(CommentDOs) // this has to be after the linking tables or you'll get fk errors
+        database.deleteAll(MetadataDOs)
         database.deleteAll(IssueDOs)
         database.deleteAll(ResourceDOs)
     }

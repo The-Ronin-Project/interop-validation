@@ -1,0 +1,43 @@
+resource:
+  - resource_id: "X3gcMALzTwatz3BVvLxXcA=="
+    # UUID: 5f781c30-02f3-4f06-adcf-7055bcbc5770
+    organization_id: "testorg"
+    resource_type: "Patient"
+    resource: "the patient resource"
+    status: "REPORTED"
+    create_dt_tm: "2022-08-01 11:18:00 +0000"
+
+issue:
+  - issue_id: "XyE58TUiR0aOuVYHueC2Yw=="
+    # UUID: 5f2139f1-3522-4746-8eb9-5607b9e0b663
+    resource_id: "X3gcMALzTwatz3BVvLxXcA=="
+    severity: "FAILED"
+    type: "pat-1"
+    location: "Patient.contact"
+    description: "No contact details"
+    status: "REPORTED"
+    create_dt_tm: "2022-08-01 11:18:00 +0000"
+  - issue_id: "iXQTt0GfSDCiCr8kquFhRw=="
+    # UUID: 897413b7-419f-4830-a20a-bf24aae16147
+    resource_id: "X3gcMALzTwatz3BVvLxXcA=="
+    severity: "FAILED"
+    type: "pat-2"
+    location: "Patient.name"
+    description: "No name"
+    status: "REPORTED"
+    create_dt_tm: "2022-08-01 11:18:00 +0000"
+
+meta:
+  - meta_id: "7EF2HHYhRfe81gpC7b/P+A=="
+    issue_id: "XyE58TUiR0aOuVYHueC2Yw=="
+    registry_entry_type: "value-set"
+    value_set_name: "thisIsTheValueSetBeingUsed"
+    value_set_uuid: "d4r7LowORKithgAAkFi87A=="
+    # UUID: 778afb2e-8c0e-44a8-ad86-9058bcec
+    version: "1"
+  - meta_id: "Et7WrzpvQyaWZgAAuvLyew=="
+    issue_id: "iXQTt0GfSDCiCr8kquFhRw=="
+    registry_entry_type: "value-set"
+    value_set_name: "thisIsTheValueSetBeingUsedAlso"
+    value_set_uuid: "d4r7LowORKithgAAkFi87A=="
+    version: "1"

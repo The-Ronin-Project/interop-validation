@@ -4,8 +4,10 @@ import com.projectronin.interop.validation.server.data.IssueDAO
 import com.projectronin.interop.validation.server.data.ResourceDAO
 import com.projectronin.interop.validation.server.data.model.ResourceDO
 import com.projectronin.interop.validation.server.data.model.toIssueDO
+import com.projectronin.interop.validation.server.data.model.toMetadataDO
 import com.projectronin.interop.validation.server.data.model.toResourceDO
 import com.projectronin.interop.validation.server.generated.models.NewIssue
+import com.projectronin.interop.validation.server.generated.models.NewMetadata
 import com.projectronin.interop.validation.server.generated.models.NewResource
 import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.Resource
@@ -101,11 +103,37 @@ class ResourceControllerTest {
         location = "Patient.contact"
     )
 
+    private val newIssue3Meta = NewMetadata(
+        registryEntryType = "value-set",
+        valueSetName = "name of the value-set being referenced",
+        valueSetUuid = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec"),
+        conceptMapName = "name of the concept-map being referenced",
+        conceptMapUuid = UUID.fromString("29681f0f-41a7-4790-9122-ccff1ee50e0e"),
+        version = "1"
+    )
+
+    private val newIssue3 = NewIssue(
+        severity = Severity.WARNING,
+        type = "pat-2",
+        description = "No contact details",
+        createDtTm = OffsetDateTime.now(),
+        location = "Patient.contact",
+        metadata = listOf(newIssue3Meta)
+    )
+
     private val newResource = NewResource(
         organizationId = "testorg",
         resourceType = "Patient",
         resource = "the patient resource",
         issues = listOf(newIssue1, newIssue2),
+        createDtTm = OffsetDateTime.now()
+    )
+
+    private val resourceWithIssues = NewResource(
+        organizationId = "testorg",
+        resourceType = "Patient",
+        resource = "the patient resource",
+        issues = listOf(newIssue1, newIssue3),
         createDtTm = OffsetDateTime.now()
     )
 
@@ -422,6 +450,34 @@ class ResourceControllerTest {
             createDtTm = resource1CreateDtTm
         )
         assertTrue(resources.contains(expectedResource1))
+    }
+
+    @Test
+    fun `addResource with multiple issues and meta`() {
+        val resourceUUID = UUID.randomUUID()
+        val issue1UUID = UUID.randomUUID()
+        val issue3UUID = UUID.randomUUID()
+        val metaUUID = UUID.randomUUID()
+        every {
+            resourceDAO.insertResource(resourceWithIssues.toResourceDO())
+        } returns resourceUUID
+
+        every {
+            issueDAO.insertIssue(newIssue1.toIssueDO(resourceUUID))
+        } returns issue1UUID
+
+        every {
+            issueDAO.insertIssue(newIssue3.toIssueDO(resourceUUID))
+        } returns issue3UUID
+
+        every {
+            issueDAO.insertMetadata(newIssue3Meta.toMetadataDO(issue3UUID))
+        } returns metaUUID
+
+        val response = controller.addResource(resourceWithIssues)
+        val resources = response.body!!
+
+        assertEquals(resources.id, resourceUUID)
     }
 
     @Test

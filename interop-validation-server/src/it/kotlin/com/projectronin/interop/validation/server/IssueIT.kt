@@ -7,11 +7,14 @@ import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.validation.client.generated.models.Issue
 import com.projectronin.interop.validation.client.generated.models.IssueStatus
 import com.projectronin.interop.validation.client.generated.models.NewIssue
+import com.projectronin.interop.validation.client.generated.models.NewMetadata
 import com.projectronin.interop.validation.client.generated.models.NewResource
 import com.projectronin.interop.validation.client.generated.models.Order
 import com.projectronin.interop.validation.client.generated.models.UpdateIssue
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -45,6 +48,52 @@ class IssueIT : BaseValidationIT() {
         issues = listOf(failedIssue, warningIssue)
     )
 
+    private val meta1 = NewMetadata(
+        registryEntryType = "value-set",
+        valueSetName = "name of the value-set being referenced",
+        valueSetUuid = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec"),
+        conceptMapName = "name of the concept-map being referenced",
+        conceptMapUuid = UUID.fromString("29681f0f-41a7-4790-9122-ccff1ee50e0e"),
+        version = "1"
+    )
+
+    private val failedIssueWithMeta = NewIssue(
+        severity = ClientSeverity.FAILED,
+        type = "PAT_001",
+        description = "No names",
+        location = "Patient.name",
+        metadata = listOf(meta1)
+    )
+
+    private val failedIssueWithOutMeta = NewIssue(
+        severity = ClientSeverity.FAILED,
+        type = "PAT_001",
+        description = "No names",
+        location = "Patient.name",
+        metadata = emptyList()
+    )
+
+    private val resource1 = NewResource(
+        organizationId = "ronin",
+        resourceType = "Patient",
+        resource = JacksonManager.objectMapper.writeValueAsString(patient),
+        issues = listOf(failedIssueWithMeta)
+    )
+
+    private val resource2 = NewResource(
+        organizationId = "ronin",
+        resourceType = "Patient",
+        resource = JacksonManager.objectMapper.writeValueAsString(patient),
+        issues = listOf(failedIssueWithOutMeta)
+    )
+
+    private val resource3 = NewResource(
+        organizationId = "ronin",
+        resourceType = "Patient",
+        resource = JacksonManager.objectMapper.writeValueAsString(patient),
+        issues = listOf(failedIssueWithMeta, failedIssueWithOutMeta)
+    )
+
     @Test
     fun `getResourceIssues - gets issues in order`() {
         val resourceId = addResource(resource)
@@ -58,6 +107,42 @@ class IssueIT : BaseValidationIT() {
         assertEquals(2, issuesDesc.size)
         assertTrue(issuesDesc[0].createdFrom(warningIssue))
         assertTrue(issuesDesc[1].createdFrom(failedIssue))
+    }
+
+    @Test
+    fun `getResourceIssues - gets issues with meta if it exists`() {
+        val resourceId1 = addResource(resource1)
+        val resourceId2 = addResource(resource2)
+        val issuesResource1 = runBlocking { issueClient.getResourceIssues(resourceId1, Order.ASC) }
+        val issuesResource2 = runBlocking { issueClient.getResourceIssues(resourceId2, Order.ASC) }
+
+        assertEquals(1, issuesResource1.size)
+        assertNotNull(issuesResource1[0].metadata?.get(0)?.id)
+        assertEquals(issuesResource1[0].metadata?.get(0)?.conceptMapName, meta1.conceptMapName)
+        assertEquals(issuesResource1[0].metadata?.get(0)?.valueSetName, meta1.valueSetName)
+        assertEquals(issuesResource1[0].metadata?.get(0)?.valueSetName, meta1.valueSetName)
+
+        assertEquals(1, issuesResource2.size)
+        assertNull(issuesResource2[0].metadata?.get(0)?.id)
+    }
+
+    @Test
+    fun `getResourceIssues - gets issues even with no meta passed`() {
+        val resourceId2 = addResource(resource2)
+        val issuesResource2 = runBlocking { issueClient.getResourceIssues(resourceId2, Order.ASC) }
+
+        assertEquals(1, issuesResource2.size)
+        assertNull(issuesResource2[0].metadata?.get(0)?.id)
+    }
+
+    @Test
+    fun `getResourceIssues - gets issues for one resource have one issue with meta and one with no meta`() {
+        val resourceId = addResource(resource3)
+        val issuesResource = runBlocking { issueClient.getResourceIssues(resourceId, Order.ASC) }
+
+        assertEquals(2, issuesResource.size)
+        assertNotNull(issuesResource[0].metadata)
+        assertNull(issuesResource[1].metadata?.get(0)?.id)
     }
 
     @Test

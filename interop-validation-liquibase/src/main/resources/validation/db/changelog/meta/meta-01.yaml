@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: meta-create
+      author: Z
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            - tableExists:
+                tableName: meta
+      changes:
+        - createTable:
+            tableName: meta
+            columns:
+              - column:
+                  name: meta_id
+                  # This is stored as a BINARY as an optimization for storing UUIDs.
+                  type: BINARY(16)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_issue
+              - column:
+                  name: issue_id
+                  type: BINARY(16)
+                  constraints:
+                    nullable: false
+                    references: issue(issue_id)
+                    foreignKeyName: fk_meta_issue
+              - column:
+                  name: registry_entry_type
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value_set_name
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: value_set_uuid
+                  type: BINARY(16)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: concept_map_name
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: concept_map_uuid
+                  type: BINARY(16)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: version
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false

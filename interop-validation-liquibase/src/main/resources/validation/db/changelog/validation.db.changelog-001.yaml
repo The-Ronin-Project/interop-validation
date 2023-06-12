@@ -9,3 +9,5 @@ databaseChangeLog:
       file: validation/db/changelog/comment/resource_comment_r-01.yaml
   - include:
       file: validation/db/changelog/comment/issue_comment_r-01.yaml
+  - include:
+      file: validation/db/changelog/meta/meta-01.yaml

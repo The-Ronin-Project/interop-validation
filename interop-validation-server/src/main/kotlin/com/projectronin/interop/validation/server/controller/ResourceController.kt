@@ -4,6 +4,7 @@ import com.projectronin.interop.validation.server.data.IssueDAO
 import com.projectronin.interop.validation.server.data.ResourceDAO
 import com.projectronin.interop.validation.server.data.model.ResourceDO
 import com.projectronin.interop.validation.server.data.model.toIssueDO
+import com.projectronin.interop.validation.server.data.model.toMetadataDO
 import com.projectronin.interop.validation.server.data.model.toResourceDO
 import com.projectronin.interop.validation.server.generated.apis.ResourceApi
 import com.projectronin.interop.validation.server.generated.models.GeneratedId
@@ -64,7 +65,11 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
         val resourceUUID = resourceDAO.insertResource(newResource.toResourceDO())
 
         newResource.issues.forEach {
-            issueDAO.insertIssue(it.toIssueDO(resourceUUID))
+            val newIssueId = issueDAO.insertIssue(it.toIssueDO(resourceUUID))
+
+            it.metadata?.forEach {
+                issueDAO.insertMetadata(it.toMetadataDO(newIssueId))
+            }
         }
 
         return ResponseEntity.ok(GeneratedId(resourceUUID))

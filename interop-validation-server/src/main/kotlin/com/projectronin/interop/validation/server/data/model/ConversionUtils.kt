@@ -3,6 +3,7 @@ package com.projectronin.interop.validation.server.data.model
 import com.projectronin.interop.validation.server.generated.models.IssueStatus
 import com.projectronin.interop.validation.server.generated.models.NewComment
 import com.projectronin.interop.validation.server.generated.models.NewIssue
+import com.projectronin.interop.validation.server.generated.models.NewMetadata
 import com.projectronin.interop.validation.server.generated.models.NewResource
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
 import java.time.OffsetDateTime
@@ -33,6 +34,21 @@ fun NewIssue.toIssueDO(resourceId: UUID): IssueDO {
         description = this@toIssueDO.description
         status = IssueStatus.REPORTED
         createDateTime = this@toIssueDO.createDtTm ?: OffsetDateTime.now()
+    }
+}
+
+/**
+ * Converts a [NewMetadata] into a [MetadataDO]
+ */
+fun NewMetadata.toMetadataDO(issueId: UUID): MetadataDO {
+    return MetadataDO {
+        this@MetadataDO.issueId = issueId
+        registryEntryType = this@toMetadataDO.registryEntryType.toString()
+        valueSetName = this@toMetadataDO.valueSetName
+        valueSetUuid = this@toMetadataDO.valueSetUuid
+        conceptMapName = this@toMetadataDO.conceptMapName
+        conceptMapUuid = this@toMetadataDO.conceptMapUuid
+        version = this@toMetadataDO.version.toString()
     }
 }
 
