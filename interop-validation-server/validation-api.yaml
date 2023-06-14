@@ -476,9 +476,7 @@ components:
           type: string
           description: The location of the issue.
         metadata:
-          type: array
-          items:
-            $ref: '#/components/schemas/NewMetadata'
+          $ref: '#/components/schemas/NewMetadata'
           description: metadata from data normalization registry related to the issue
       required:
         - severity
@@ -523,9 +521,7 @@ components:
           type: string
           description: The location of the issue.
         metadata:
-          type: array
-          items:
-            $ref: '#/components/schemas/Metadata'
+          $ref: '#/components/schemas/Metadata'
           description: metadata from data normalization registry related to the issue
       required:
         - id

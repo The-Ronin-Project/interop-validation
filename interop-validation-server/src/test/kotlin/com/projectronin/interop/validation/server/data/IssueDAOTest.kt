@@ -89,7 +89,7 @@ class IssueDAOTest {
         val issueID = UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")
         val issue = issueDAO.getIssue(resourceID, issueID)
         assertEquals(issueID.toString(), issue?.id.toString())
-        assertNull(issue?.metadata?.id)
+        assertNull(issue?.metadata)
     }
 
     @Test
@@ -100,6 +100,7 @@ class IssueDAOTest {
         val valueSetUuid = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec")
         val issue = issueDAO.getIssue(resourceID, issueID)
         assertEquals(issueID.toString(), issue?.id.toString())
+
         assertNotNull(issue?.metadata)
         assertEquals(issueID, issue?.metadata?.issueId)
         assertEquals("value-set", issue?.metadata?.registryEntryType)
@@ -119,10 +120,11 @@ class IssueDAOTest {
         val issues = issueDAO.getIssues(resourceID, status, Order.ASC, 4, null)
         assertEquals(2, issues.size)
         assertNotNull(issues[0].id)
-        assertNotNull(issues[1].id)
         assertEquals(issueID, issues[0].metadata?.issueId)
-        assertEquals(issueID2, issues[1].metadata?.issueId)
         assertEquals(valueSetUuid, issues[0].metadata?.valueSetUuid)
+
+        assertNotNull(issues[1].id)
+        assertEquals(issueID2, issues[1].metadata?.issueId)
         assertEquals(valueSetUuid, issues[1].metadata?.valueSetUuid)
     }
 
@@ -136,10 +138,11 @@ class IssueDAOTest {
         val issues = issueDAO.getIssues(resourceID, status, Order.ASC, 4, null)
         assertEquals(2, issues.size)
         assertNotNull(issues[0].id)
-        assertNotNull(issues[1].id)
         assertEquals(issueID, issues[0].metadata?.issueId)
-        assertNotNull(issues[1].metadata)
         assertEquals(valueSetUuid, issues[0].metadata?.valueSetUuid)
+
+        assertNotNull(issues[1].id)
+        assertNull(issues[1].metadata)
     }
 
     @Test
@@ -195,6 +198,7 @@ class IssueDAOTest {
         val issue1 = issues[0]
         assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
         assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
+        assertNull(issue1.metadata)
     }
 
     @Test
@@ -207,6 +211,7 @@ class IssueDAOTest {
         val issue1 = issues[1]
         assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
         assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
+        assertNull(issue1.metadata)
     }
 
     @Test
@@ -220,6 +225,7 @@ class IssueDAOTest {
         val issue1 = issues[0]
         assertEquals(UUID.fromString("897413b7-419f-4830-a20a-bf24aae16147"), issue1.id)
         assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
+        assertNull(issue1.metadata)
     }
 
     @Test
@@ -232,6 +238,7 @@ class IssueDAOTest {
         val issue1 = issues[0]
         assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
         assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
+        assertNull(issue1.metadata)
     }
 
     @Test
@@ -245,6 +252,7 @@ class IssueDAOTest {
         val issue1 = issues[0]
         assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
         assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
+        assertNull(issue1.metadata)
     }
 
     @Test
@@ -324,6 +332,7 @@ class IssueDAOTest {
         assertEquals(IssueStatus.ADDRESSED, issue.status)
         assertEquals(OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC), issue.createDateTime)
         assertEquals(OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC), issue.updateDateTime)
+        assertNull(issue.metadata)
     }
 
     @Test
@@ -350,6 +359,7 @@ class IssueDAOTest {
         assertEquals(IssueStatus.ADDRESSED, issue.status)
         assertEquals(OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC), issue.createDateTime)
         assertNotNull(issue.updateDateTime)
+        assertNull(issue.metadata)
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.Severity
 import mu.KotlinLogging
 import org.ktorm.database.Database
+import org.ktorm.dsl.QueryRowSet
 import org.ktorm.dsl.and
 import org.ktorm.dsl.asc
 import org.ktorm.dsl.desc
@@ -99,12 +100,7 @@ class IssueDAO(private val database: Database) {
                 .leftJoin(MetadataDOs, on = IssueDOs.id eq MetadataDOs.issueId)
                 .select()
                 .where((IssueDOs.id eq issueId) and (IssueDOs.resourceId eq resourceId))
-                .map {
-                    val meta = MetadataDOs.createEntity(it)
-                    val issue = IssueDOs.createEntity(it)
-                    issue.metadata = meta
-                    issue
-                }
+                .map(::mapIssueAndMetadata)
                 .singleOrNull()
 
         if (issue == null) {
@@ -158,6 +154,7 @@ class IssueDAO(private val database: Database) {
                             (IssueDOs.createDateTime greater it.createDateTime) or
                                 ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id greater it.id))
                             )
+
                         Order.DESC -> (
                             (IssueDOs.createDateTime less it.createDateTime) or
                                 ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id less it.id))
@@ -168,12 +165,7 @@ class IssueDAO(private val database: Database) {
                 conditions.reduce { a, b -> a and b }
             }.limit(limit).orderBy(orderBy)
 
-        val resources = query.map {
-            val meta: MetadataDO = MetadataDOs.createEntity(it)
-            val issue = IssueDOs.createEntity(it)
-            issue.metadata = meta
-            issue
-        }
+        val resources = query.map(::mapIssueAndMetadata)
 
         logger.info { "Found ${resources.size} issues" }
         return resources
@@ -191,12 +183,7 @@ class IssueDAO(private val database: Database) {
                 .leftJoin(MetadataDOs, on = IssueDOs.id eq MetadataDOs.issueId)
                 .select()
                 .where((IssueDOs.resourceId eq resourceId) and (IssueDOs.id eq issueId))
-                .map {
-                    val meta: MetadataDO? = MetadataDOs.createEntity(it)
-                    val issue = IssueDOs.createEntity(it)
-                    issue.metadata = meta
-                    issue
-                }
+                .map(::mapIssueAndMetadata)
                 .singleOrNull()
 
         if (issue == null) {
@@ -213,6 +200,14 @@ class IssueDAO(private val database: Database) {
         issue.flushChanges()
 
         logger.info { "Issue $issueId updated" }
+        return issue
+    }
+
+    private fun mapIssueAndMetadata(queryRowSet: QueryRowSet): IssueDO {
+        val issue = IssueDOs.createEntity(queryRowSet)
+
+        val meta = MetadataDOs.createEntity(queryRowSet)
+        meta.id?.let { issue.metadata = meta }
         return issue
     }
 }

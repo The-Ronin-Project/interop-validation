@@ -71,17 +71,15 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
         )
     }
 
-    private fun createMetadata(metadataDO: MetadataDO): List<Metadata> {
-        return listOf(
-            Metadata(
-                id = metadataDO.id,
-                registryEntryType = metadataDO.registryEntryType,
-                valueSetName = metadataDO.valueSetName,
-                valueSetUuid = metadataDO.valueSetUuid,
-                conceptMapName = metadataDO.conceptMapName,
-                conceptMapUuid = metadataDO.conceptMapUuid,
-                version = metadataDO.version
-            )
+    private fun createMetadata(metadataDO: MetadataDO): Metadata {
+        return Metadata(
+            id = metadataDO.id,
+            registryEntryType = metadataDO.registryEntryType,
+            valueSetName = metadataDO.valueSetName,
+            valueSetUuid = metadataDO.valueSetUuid,
+            conceptMapName = metadataDO.conceptMapName,
+            conceptMapUuid = metadataDO.conceptMapUuid,
+            version = metadataDO.version
         )
     }
 }

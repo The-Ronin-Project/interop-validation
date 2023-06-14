@@ -62,15 +62,14 @@ class IssueIT : BaseValidationIT() {
         type = "PAT_001",
         description = "No names",
         location = "Patient.name",
-        metadata = listOf(meta1)
+        metadata = meta1
     )
 
     private val failedIssueWithOutMeta = NewIssue(
         severity = ClientSeverity.FAILED,
         type = "PAT_001",
         description = "No names",
-        location = "Patient.name",
-        metadata = emptyList()
+        location = "Patient.name"
     )
 
     private val resource1 = NewResource(
@@ -117,13 +116,13 @@ class IssueIT : BaseValidationIT() {
         val issuesResource2 = runBlocking { issueClient.getResourceIssues(resourceId2, Order.ASC) }
 
         assertEquals(1, issuesResource1.size)
-        assertNotNull(issuesResource1[0].metadata?.get(0)?.id)
-        assertEquals(issuesResource1[0].metadata?.get(0)?.conceptMapName, meta1.conceptMapName)
-        assertEquals(issuesResource1[0].metadata?.get(0)?.valueSetName, meta1.valueSetName)
-        assertEquals(issuesResource1[0].metadata?.get(0)?.valueSetName, meta1.valueSetName)
+        assertNotNull(issuesResource1[0].metadata?.id)
+        assertEquals(issuesResource1[0].metadata?.conceptMapName, meta1.conceptMapName)
+        assertEquals(issuesResource1[0].metadata?.valueSetName, meta1.valueSetName)
+        assertEquals(issuesResource1[0].metadata?.valueSetName, meta1.valueSetName)
 
         assertEquals(1, issuesResource2.size)
-        assertNull(issuesResource2[0].metadata?.get(0)?.id)
+        assertNull(issuesResource2[0].metadata?.id)
     }
 
     @Test
@@ -132,7 +131,7 @@ class IssueIT : BaseValidationIT() {
         val issuesResource2 = runBlocking { issueClient.getResourceIssues(resourceId2, Order.ASC) }
 
         assertEquals(1, issuesResource2.size)
-        assertNull(issuesResource2[0].metadata?.get(0)?.id)
+        assertNull(issuesResource2[0].metadata?.id)
     }
 
     @Test
@@ -142,7 +141,7 @@ class IssueIT : BaseValidationIT() {
 
         assertEquals(2, issuesResource.size)
         assertNotNull(issuesResource[0].metadata)
-        assertNull(issuesResource[1].metadata?.get(0)?.id)
+        assertNull(issuesResource[1].metadata?.id)
     }
 
     @Test

@@ -38,7 +38,8 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
     ): ResponseEntity<List<Resource>> {
         val statuses = if (status.isNullOrEmpty()) ResourceStatus.values().toList() else status
 
-        val resourceDOs = resourceDAO.getResources(statuses, order, limit, after, organizationId, resourceType, issueType)
+        val resourceDOs =
+            resourceDAO.getResources(statuses, order, limit, after, organizationId, resourceType, issueType)
         if (resourceDOs.isEmpty()) {
             return ResponseEntity.ok(listOf())
         }
@@ -64,11 +65,11 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
     override fun addResource(newResource: NewResource): ResponseEntity<GeneratedId> {
         val resourceUUID = resourceDAO.insertResource(newResource.toResourceDO())
 
-        newResource.issues.forEach {
-            val newIssueId = issueDAO.insertIssue(it.toIssueDO(resourceUUID))
+        newResource.issues.forEach { issue ->
+            val newIssueId = issueDAO.insertIssue(issue.toIssueDO(resourceUUID))
 
-            it.metadata?.forEach {
-                issueDAO.insertMetadata(it.toMetadataDO(newIssueId))
+            issue.metadata?.let { metadata ->
+                issueDAO.insertMetadata(metadata.toMetadataDO(newIssueId))
             }
         }
 

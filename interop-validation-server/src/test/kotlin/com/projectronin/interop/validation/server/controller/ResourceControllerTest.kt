@@ -118,7 +118,7 @@ class ResourceControllerTest {
         description = "No contact details",
         createDtTm = OffsetDateTime.now(),
         location = "Patient.contact",
-        metadata = listOf(newIssue3Meta)
+        metadata = newIssue3Meta
     )
 
     private val newResource = NewResource(
@@ -216,7 +216,8 @@ class ResourceControllerTest {
             resourceDAO.getResources(listOf(ResourceStatus.IGNORED), Order.ASC, 10, afterUUID, null, null, null)
         } returns emptyList()
 
-        val response = controller.getResources(listOf(ResourceStatus.IGNORED), Order.ASC, 10, afterUUID, null, null, null)
+        val response =
+            controller.getResources(listOf(ResourceStatus.IGNORED), Order.ASC, 10, afterUUID, null, null, null)
         assertEquals(HttpStatus.OK, response.statusCode)
 
         val resources = response.body!!
@@ -266,7 +267,8 @@ class ResourceControllerTest {
             )
         )
 
-        val response = controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, afterUUID, null, null, null)
+        val response =
+            controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, afterUUID, null, null, null)
         assertEquals(HttpStatus.OK, response.statusCode)
 
         val resources = response.body!!
@@ -298,7 +300,8 @@ class ResourceControllerTest {
             )
         )
 
-        val response = controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, afterUUID, null, null, null)
+        val response =
+            controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, afterUUID, null, null, null)
         assertEquals(HttpStatus.OK, response.statusCode)
 
         val resources = response.body!!
@@ -330,7 +333,8 @@ class ResourceControllerTest {
             )
         )
 
-        val response = controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, afterUUID, null, null, null)
+        val response =
+            controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, afterUUID, null, null, null)
         assertEquals(HttpStatus.OK, response.statusCode)
 
         val resources = response.body!!
@@ -360,7 +364,8 @@ class ResourceControllerTest {
             resource2Id to setOf(Severity.WARNING)
         )
 
-        val response = controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, afterUUID, null, null, null)
+        val response =
+            controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, afterUUID, null, null, null)
         assertEquals(HttpStatus.OK, response.statusCode)
 
         val resources = response.body!!
@@ -404,7 +409,8 @@ class ResourceControllerTest {
             )
         )
 
-        val response = controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, null, "testorg", null, null)
+        val response =
+            controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, null, "testorg", null, null)
         assertEquals(HttpStatus.OK, response.statusCode)
 
         val resources = response.body!!
@@ -434,7 +440,8 @@ class ResourceControllerTest {
             )
         )
 
-        val response = controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, null, null, "Patient", null)
+        val response =
+            controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, null, null, "Patient", null)
         assertEquals(HttpStatus.OK, response.statusCode)
 
         val resources = response.body!!
@@ -483,7 +490,15 @@ class ResourceControllerTest {
     @Test
     fun `getResources - supports issue type being provided`() {
         every {
-            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, null, null, "Patient", issueTypePat1)
+            resourceDAO.getResources(
+                listOf(ResourceStatus.REPORTED),
+                Order.ASC,
+                10,
+                null,
+                null,
+                "Patient",
+                issueTypePat1
+            )
         } returns listOf(resourceDO3)
 
         every { issueDAO.getIssueSeveritiesForResources(listOf(resource3Id)) } returns mapOf(
@@ -492,7 +507,15 @@ class ResourceControllerTest {
             )
         )
 
-        val response = controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, null, null, "Patient", issueTypePat1)
+        val response = controller.getResources(
+            listOf(ResourceStatus.REPORTED),
+            Order.ASC,
+            10,
+            null,
+            null,
+            "Patient",
+            issueTypePat1
+        )
         assertEquals(HttpStatus.OK, response.statusCode)
 
         val resources = response.body!!
@@ -513,7 +536,15 @@ class ResourceControllerTest {
     @Test
     fun `getResources - supports multiple issue types being provided`() {
         every {
-            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, null, null, "Patient", issueTypePat1AndPat2)
+            resourceDAO.getResources(
+                listOf(ResourceStatus.REPORTED),
+                Order.ASC,
+                10,
+                null,
+                null,
+                "Patient",
+                issueTypePat1AndPat2
+            )
         } returns listOf(resourceDO3, resourceDO4)
 
         every { issueDAO.getIssueSeveritiesForResources(listOf(resource3Id, resource4Id)) } returns mapOf(
@@ -525,7 +556,15 @@ class ResourceControllerTest {
             )
         )
 
-        val response = controller.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 10, null, null, "Patient", issueTypePat1AndPat2)
+        val response = controller.getResources(
+            listOf(ResourceStatus.REPORTED),
+            Order.ASC,
+            10,
+            null,
+            null,
+            "Patient",
+            issueTypePat1AndPat2
+        )
         assertEquals(HttpStatus.OK, response.statusCode)
 
         val resources = response.body!!

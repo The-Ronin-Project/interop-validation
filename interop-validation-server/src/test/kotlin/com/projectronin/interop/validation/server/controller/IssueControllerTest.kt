@@ -141,12 +141,12 @@ class IssueControllerTest {
         assertEquals(issue1Id, issues.firstOrNull()?.id)
         val metaData = issues[0].metadata
         assertNotNull(issues[0].metadata)
-        assertEquals(metaData?.firstOrNull()?.id, meta1Id)
-        assertEquals(metaData?.firstOrNull()?.registryEntryType, "concept_map")
-        assertEquals(metaData?.firstOrNull()?.valueSetName, "value-set-name")
-        assertEquals(metaData?.firstOrNull()?.valueSetUuid, valueSetUUID)
-        assertEquals(metaData?.firstOrNull()?.conceptMapName, "concept-map-name")
-        assertEquals(metaData?.firstOrNull()?.conceptMapUuid, conceptMapUUID)
+        assertEquals(metaData?.id, meta1Id)
+        assertEquals(metaData?.registryEntryType, "concept_map")
+        assertEquals(metaData?.valueSetName, "value-set-name")
+        assertEquals(metaData?.valueSetUuid, valueSetUUID)
+        assertEquals(metaData?.conceptMapName, "concept-map-name")
+        assertEquals(metaData?.conceptMapUuid, conceptMapUUID)
     }
 
     @Test
