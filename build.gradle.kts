@@ -2,13 +2,16 @@ import org.jetbrains.gradle.ext.settings
 import org.jetbrains.gradle.ext.taskTriggers
 
 plugins {
-    id("com.projectronin.interop.gradle.server-publish") apply false
-    id("com.projectronin.interop.gradle.server-version")
+    alias(libs.plugins.interop.docker.integration) apply false
+    alias(libs.plugins.interop.junit) apply false
+    alias(libs.plugins.interop.spring.boot) apply false
+    alias(libs.plugins.interop.server.publish) apply false
+    alias(libs.plugins.interop.server.version)
 
-    id("org.openapi.generator") apply false
+    alias(libs.plugins.openapi.generator) apply false
 
     // We need to force IntelliJ to do some actions they expose through this plugin.
-    id("org.jetbrains.gradle.plugin.idea-ext")
+    alias(libs.plugins.idea.ext)
 }
 
 subprojects {
@@ -17,9 +20,6 @@ subprojects {
     if (project.name != "interop-validation-server") {
         apply(plugin = "com.projectronin.interop.gradle.server-publish")
     }
-
-    // Disable releases hub from running on the subprojects. Main project will handle it all.
-    tasks.filter { it.group.equals("releases hub", ignoreCase = true) }.forEach { it.enabled = false }
 }
 
 val openapiProjects = listOf(project(":interop-validation-client"), project(":interop-validation-server"))

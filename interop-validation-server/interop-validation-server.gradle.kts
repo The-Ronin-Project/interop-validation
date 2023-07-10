@@ -1,8 +1,8 @@
 plugins {
     `maven-publish`
-    id("com.projectronin.interop.gradle.docker-integration")
-    id("com.projectronin.interop.gradle.junit")
-    id("com.projectronin.interop.gradle.spring-boot")
+    alias(libs.plugins.interop.docker.integration)
+    alias(libs.plugins.interop.junit)
+    alias(libs.plugins.interop.spring.boot)
 }
 
 dependencies {

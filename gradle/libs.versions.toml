@@ -1,36 +1,73 @@
+[versions]
+dbrider = "1.38.1"
+idea-ext = "1.1.7"
+interop-common = "3.9.1"
+interop-fhir = "8.2.1"
+interop-gradle = "3.2.0"
+jackson = "2.15.2"
+jakarta = "2.0.2"
+ktor = "2.3.1"
+ktorm = "3.6.0"
+liquibase = "4.22.0"
+mockk = "1.13.5"
+mockwebserver = "4.11.0"
+mysql = "8.0.33"
+openapi-generator = "6.6.0"
+springdoc = "1.7.0"
+# @pin until JDK 17
+spring-boot = "2.7.13"
+testcontainers = "1.18.3"
+uuid-creator = "5.3.2"
+
 [libraries]
-interop-common = "com.projectronin.interop:interop-common:3.9.1"
-interop-commonHttp = "com.projectronin.interop:interop-common-http:3.9.1"
-interop-commonJackson = "com.projectronin.interop:interop-common-jackson:3.9.1"
-interop-commonKtorm = "com.projectronin.interop:interop-common-ktorm:3.9.1"
-interop-commonTestDb = "com.projectronin.interop:interop-common-test-db:3.9.1"
-
-interop-fhir = "com.projectronin.interop.fhir:interop-fhir:8.2.1"
-jackson-dataformat-xml = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.2"
-jackson-dataformat-yaml = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2"
-
-jackson-datatype-jsr310 = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2"
-jackson-module-kotlin = "com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2"
-
-jakarta-validation-api = "jakarta.validation:jakarta.validation-api:2.0.2"
-ktor-client-cio = "io.ktor:ktor-client-cio:2.3.1"
-ktor-client-content-negotiation = "io.ktor:ktor-client-content-negotiation:2.3.1"
-ktor-client-core = "io.ktor:ktor-client-core:2.3.1"
-ktor-serialization-jackson = "io.ktor:ktor-serialization-jackson:2.3.1"
-ktorm-core = "org.ktorm:ktorm-core:3.6.0"
-ktorm-support-mysql = "org.ktorm:ktorm-support-mysql:3.6.0"
-liquibase-core = "org.liquibase:liquibase-core:4.22.0"
-mockk = "io.mockk:mockk:1.13.5"
-mockwebserver = "com.squareup.okhttp3:mockwebserver:4.11.0"
-mysql-connector-java = "mysql:mysql-connector-java:8.0.33"
-rider-core = "com.github.database-rider:rider-core:1.38.1"
-springdoc-openapi-ui = "org.springdoc:springdoc-openapi-ui:1.7.0"
-spring-boot-parent = "org.springframework.boot:spring-boot-parent:2.7.5"
-spring-boot-actuator = "org.springframework.boot:spring-boot-starter-actuator:2.7.5"
-testcontainers-bom = "org.testcontainers:testcontainers-bom:1.18.3"
-testcontainers-mysql = "org.testcontainers:mysql:1.18.3"
-uuid-creator = "com.github.f4b6a3:uuid-creator:5.3.2"
+interop-common = { module = "com.projectronin.interop:interop-common", version.ref = "interop-common" }
+interop-commonHttp = { module = "com.projectronin.interop:interop-common-http", version.ref = "interop-common" }
+interop-commonJackson = { module = "com.projectronin.interop:interop-common-jackson", version.ref = "interop-common" }
+interop-commonKtorm = { module = "com.projectronin.interop:interop-common-ktorm", version.ref = "interop-common" }
+interop-commonTestDb = { module = "com.projectronin.interop:interop-common-test-db", version.ref = "interop-common" }
+interop-fhir = { module = "com.projectronin.interop.fhir:interop-fhir", version.ref = "interop-fhir" }
+jackson-dataformat-xml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml", version.ref = "jackson" }
+jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakarta" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-serialization-jackson = { module = "io.ktor:ktor-serialization-jackson", version.ref = "ktor" }
+ktorm-core = { module = "org.ktorm:ktorm-core", version.ref = "ktorm" }
+ktorm-support-mysql = { module = "org.ktorm:ktorm-support-mysql", version.ref = "ktorm" }
+liquibase-core = { module = "org.liquibase:liquibase-core", version.ref = "liquibase" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "mockwebserver" }
+mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysql" }
+rider-core = { module = "com.github.database-rider:rider-core", version.ref = "dbrider" }
+springdoc-openapi-ui = { module = "org.springdoc:springdoc-openapi-ui", version.ref = "springdoc" }
+spring-boot-parent = { module = "org.springframework.boot:spring-boot-parent", version.ref = "spring-boot" }
+spring-boot-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator", version.ref = "spring-boot" }
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testcontainers" }
+uuid-creator = { module = "com.github.f4b6a3:uuid-creator", version.ref = "uuid-creator" }
 
 [bundles]
-jackson = ["jackson-dataformat-xml", "jackson-dataformat-yaml", "jackson-datatype-jsr310", "jackson-module-kotlin"]
-ktor = ["ktor-client-cio", "ktor-client-content-negotiation", "ktor-client-core", "ktor-serialization-jackson"]
+jackson = [
+    "jackson-dataformat-xml",
+    "jackson-dataformat-yaml",
+    "jackson-datatype-jsr310",
+    "jackson-module-kotlin"
+]
+ktor = [
+    "ktor-client-cio",
+    "ktor-client-content-negotiation",
+    "ktor-client-core",
+    "ktor-serialization-jackson"
+]
+
+[plugins]
+idea-ext = { id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "idea-ext" }
+interop-docker-integration = { id = "com.projectronin.interop.gradle.docker-integration", version.ref = "interop-gradle" }
+interop-junit = { id = "com.projectronin.interop.gradle.junit", version.ref = "interop-gradle" }
+interop-server-publish = { id = "com.projectronin.interop.gradle.server-publish", version.ref = "interop-gradle" }
+interop-server-version = { id = "com.projectronin.interop.gradle.server-version", version.ref = "interop-gradle" }
+interop-spring-boot = { id = "com.projectronin.interop.gradle.spring-boot", version.ref = "interop-gradle" }
+openapi-generator = { id = "org.openapi.generator", version.ref = "openapi-generator" }
