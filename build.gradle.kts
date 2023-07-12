@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.interop.spring.boot) apply false
     alias(libs.plugins.interop.server.publish) apply false
     alias(libs.plugins.interop.server.version)
+    alias(libs.plugins.interop.version.catalog)
 
     alias(libs.plugins.openapi.generator) apply false
 

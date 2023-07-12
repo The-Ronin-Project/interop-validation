@@ -70,4 +70,5 @@ interop-junit = { id = "com.projectronin.interop.gradle.junit", version.ref = "i
 interop-server-publish = { id = "com.projectronin.interop.gradle.server-publish", version.ref = "interop-gradle" }
 interop-server-version = { id = "com.projectronin.interop.gradle.server-version", version.ref = "interop-gradle" }
 interop-spring-boot = { id = "com.projectronin.interop.gradle.spring-boot", version.ref = "interop-gradle" }
+interop-version-catalog = { id = "com.projectronin.interop.gradle.version-catalog-update", version.ref = "interop-gradle" }
 openapi-generator = { id = "org.openapi.generator", version.ref = "openapi-generator" }
