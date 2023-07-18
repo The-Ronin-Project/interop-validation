@@ -1,21 +1,22 @@
 [versions]
-dbrider = "1.38.1"
+dbrider = "1.39.0"
 idea-ext = "1.1.7"
 interop-common = "3.9.1"
-interop-fhir = "8.2.1"
+interop-fhir = "8.7.0"
 interop-gradle = "3.2.0"
 jackson = "2.15.2"
+# @pin until Spring Boot 3
 jakarta = "2.0.2"
-ktor = "2.3.1"
+ktor = "2.3.2"
 ktorm = "3.6.0"
-liquibase = "4.22.0"
+liquibase = "4.23.0"
 mockk = "1.13.5"
 mockwebserver = "4.11.0"
 mysql = "8.0.33"
 openapi-generator = "6.6.0"
-springdoc = "1.7.0"
 # @pin until JDK 17
 spring-boot = "2.7.13"
+springdoc = "1.7.0"
 testcontainers = "1.18.3"
 uuid-creator = "5.3.2"
 
@@ -42,9 +43,9 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "mockwebserver" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysql" }
 rider-core = { module = "com.github.database-rider:rider-core", version.ref = "dbrider" }
-springdoc-openapi-ui = { module = "org.springdoc:springdoc-openapi-ui", version.ref = "springdoc" }
-spring-boot-parent = { module = "org.springframework.boot:spring-boot-parent", version.ref = "spring-boot" }
 spring-boot-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator", version.ref = "spring-boot" }
+spring-boot-parent = { module = "org.springframework.boot:spring-boot-parent", version.ref = "spring-boot" }
+springdoc-openapi-ui = { module = "org.springdoc:springdoc-openapi-ui", version.ref = "springdoc" }
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testcontainers" }
 uuid-creator = { module = "com.github.f4b6a3:uuid-creator", version.ref = "uuid-creator" }
@@ -54,13 +55,13 @@ jackson = [
     "jackson-dataformat-xml",
     "jackson-dataformat-yaml",
     "jackson-datatype-jsr310",
-    "jackson-module-kotlin"
+    "jackson-module-kotlin",
 ]
 ktor = [
     "ktor-client-cio",
     "ktor-client-content-negotiation",
     "ktor-client-core",
-    "ktor-serialization-jackson"
+    "ktor-serialization-jackson",
 ]
 
 [plugins]
