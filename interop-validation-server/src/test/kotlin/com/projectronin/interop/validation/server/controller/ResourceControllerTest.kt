@@ -103,7 +103,7 @@ class ResourceControllerTest {
         location = "Patient.contact"
     )
 
-    private val newIssue3Meta = NewMetadata(
+    private val newMetadata1 = NewMetadata(
         registryEntryType = "value-set",
         valueSetName = "name of the value-set being referenced",
         valueSetUuid = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec"),
@@ -112,13 +112,31 @@ class ResourceControllerTest {
         version = "1"
     )
 
+    private val newMetadata2 = NewMetadata(
+        registryEntryType = "value-set",
+        valueSetName = "name of the value-set being referenced",
+        valueSetUuid = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec"),
+        conceptMapName = "name of the concept-map being referenced",
+        conceptMapUuid = UUID.fromString("201ad507-64f7-4429-810f-94bdbd51f80a"),
+        version = "2"
+    )
+
     private val newIssue3 = NewIssue(
         severity = Severity.WARNING,
         type = "pat-2",
         description = "No contact details",
         createDtTm = OffsetDateTime.now(),
         location = "Patient.contact",
-        metadata = newIssue3Meta
+        metadata = listOf(newMetadata1)
+    )
+
+    private val newIssue4 = NewIssue(
+        severity = Severity.WARNING,
+        type = "pat-2",
+        description = "No contact details",
+        createDtTm = OffsetDateTime.now(),
+        location = "Patient.contact",
+        metadata = listOf(newMetadata1, newMetadata2)
     )
 
     private val newResource = NewResource(
@@ -134,6 +152,14 @@ class ResourceControllerTest {
         resourceType = "Patient",
         resource = "the patient resource",
         issues = listOf(newIssue1, newIssue3),
+        createDtTm = OffsetDateTime.now()
+    )
+
+    private val resourceWithMetas = NewResource(
+        organizationId = "testorg",
+        resourceType = "Patient",
+        resource = "the patient resource",
+        issues = listOf(newIssue4),
         createDtTm = OffsetDateTime.now()
     )
 
@@ -478,10 +504,38 @@ class ResourceControllerTest {
         } returns issue3UUID
 
         every {
-            issueDAO.insertMetadata(newIssue3Meta.toMetadataDO(issue3UUID))
+            issueDAO.insertMetadata(newMetadata1.toMetadataDO(issue3UUID))
         } returns metaUUID
 
         val response = controller.addResource(resourceWithIssues)
+        val resources = response.body!!
+
+        assertEquals(resources.id, resourceUUID)
+    }
+
+    @Test
+    fun `addResource with multiple issues and multiple meta`() {
+        val resourceUUID = UUID.randomUUID()
+        val issue4UUID = UUID.randomUUID()
+        val metaUUID = UUID.randomUUID()
+        val meta2UUID = UUID.randomUUID()
+        every {
+            resourceDAO.insertResource(resourceWithMetas.toResourceDO())
+        } returns resourceUUID
+
+        every {
+            issueDAO.insertIssue(newIssue4.toIssueDO(resourceUUID))
+        } returns issue4UUID
+
+        every {
+            issueDAO.insertMetadata(newMetadata1.toMetadataDO(issue4UUID))
+        } returns metaUUID
+
+        every {
+            issueDAO.insertMetadata(newMetadata2.toMetadataDO(issue4UUID))
+        } returns meta2UUID
+
+        val response = controller.addResource(resourceWithMetas)
         val resources = response.body!!
 
         assertEquals(resources.id, resourceUUID)

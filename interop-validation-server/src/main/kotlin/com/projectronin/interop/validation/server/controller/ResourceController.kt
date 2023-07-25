@@ -67,8 +67,7 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
 
         newResource.issues.forEach { issue ->
             val newIssueId = issueDAO.insertIssue(issue.toIssueDO(resourceUUID))
-
-            issue.metadata?.let { metadata ->
+            issue.metadata?.forEach { metadata ->
                 issueDAO.insertMetadata(metadata.toMetadataDO(newIssueId))
             }
         }

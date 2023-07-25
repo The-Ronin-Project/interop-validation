@@ -21,5 +21,5 @@ interface IssueDO : Entity<IssueDO> {
     var status: IssueStatus
     var createDateTime: OffsetDateTime
     var updateDateTime: OffsetDateTime?
-    var metadata: MetadataDO?
+    var metadata: List<MetadataDO>?
 }

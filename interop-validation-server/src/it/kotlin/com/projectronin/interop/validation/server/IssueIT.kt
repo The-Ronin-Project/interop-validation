@@ -6,6 +6,7 @@ import com.projectronin.interop.fhir.r4.datatype.primitive.Id
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.validation.client.generated.models.Issue
 import com.projectronin.interop.validation.client.generated.models.IssueStatus
+import com.projectronin.interop.validation.client.generated.models.Metadata
 import com.projectronin.interop.validation.client.generated.models.NewIssue
 import com.projectronin.interop.validation.client.generated.models.NewMetadata
 import com.projectronin.interop.validation.client.generated.models.NewResource
@@ -14,7 +15,6 @@ import com.projectronin.interop.validation.client.generated.models.UpdateIssue
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -57,14 +57,28 @@ class IssueIT : BaseValidationIT() {
         version = "1"
     )
 
+    private val meta2 = NewMetadata(
+        registryEntryType = "concept-map",
+        conceptMapName = "name of the concept-map being referenced",
+        conceptMapUuid = UUID.fromString("5de34981-4ad1-43c9-b70e-8cb519151df0"),
+        version = "2"
+    )
+
     private val failedIssueWithMeta = NewIssue(
         severity = ClientSeverity.FAILED,
         type = "PAT_001",
         description = "No names",
         location = "Patient.name",
-        metadata = meta1
+        metadata = listOf(meta1)
     )
 
+    private val failedIssueWithMetas = NewIssue(
+        severity = ClientSeverity.FAILED,
+        type = "PAT_001",
+        description = "No names",
+        location = "Patient.name",
+        metadata = listOf(meta1, meta2)
+    )
     private val failedIssueWithOutMeta = NewIssue(
         severity = ClientSeverity.FAILED,
         type = "PAT_001",
@@ -93,6 +107,13 @@ class IssueIT : BaseValidationIT() {
         issues = listOf(failedIssueWithMeta, failedIssueWithOutMeta)
     )
 
+    private val resource4 = NewResource(
+        organizationId = "ronin",
+        resourceType = "Patient",
+        resource = JacksonManager.objectMapper.writeValueAsString(patient),
+        issues = listOf(failedIssueWithMetas)
+    )
+
     @Test
     fun `getResourceIssues - gets issues in order`() {
         val resourceId = addResource(resource)
@@ -116,13 +137,36 @@ class IssueIT : BaseValidationIT() {
         val issuesResource2 = runBlocking { issueClient.getResourceIssues(resourceId2, Order.ASC) }
 
         assertEquals(1, issuesResource1.size)
-        assertNotNull(issuesResource1[0].metadata?.id)
-        assertEquals(issuesResource1[0].metadata?.conceptMapName, meta1.conceptMapName)
-        assertEquals(issuesResource1[0].metadata?.valueSetName, meta1.valueSetName)
-        assertEquals(issuesResource1[0].metadata?.valueSetName, meta1.valueSetName)
+        assertNotNull(issuesResource1[0].metadata?.get(0)?.id)
+        assertEquals(issuesResource1[0].metadata?.get(0)?.conceptMapName, meta1.conceptMapName)
+        assertEquals(issuesResource1[0].metadata?.get(0)?.valueSetName, meta1.valueSetName)
+        assertEquals(issuesResource1[0].metadata?.get(0)?.valueSetName, meta1.valueSetName)
 
         assertEquals(1, issuesResource2.size)
-        assertNull(issuesResource2[0].metadata?.id)
+        assertEquals(listOf<Metadata>(), issuesResource2[0].metadata)
+    }
+
+    @Test
+    fun `getResourceIssues - gets issues with metas if it exists`() {
+        val resourceId4 = addResource(resource4)
+        val issuesResource1 = runBlocking { issueClient.getResourceIssues(resourceId4, Order.ASC) }
+
+        assertEquals(1, issuesResource1.size)
+        assertEquals(2, issuesResource1[0].metadata?.size)
+        assertNotNull(issuesResource1[0].metadata?.get(0)?.id)
+        assertNotNull(issuesResource1[0].metadata?.get(1)?.id)
+
+        val metadataByType = issuesResource1[0].metadata?.groupBy { it.registryEntryType }
+        assertEquals(2, metadataByType?.size)
+
+        val conceptMapMetadata = metadataByType?.get("concept-map")
+        assertEquals(1, conceptMapMetadata?.size)
+        val valueSetMetadata = metadataByType?.get("value-set")
+        assertEquals(1, valueSetMetadata?.size)
+        assertEquals(conceptMapMetadata?.get(0)?.conceptMapName, meta2.conceptMapName)
+        assertEquals(conceptMapMetadata?.get(0)?.conceptMapUuid, meta2.conceptMapUuid)
+        assertEquals(valueSetMetadata?.get(0)?.valueSetName, meta1.valueSetName)
+        assertEquals(valueSetMetadata?.get(0)?.valueSetUuid, meta1.valueSetUuid)
     }
 
     @Test
@@ -131,7 +175,7 @@ class IssueIT : BaseValidationIT() {
         val issuesResource2 = runBlocking { issueClient.getResourceIssues(resourceId2, Order.ASC) }
 
         assertEquals(1, issuesResource2.size)
-        assertNull(issuesResource2[0].metadata?.id)
+        assertEquals(listOf<Metadata>(), issuesResource2[0].metadata)
     }
 
     @Test
@@ -141,7 +185,7 @@ class IssueIT : BaseValidationIT() {
 
         assertEquals(2, issuesResource.size)
         assertNotNull(issuesResource[0].metadata)
-        assertNull(issuesResource[1].metadata?.id)
+        assertEquals(listOf<Metadata>(), issuesResource[1].metadata)
     }
 
     @Test

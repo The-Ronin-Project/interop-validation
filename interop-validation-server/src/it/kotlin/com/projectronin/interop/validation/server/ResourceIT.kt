@@ -6,6 +6,7 @@ import com.projectronin.interop.fhir.r4.datatype.primitive.Id
 import com.projectronin.interop.fhir.r4.resource.Location
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.validation.client.generated.models.NewIssue
+import com.projectronin.interop.validation.client.generated.models.NewMetadata
 import com.projectronin.interop.validation.client.generated.models.NewResource
 import com.projectronin.interop.validation.client.generated.models.Order
 import com.projectronin.interop.validation.client.generated.models.ResourceStatus
@@ -52,6 +53,25 @@ class ResourceIT : BaseValidationIT() {
         type = "PAT_001",
         description = "No birth date",
         location = "Patient.birthDate"
+    )
+    private val metadata1 = NewMetadata(
+        registryEntryType = "value-set",
+        valueSetName = "name of the value-set being referenced",
+        valueSetUuid = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec"),
+        version = "1"
+    )
+    private val metadata2 = NewMetadata(
+        registryEntryType = "concept-map",
+        conceptMapName = "name of the concept-map being referenced",
+        conceptMapUuid = UUID.fromString("29681f0f-41a7-4790-9122-ccff1ee50e0e"),
+        version = "2"
+    )
+    private val issueWithMeta = NewIssue(
+        severity = Severity.WARNING,
+        type = "PAT_001",
+        description = "No birth date",
+        location = "Patient.birthDate",
+        metadata = listOf(metadata1, metadata2)
     )
     private val newFailedResource = NewResource(
         organizationId = "ronin",
@@ -431,5 +451,36 @@ class ResourceIT : BaseValidationIT() {
         }
         println(exception.message)
         assertEquals(true, exception.message?.contains("400"))
+    }
+
+    @Test
+    fun `addResource works for issue with metadata`() {
+        val newResource = NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = objectMapper.writeValueAsString(patient),
+            issues = listOf(issueWithMeta),
+            createDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusHours(2)
+        )
+
+        val generatedId = runBlocking { resourceClient.addResource(newResource) }
+        assertNotNull(generatedId)
+
+        val uuid = generatedId.id!!
+        val readIssue = runBlocking { issueClient.getResourceIssues(uuid, Order.ASC) }
+        assertEquals(1, readIssue.size)
+        assertEquals(2, readIssue[0].metadata?.size)
+
+        val metadataByType = readIssue[0].metadata?.groupBy { it.registryEntryType }
+        assertEquals(2, metadataByType?.size)
+        val conceptMapMetadata = metadataByType?.get("concept-map")
+        assertEquals(1, conceptMapMetadata?.size)
+        val valueSetMetadata = metadataByType?.get("value-set")
+        assertEquals(1, valueSetMetadata?.size)
+
+        assertEquals(conceptMapMetadata?.get(0)?.conceptMapName, metadata2.conceptMapName)
+        assertEquals(conceptMapMetadata?.get(0)?.conceptMapUuid, metadata2.conceptMapUuid)
+        assertEquals(valueSetMetadata?.get(0)?.valueSetName, metadata1.valueSetName)
+        assertEquals(valueSetMetadata?.get(0)?.valueSetUuid, metadata1.valueSetUuid)
     }
 }

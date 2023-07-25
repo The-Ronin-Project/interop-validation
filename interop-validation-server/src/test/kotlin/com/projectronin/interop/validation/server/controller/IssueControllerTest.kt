@@ -101,7 +101,7 @@ class IssueControllerTest {
         description = "No contact details"
         status = IssueStatus.REPORTED
         createDateTime = issueCreateTime
-        metadata = meta1
+        metadata = listOf(meta1)
     }
 
     @BeforeEach
@@ -112,7 +112,7 @@ class IssueControllerTest {
 
     @Test
     fun `getIssues - handles null statuses`() {
-        issue1.metadata = meta1
+        issue1.metadata = listOf(meta1)
         every {
             issueDAO.getIssues(resourceId, IssueStatus.values().toList(), Order.ASC, 10, null)
         } returns listOf(issue1)
@@ -139,8 +139,8 @@ class IssueControllerTest {
         assertEquals(1, issues.size)
 
         assertEquals(issue1Id, issues.firstOrNull()?.id)
-        val metaData = issues[0].metadata
-        assertNotNull(issues[0].metadata)
+        val metaData = issues[0].metadata?.get(0)
+        assertNotNull(metaData)
         assertEquals(metaData?.id, meta1Id)
         assertEquals(metaData?.registryEntryType, "concept_map")
         assertEquals(metaData?.valueSetName, "value-set-name")
@@ -151,8 +151,8 @@ class IssueControllerTest {
 
     @Test
     fun `getIssues - handles emptyList of statuses`() {
-        issue1.metadata = meta1
-        issue2.metadata = meta2
+        issue1.metadata = listOf(meta1)
+        issue2.metadata = listOf(meta2)
         every {
             issueDAO.getIssues(resourceId, IssueStatus.values().toList(), Order.ASC, 10, null)
         } returns listOf(issue1, issue2)
@@ -202,7 +202,7 @@ class IssueControllerTest {
 
     @Test
     fun `getIssueByID - works`() {
-        issue1.metadata = meta1
+        issue1.metadata = listOf(meta1)
         every {
             issueDAO.getIssue(resourceId, issue1Id)
         } returns issue1
@@ -226,7 +226,7 @@ class IssueControllerTest {
             status = IssueStatus.REPORTED
             createDateTime = issueCreateTime
             updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-            metadata = metaForIssueUpdate
+            metadata = listOf(metaForIssueUpdate)
         }
         every {
             issueDAO.updateIssue(resourceId, issue2Id, captureLambda())

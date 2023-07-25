@@ -9,7 +9,6 @@ import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.Severity
 import mu.KotlinLogging
 import org.ktorm.database.Database
-import org.ktorm.dsl.QueryRowSet
 import org.ktorm.dsl.and
 import org.ktorm.dsl.asc
 import org.ktorm.dsl.desc
@@ -18,7 +17,6 @@ import org.ktorm.dsl.from
 import org.ktorm.dsl.greater
 import org.ktorm.dsl.inList
 import org.ktorm.dsl.insert
-import org.ktorm.dsl.leftJoin
 import org.ktorm.dsl.less
 import org.ktorm.dsl.limit
 import org.ktorm.dsl.map
@@ -96,16 +94,13 @@ class IssueDAO(private val database: Database) {
     fun getIssue(resourceId: UUID, issueId: UUID): IssueDO? {
         logger.info { "Looking up issue $issueId within resource $resourceId" }
         val issue =
-            database.from(IssueDOs)
-                .leftJoin(MetadataDOs, on = IssueDOs.id eq MetadataDOs.issueId)
-                .select()
-                .where((IssueDOs.id eq issueId) and (IssueDOs.resourceId eq resourceId))
-                .map(::mapIssueAndMetadata)
-                .singleOrNull()
-
+            database.from(IssueDOs).select().where((IssueDOs.id eq issueId) and (IssueDOs.resourceId eq resourceId))
+                .map { IssueDOs.createEntity(it) }.singleOrNull()
         if (issue == null) {
             logger.info { "No issue found for resource $resourceId and issue $issueId" }
             return null
+        } else {
+            issue.metadata = database.from(MetadataDOs).select().where(MetadataDOs.issueId eq issueId).map { MetadataDOs.createEntity(it) }
         }
 
         logger.info { "Issue loaded for resource $resourceId and issue $issueId" }
@@ -135,8 +130,7 @@ class IssueDAO(private val database: Database) {
             Order.DESC -> listOf(IssueDOs.createDateTime.desc(), IssueDOs.id.desc())
         }
 
-        val query = database.from(IssueDOs)
-            .leftJoin(MetadataDOs, on = IssueDOs.id eq MetadataDOs.issueId)
+        val issues = database.from(IssueDOs)
             .select()
             .where {
                 val conditions = mutableListOf<ColumnDeclaring<Boolean>>()
@@ -163,12 +157,14 @@ class IssueDAO(private val database: Database) {
                 }
 
                 conditions.reduce { a, b -> a and b }
-            }.limit(limit).orderBy(orderBy)
+            }.limit(limit).orderBy(orderBy).map { IssueDOs.createEntity(it) }
 
-        val resources = query.map(::mapIssueAndMetadata)
+        issues.forEach { issue ->
+            issue.metadata = database.from(MetadataDOs).select().where { MetadataDOs.issueId eq issue.id }.map { MetadataDOs.createEntity(it) }
+        }
 
-        logger.info { "Found ${resources.size} issues" }
-        return resources
+        logger.info { "Found ${issues.size} issues" }
+        return issues
     }
 
     /**
@@ -180,10 +176,9 @@ class IssueDAO(private val database: Database) {
 
         val issue =
             database.from(IssueDOs)
-                .leftJoin(MetadataDOs, on = IssueDOs.id eq MetadataDOs.issueId)
                 .select()
                 .where((IssueDOs.resourceId eq resourceId) and (IssueDOs.id eq issueId))
-                .map(::mapIssueAndMetadata)
+                .map { IssueDOs.createEntity(it) }
                 .singleOrNull()
 
         if (issue == null) {
@@ -200,14 +195,6 @@ class IssueDAO(private val database: Database) {
         issue.flushChanges()
 
         logger.info { "Issue $issueId updated" }
-        return issue
-    }
-
-    private fun mapIssueAndMetadata(queryRowSet: QueryRowSet): IssueDO {
-        val issue = IssueDOs.createEntity(queryRowSet)
-
-        val meta = MetadataDOs.createEntity(queryRowSet)
-        meta.id?.let { issue.metadata = meta }
         return issue
     }
 }

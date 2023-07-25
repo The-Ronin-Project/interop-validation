@@ -67,7 +67,7 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
             status = issueDO.status,
             createDtTm = issueDO.createDateTime,
             updateDtTm = issueDO.updateDateTime,
-            metadata = issueDO.metadata?.let { createMetadata(it) }
+            metadata = issueDO.metadata?.map { createMetadata(it) }
         )
     }
 

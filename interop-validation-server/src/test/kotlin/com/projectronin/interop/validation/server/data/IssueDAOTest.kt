@@ -6,6 +6,7 @@ import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.projectronin.interop.common.test.database.dbrider.DBRiderConnection
 import com.projectronin.interop.common.test.database.ktorm.KtormHelper
 import com.projectronin.interop.common.test.database.liquibase.LiquibaseTest
+import com.projectronin.interop.validation.server.data.binding.MetadataDOs
 import com.projectronin.interop.validation.server.data.model.IssueDO
 import com.projectronin.interop.validation.server.data.model.MetadataDO
 import com.projectronin.interop.validation.server.generated.models.IssueStatus
@@ -89,7 +90,7 @@ class IssueDAOTest {
         val issueID = UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")
         val issue = issueDAO.getIssue(resourceID, issueID)
         assertEquals(issueID.toString(), issue?.id.toString())
-        assertNull(issue?.metadata)
+        assertEquals(listOf<MetadataDO>(), issue?.metadata)
     }
 
     @Test
@@ -102,11 +103,11 @@ class IssueDAOTest {
         assertEquals(issueID.toString(), issue?.id.toString())
 
         assertNotNull(issue?.metadata)
-        assertEquals(issueID, issue?.metadata?.issueId)
-        assertEquals("value-set", issue?.metadata?.registryEntryType)
-        assertEquals("thisIsTheValueSetBeingUsed", issue?.metadata?.valueSetName)
-        assertEquals(valueSetUuid, issue?.metadata?.valueSetUuid)
-        assertEquals("1", issue?.metadata?.version)
+        assertEquals(issueID, issue?.metadata?.get(0)?.issueId)
+        assertEquals("value-set", issue?.metadata?.get(0)?.registryEntryType)
+        assertEquals("thisIsTheValueSetBeingUsed", issue?.metadata?.get(0)?.valueSetName)
+        assertEquals(valueSetUuid, issue?.metadata?.get(0)?.valueSetUuid)
+        assertEquals("1", issue?.metadata?.get(0)?.version)
     }
 
     @Test
@@ -120,12 +121,13 @@ class IssueDAOTest {
         val issues = issueDAO.getIssues(resourceID, status, Order.ASC, 4, null)
         assertEquals(2, issues.size)
         assertNotNull(issues[0].id)
-        assertEquals(issueID, issues[0].metadata?.issueId)
-        assertEquals(valueSetUuid, issues[0].metadata?.valueSetUuid)
+        assertEquals(issueID, issues[0].metadata?.get(0)?.issueId)
+        assertEquals(valueSetUuid, issues[0].metadata?.get(0)?.valueSetUuid)
 
         assertNotNull(issues[1].id)
-        assertEquals(issueID2, issues[1].metadata?.issueId)
-        assertEquals(valueSetUuid, issues[1].metadata?.valueSetUuid)
+        assertEquals(2, issues[1].metadata?.size)
+        assertEquals(issueID2, issues[1].metadata?.get(0)?.issueId)
+        assertEquals(valueSetUuid, issues[1].metadata?.get(0)?.conceptMapUuid)
     }
 
     @Test
@@ -138,11 +140,11 @@ class IssueDAOTest {
         val issues = issueDAO.getIssues(resourceID, status, Order.ASC, 4, null)
         assertEquals(2, issues.size)
         assertNotNull(issues[0].id)
-        assertEquals(issueID, issues[0].metadata?.issueId)
-        assertEquals(valueSetUuid, issues[0].metadata?.valueSetUuid)
+        assertEquals(issueID, issues[0].metadata?.get(0)?.issueId)
+        assertEquals(valueSetUuid, issues[0].metadata?.get(0)?.valueSetUuid)
 
         assertNotNull(issues[1].id)
-        assertNull(issues[1].metadata)
+        assertEquals(listOf<MetadataDOs>(), issues[1].metadata)
     }
 
     @Test
@@ -198,7 +200,7 @@ class IssueDAOTest {
         val issue1 = issues[0]
         assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
         assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
-        assertNull(issue1.metadata)
+        assertEquals(listOf<MetadataDOs>(), issue1.metadata)
     }
 
     @Test
@@ -211,7 +213,7 @@ class IssueDAOTest {
         val issue1 = issues[1]
         assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
         assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
-        assertNull(issue1.metadata)
+        assertEquals(listOf<MetadataDOs>(), issue1.metadata)
     }
 
     @Test
@@ -225,7 +227,7 @@ class IssueDAOTest {
         val issue1 = issues[0]
         assertEquals(UUID.fromString("897413b7-419f-4830-a20a-bf24aae16147"), issue1.id)
         assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
-        assertNull(issue1.metadata)
+        assertEquals(listOf<MetadataDOs>(), issue1.metadata)
     }
 
     @Test
@@ -238,7 +240,7 @@ class IssueDAOTest {
         val issue1 = issues[0]
         assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
         assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
-        assertNull(issue1.metadata)
+        assertEquals(listOf<MetadataDOs>(), issue1.metadata)
     }
 
     @Test
@@ -252,7 +254,7 @@ class IssueDAOTest {
         val issue1 = issues[0]
         assertEquals(UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663"), issue1.id)
         assertEquals(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), issue1.resourceId)
-        assertNull(issue1.metadata)
+        assertEquals(listOf<MetadataDOs>(), issue1.metadata)
     }
 
     @Test
