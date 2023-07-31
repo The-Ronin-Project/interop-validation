@@ -1,7 +1,7 @@
 [versions]
 dbrider = "1.39.0"
 idea-ext = "1.1.7"
-interop-common = "3.9.1"
+interop-common = "3.10.0"
 interop-fhir = "8.7.1"
 interop-gradle = "3.2.0"
 jackson = "2.15.2"
