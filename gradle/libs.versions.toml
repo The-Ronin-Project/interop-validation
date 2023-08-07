@@ -2,7 +2,7 @@
 dbrider = "1.39.0"
 idea-ext = "1.1.7"
 interop-common = "3.10.0"
-interop-fhir = "8.7.3"
+interop-fhir = "8.8.0"
 interop-gradle = "3.2.0"
 jackson = "2.15.2"
 # @pin until Spring Boot 3
