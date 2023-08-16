@@ -1,7 +1,15 @@
 package com.projectronin.interop.validation.server.controller
 
+import com.projectronin.event.interop.internal.v1.ResourceType
+import com.projectronin.event.interop.resource.request.v1.InteropResourceRequestV1
+import com.projectronin.interop.common.jackson.JacksonManager
+import com.projectronin.interop.fhir.r4.datatype.primitive.Id
+import com.projectronin.interop.fhir.r4.resource.Location
+import com.projectronin.interop.kafka.KafkaRequestService
+import com.projectronin.interop.validation.server.data.CommentDAO
 import com.projectronin.interop.validation.server.data.IssueDAO
 import com.projectronin.interop.validation.server.data.ResourceDAO
+import com.projectronin.interop.validation.server.data.model.CommentDO
 import com.projectronin.interop.validation.server.data.model.ResourceDO
 import com.projectronin.interop.validation.server.data.model.toIssueDO
 import com.projectronin.interop.validation.server.data.model.toMetadataDO
@@ -10,6 +18,7 @@ import com.projectronin.interop.validation.server.generated.models.NewIssue
 import com.projectronin.interop.validation.server.generated.models.NewMetadata
 import com.projectronin.interop.validation.server.generated.models.NewResource
 import com.projectronin.interop.validation.server.generated.models.Order
+import com.projectronin.interop.validation.server.generated.models.ReprocessResourceRequest
 import com.projectronin.interop.validation.server.generated.models.Resource
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
 import com.projectronin.interop.validation.server.generated.models.Severity
@@ -17,9 +26,11 @@ import com.projectronin.interop.validation.server.generated.models.UpdatableReso
 import com.projectronin.interop.validation.server.generated.models.UpdateResource
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.http.HttpStatus
@@ -34,9 +45,11 @@ import java.util.UUID
     working.  If you force the insert to the issue table to fail it'll rollback the insert to resource.
  */
 class ResourceControllerTest {
-    lateinit var resourceDAO: ResourceDAO
-    lateinit var issueDAO: IssueDAO
-    lateinit var controller: ResourceController
+    private val resourceDAO = mockk<ResourceDAO>()
+    private val issueDAO = mockk<IssueDAO>()
+    private val commentDAO = mockk<CommentDAO>()
+    private val kafkaRequestService = mockk<KafkaRequestService>()
+    private val controller = ResourceController(resourceDAO, issueDAO, commentDAO, kafkaRequestService)
 
     private val resource1Id = UUID.fromString("03d51d53-1a31-49a9-af74-573b456efca5")
     private val resource1CreateDtTm = OffsetDateTime.now(ZoneOffset.UTC)
@@ -165,13 +178,6 @@ class ResourceControllerTest {
 
     private val issueTypePat1 = listOf("pat-1")
     private val issueTypePat1AndPat2 = listOf("pat-1", "pat-2")
-
-    @BeforeEach
-    fun setup() {
-        resourceDAO = mockk()
-        issueDAO = mockk()
-        controller = ResourceController(resourceDAO, issueDAO)
-    }
 
     @Test
     fun `getResources - all statuses are searched when null statuses provided`() {
@@ -857,5 +863,335 @@ class ResourceControllerTest {
         assertEquals(resource2CreateDtTm, resource.createDtTm)
         assertEquals(resource2UpdateDtTm, resource.updateDtTm)
         assertEquals(Severity.FAILED, resource.severity)
+    }
+
+    @Test
+    fun `reprocessResource returns 404 when unknown ID provided`() {
+        val resourceId = UUID.randomUUID()
+        every { resourceDAO.getResource(resourceId) } returns null
+
+        val request = ReprocessResourceRequest(
+            user = "josh",
+            comment = "reprocessing"
+        )
+        val response = controller.reprocessResource(resourceId, request)
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+    }
+
+    @Test
+    fun `reprocessResource returns error when resource can not be deserialized`() {
+        val resourceId = UUID.randomUUID()
+        every { resourceDAO.getResource(resourceId) } returns mockk {
+            every { resource } returns "not-a-real-resource"
+        }
+
+        val request = ReprocessResourceRequest(
+            user = "josh",
+            comment = "reprocessing"
+        )
+        val response = controller.reprocessResource(resourceId, request)
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
+    }
+
+    @Test
+    fun `reprocessResource returns error when no id is found on resource`() {
+        val resourceId = UUID.randomUUID()
+        val resourceJson = JacksonManager.objectMapper.writeValueAsString(
+            Location(id = null)
+        )
+        every { resourceDAO.getResource(resourceId) } returns mockk {
+            every { resource } returns resourceJson
+        }
+
+        val request = ReprocessResourceRequest(
+            user = "josh",
+            comment = "reprocessing"
+        )
+        val response = controller.reprocessResource(resourceId, request)
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
+    }
+
+    @Test
+    fun `reprocessResource returns error when failure occurs during publishing`() {
+        val resourceId = UUID.randomUUID()
+        val resourceJson = JacksonManager.objectMapper.writeValueAsString(
+            Location(id = Id(resourceId.toString()))
+        )
+        every { resourceDAO.getResource(resourceId) } returns mockk {
+            every { resource } returns resourceJson
+            every { resourceType } returns "Location"
+            every { organizationId } returns "tenant"
+        }
+
+        every {
+            kafkaRequestService.pushRequestEvent(
+                "tenant",
+                listOf("tenant-$resourceId"),
+                ResourceType.Location,
+                "validation-server",
+                InteropResourceRequestV1.FlowOptions(false, null)
+            )
+        } returns mockk {
+            every { failures } returns listOf(mockk())
+        }
+
+        val request = ReprocessResourceRequest(
+            user = "josh",
+            comment = "reprocessing"
+        )
+        val response = controller.reprocessResource(resourceId, request)
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
+    }
+
+    @Test
+    fun `reprocessResource works for resource with client FHIR ID`() {
+        val resourceId = UUID.randomUUID()
+        val resourceJson = JacksonManager.objectMapper.writeValueAsString(
+            Location(id = Id(resourceId.toString()))
+        )
+        every { resourceDAO.getResource(resourceId) } returns mockk {
+            every { resource } returns resourceJson
+            every { resourceType } returns "Location"
+            every { organizationId } returns "tenant"
+        }
+
+        every {
+            kafkaRequestService.pushRequestEvent(
+                "tenant",
+                listOf("tenant-$resourceId"),
+                ResourceType.Location,
+                "validation-server",
+                InteropResourceRequestV1.FlowOptions(false, null)
+            )
+        } returns mockk {
+            every { successful } returns listOf("tenant-$resourceId")
+            every { failures } returns emptyList()
+        }
+
+        val commentSlot = slot<CommentDO>()
+        every { commentDAO.insertResourceComment(capture(commentSlot), resourceId) } returns UUID.randomUUID()
+
+        val lambdaSlot = slot<(ResourceDO) -> Unit>()
+        every { resourceDAO.updateResource(resourceId, capture(lambdaSlot)) } returns mockk()
+
+        val request = ReprocessResourceRequest(
+            user = "josh",
+            comment = "reprocessing"
+        )
+        val response = controller.reprocessResource(resourceId, request)
+        assertEquals(HttpStatus.OK, response.statusCode)
+
+        val commentDO = commentSlot.captured
+        assertEquals("josh", commentDO.author)
+        assertEquals("reprocessing", commentDO.text)
+
+        lambdaSlot.captured(resourceDO1)
+        assertEquals(ResourceStatus.REPROCESSED, resourceDO1.status)
+
+        verify(exactly = 1) { commentDAO.insertResourceComment(any(), resourceId) }
+        verify(exactly = 1) { resourceDAO.updateResource(resourceId, any()) }
+    }
+
+    @Test
+    fun `reprocessResource works for resource with Ronin FHIR ID`() {
+        val resourceId = UUID.randomUUID()
+        val resourceJson = JacksonManager.objectMapper.writeValueAsString(
+            Location(id = Id("tenant-$resourceId"))
+        )
+        every { resourceDAO.getResource(resourceId) } returns mockk {
+            every { resource } returns resourceJson
+            every { resourceType } returns "Location"
+            every { organizationId } returns "tenant"
+        }
+
+        every {
+            kafkaRequestService.pushRequestEvent(
+                "tenant",
+                listOf("tenant-$resourceId"),
+                ResourceType.Location,
+                "validation-server",
+                InteropResourceRequestV1.FlowOptions(false, null)
+            )
+        } returns mockk {
+            every { successful } returns listOf("tenant-$resourceId")
+            every { failures } returns emptyList()
+        }
+
+        val commentSlot = slot<CommentDO>()
+        every { commentDAO.insertResourceComment(capture(commentSlot), resourceId) } returns UUID.randomUUID()
+
+        val lambdaSlot = slot<(ResourceDO) -> Unit>()
+        every { resourceDAO.updateResource(resourceId, capture(lambdaSlot)) } returns mockk()
+
+        val request = ReprocessResourceRequest(
+            user = "josh",
+            comment = "reprocessing"
+        )
+        val response = controller.reprocessResource(resourceId, request)
+        assertEquals(HttpStatus.OK, response.statusCode)
+
+        val commentDO = commentSlot.captured
+        assertEquals("josh", commentDO.author)
+        assertEquals("reprocessing", commentDO.text)
+
+        lambdaSlot.captured(resourceDO1)
+        assertEquals(ResourceStatus.REPROCESSED, resourceDO1.status)
+
+        verify(exactly = 1) { commentDAO.insertResourceComment(any(), resourceId) }
+        verify(exactly = 1) { resourceDAO.updateResource(resourceId, any()) }
+    }
+
+    @Test
+    fun `reprocessResource supports no refreshNormalization being provided`() {
+        val resourceId = UUID.randomUUID()
+        val resourceJson = JacksonManager.objectMapper.writeValueAsString(
+            Location(id = Id("tenant-$resourceId"))
+        )
+        every { resourceDAO.getResource(resourceId) } returns mockk {
+            every { resource } returns resourceJson
+            every { resourceType } returns "Location"
+            every { organizationId } returns "tenant"
+        }
+
+        every {
+            kafkaRequestService.pushRequestEvent(
+                "tenant",
+                listOf("tenant-$resourceId"),
+                ResourceType.Location,
+                "validation-server",
+                InteropResourceRequestV1.FlowOptions(false, null)
+            )
+        } returns mockk {
+            every { successful } returns listOf("tenant-$resourceId")
+            every { failures } returns emptyList()
+        }
+
+        val commentSlot = slot<CommentDO>()
+        every { commentDAO.insertResourceComment(capture(commentSlot), resourceId) } returns UUID.randomUUID()
+
+        val lambdaSlot = slot<(ResourceDO) -> Unit>()
+        every { resourceDAO.updateResource(resourceId, capture(lambdaSlot)) } returns mockk()
+
+        val request = ReprocessResourceRequest(
+            user = "josh",
+            comment = "reprocessing"
+        )
+        val response = controller.reprocessResource(resourceId, request)
+        assertEquals(HttpStatus.OK, response.statusCode)
+
+        val commentDO = commentSlot.captured
+        assertEquals("josh", commentDO.author)
+        assertEquals("reprocessing", commentDO.text)
+
+        lambdaSlot.captured(resourceDO1)
+        assertEquals(ResourceStatus.REPROCESSED, resourceDO1.status)
+
+        verify(exactly = 1) { commentDAO.insertResourceComment(any(), resourceId) }
+        verify(exactly = 1) { resourceDAO.updateResource(resourceId, any()) }
+    }
+
+    @Test
+    fun `reprocessResource supports a true refreshNormalization`() {
+        val resourceId = UUID.randomUUID()
+        val resourceJson = JacksonManager.objectMapper.writeValueAsString(
+            Location(id = Id("tenant-$resourceId"))
+        )
+        every { resourceDAO.getResource(resourceId) } returns mockk {
+            every { resource } returns resourceJson
+            every { resourceType } returns "Location"
+            every { organizationId } returns "tenant"
+        }
+
+        val flowOptionsSlot = slot<InteropResourceRequestV1.FlowOptions>()
+        every {
+            kafkaRequestService.pushRequestEvent(
+                "tenant",
+                listOf("tenant-$resourceId"),
+                ResourceType.Location,
+                "validation-server",
+                capture(flowOptionsSlot)
+            )
+        } returns mockk {
+            every { successful } returns listOf("tenant-$resourceId")
+            every { failures } returns emptyList()
+        }
+
+        val commentSlot = slot<CommentDO>()
+        every { commentDAO.insertResourceComment(capture(commentSlot), resourceId) } returns UUID.randomUUID()
+
+        val lambdaSlot = slot<(ResourceDO) -> Unit>()
+        every { resourceDAO.updateResource(resourceId, capture(lambdaSlot)) } returns mockk()
+
+        val request = ReprocessResourceRequest(
+            user = "josh",
+            comment = "reprocessing",
+            refreshNormalization = true
+        )
+        val response = controller.reprocessResource(resourceId, request)
+        assertEquals(HttpStatus.OK, response.statusCode)
+
+        val flowOptions = flowOptionsSlot.captured
+        assertEquals(false, flowOptions.disableDownstreamResources)
+        assertNotNull(flowOptions.normalizationRegistryMinimumTime)
+
+        val commentDO = commentSlot.captured
+        assertEquals("josh", commentDO.author)
+        assertEquals("reprocessing", commentDO.text)
+
+        lambdaSlot.captured(resourceDO1)
+        assertEquals(ResourceStatus.REPROCESSED, resourceDO1.status)
+
+        verify(exactly = 1) { commentDAO.insertResourceComment(any(), resourceId) }
+        verify(exactly = 1) { resourceDAO.updateResource(resourceId, any()) }
+    }
+
+    @Test
+    fun `reprocessResource supports a false refreshNormalization`() {
+        val resourceId = UUID.randomUUID()
+        val resourceJson = JacksonManager.objectMapper.writeValueAsString(
+            Location(id = Id("tenant-$resourceId"))
+        )
+        every { resourceDAO.getResource(resourceId) } returns mockk {
+            every { resource } returns resourceJson
+            every { resourceType } returns "Location"
+            every { organizationId } returns "tenant"
+        }
+
+        every {
+            kafkaRequestService.pushRequestEvent(
+                "tenant",
+                listOf("tenant-$resourceId"),
+                ResourceType.Location,
+                "validation-server",
+                InteropResourceRequestV1.FlowOptions(false, null)
+            )
+        } returns mockk {
+            every { successful } returns listOf("tenant-$resourceId")
+            every { failures } returns emptyList()
+        }
+
+        val commentSlot = slot<CommentDO>()
+        every { commentDAO.insertResourceComment(capture(commentSlot), resourceId) } returns UUID.randomUUID()
+
+        val lambdaSlot = slot<(ResourceDO) -> Unit>()
+        every { resourceDAO.updateResource(resourceId, capture(lambdaSlot)) } returns mockk()
+
+        val request = ReprocessResourceRequest(
+            user = "josh",
+            comment = "reprocessing",
+            refreshNormalization = false
+        )
+        val response = controller.reprocessResource(resourceId, request)
+        assertEquals(HttpStatus.OK, response.statusCode)
+
+        val commentDO = commentSlot.captured
+        assertEquals("josh", commentDO.author)
+        assertEquals("reprocessing", commentDO.text)
+
+        lambdaSlot.captured(resourceDO1)
+        assertEquals(ResourceStatus.REPROCESSED, resourceDO1.status)
+
+        verify(exactly = 1) { commentDAO.insertResourceComment(any(), resourceId) }
+        verify(exactly = 1) { resourceDAO.updateResource(resourceId, any()) }
     }
 }

@@ -9,7 +9,13 @@ dependencies {
     implementation(platform(libs.spring.boot.parent))
     implementation(libs.springdoc.openapi.ui)
 
+    implementation(libs.interop.commonJackson)
     implementation(libs.interop.commonKtorm)
+    implementation(libs.interop.fhir)
+    implementation(libs.interop.kafka)
+    implementation(libs.event.interop.resource.internal)
+    implementation(libs.event.interop.resource.request)
+
     implementation(libs.ktorm.core)
     implementation(libs.ktorm.support.mysql)
     implementation(libs.uuid.creator)
@@ -38,10 +44,15 @@ dependencies {
     itImplementation(project(":interop-validation-client"))
     itImplementation(libs.interop.commonHttp)
     itImplementation(libs.interop.fhir)
+    itImplementation(libs.interop.kafka)
+    itImplementation(libs.event.interop.resource.request)
+    itImplementation(libs.ronin.kafka)
+    itImplementation(libs.kafka.clients)
     itImplementation(libs.ktor.client.core)
     itImplementation(platform(libs.testcontainers.bom))
     itImplementation("org.testcontainers:mysql")
     itImplementation(libs.ktorm.core)
+    itImplementation(libs.kotlin.logging)
     itImplementation(project)
 }
 

@@ -190,6 +190,9 @@ paths:
                 comment:
                   type: string
                   description: A comment to associate with the reprocessing. This will be added as a comment for this resource.
+                refresh_normalization:
+                  type: boolean
+                  description: If true, the normalization registry cache will be refreshed before reprocessing the resource.
               required:
                 - user
                 - comment

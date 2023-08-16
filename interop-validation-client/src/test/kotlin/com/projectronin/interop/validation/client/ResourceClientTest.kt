@@ -124,6 +124,7 @@ class ResourceClientTest {
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals("GET", request.method)
         assertEquals(true, request.path?.endsWith("/resources?status=REPORTED&order=ASC&limit=2"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -152,6 +153,7 @@ class ResourceClientTest {
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals("GET", request.method)
         assertEquals(true, request.path?.endsWith("/resources?order=ASC&limit=10"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -180,6 +182,7 @@ class ResourceClientTest {
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals("GET", request.method)
         assertEquals(true, request.path?.endsWith("/resources?order=ASC&limit=10"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -209,6 +212,7 @@ class ResourceClientTest {
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals("GET", request.method)
         assertEquals(true, request.path?.endsWith("/resources?issue_type=PAT_001&order=ASC&limit=10"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -238,7 +242,11 @@ class ResourceClientTest {
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
-        assertEquals(true, request.path?.endsWith("/resources?issue_type=PAT_001&issue_type=PAT_002&order=ASC&limit=10"))
+        assertEquals("GET", request.method)
+        assertEquals(
+            true,
+            request.path?.endsWith("/resources?issue_type=PAT_001&issue_type=PAT_002&order=ASC&limit=10")
+        )
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -268,6 +276,7 @@ class ResourceClientTest {
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals("GET", request.method)
         assertEquals(true, request.path?.endsWith("/resources?order=ASC&limit=10&after=$after"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -298,6 +307,7 @@ class ResourceClientTest {
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals("GET", request.method)
         assertEquals(true, request.path?.endsWith("/resources?organization_id=org&order=ASC&limit=10"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -327,6 +337,7 @@ class ResourceClientTest {
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals("GET", request.method)
         assertEquals(true, request.path?.endsWith("/resources?resource_type=Patient&order=ASC&limit=10"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -353,6 +364,7 @@ class ResourceClientTest {
         exception.message?.let { assertTrue(it.contains("504")) }
 
         val request = mockWebServer.takeRequest()
+        assertEquals("GET", request.method)
         assertEquals(true, request.path?.endsWith("/resources?status=REPORTED&order=ASC&limit=1"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -376,6 +388,7 @@ class ResourceClientTest {
         assertEquals(expectedResource, response)
 
         val request = mockWebServer.takeRequest()
+        assertEquals("GET", request.method)
         assertEquals(true, request.path?.endsWith("/resources/$resource1Id"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -399,6 +412,7 @@ class ResourceClientTest {
         exception.message?.let { assertTrue(it.contains("400")) }
 
         val request = mockWebServer.takeRequest()
+        assertEquals("GET", request.method)
         assertEquals(true, request.path?.endsWith("/resources/$resource1Id"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -442,6 +456,7 @@ class ResourceClientTest {
         assertEquals(resourceId1.id, response.id)
 
         val request = mockWebServer.takeRequest()
+        assertEquals("POST", request.method)
         assertEquals(true, request.path?.endsWith("/resources"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -485,6 +500,7 @@ class ResourceClientTest {
         exception.message?.let { assertTrue(it.contains("400")) }
 
         val request = mockWebServer.takeRequest()
+        assertEquals("POST", request.method)
         assertEquals(true, request.path?.endsWith("/resources"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -511,6 +527,7 @@ class ResourceClientTest {
         }
 
         val request = mockWebServer.takeRequest()
+        assertEquals("POST", request.method)
         assertEquals(true, request.path?.endsWith("/resources/$uuid/reprocess"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -541,6 +558,7 @@ class ResourceClientTest {
         exception.message?.let { assertTrue(it.contains("503")) }
 
         val request = mockWebServer.takeRequest()
+        assertEquals("POST", request.method)
         assertEquals(true, request.path?.endsWith("/resources/$uuid/reprocess"))
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }

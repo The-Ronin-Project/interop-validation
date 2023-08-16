@@ -1,13 +1,21 @@
 package com.projectronin.interop.validation.server.controller
 
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.projectronin.event.interop.internal.v1.ResourceType
+import com.projectronin.event.interop.resource.request.v1.InteropResourceRequestV1
+import com.projectronin.interop.common.jackson.JacksonManager
+import com.projectronin.interop.kafka.KafkaRequestService
+import com.projectronin.interop.validation.server.data.CommentDAO
 import com.projectronin.interop.validation.server.data.IssueDAO
 import com.projectronin.interop.validation.server.data.ResourceDAO
 import com.projectronin.interop.validation.server.data.model.ResourceDO
+import com.projectronin.interop.validation.server.data.model.toCommentDO
 import com.projectronin.interop.validation.server.data.model.toIssueDO
 import com.projectronin.interop.validation.server.data.model.toMetadataDO
 import com.projectronin.interop.validation.server.data.model.toResourceDO
 import com.projectronin.interop.validation.server.generated.apis.ResourceApi
 import com.projectronin.interop.validation.server.generated.models.GeneratedId
+import com.projectronin.interop.validation.server.generated.models.NewComment
 import com.projectronin.interop.validation.server.generated.models.NewResource
 import com.projectronin.interop.validation.server.generated.models.Order
 import com.projectronin.interop.validation.server.generated.models.ReprocessResourceRequest
@@ -20,10 +28,17 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.UUID
 
 @RestController
-class ResourceController(private val resourceDAO: ResourceDAO, private val issueDAO: IssueDAO) : ResourceApi {
+class ResourceController(
+    private val resourceDAO: ResourceDAO,
+    private val issueDAO: IssueDAO,
+    private val commentDAO: CommentDAO,
+    private val requestService: KafkaRequestService
+) : ResourceApi {
     val logger = KotlinLogging.logger { }
 
     @PreAuthorize("hasAuthority('SCOPE_read:resources')")
@@ -97,7 +112,56 @@ class ResourceController(private val resourceDAO: ResourceDAO, private val issue
         resourceId: UUID,
         reprocessResourceRequest: ReprocessResourceRequest
     ): ResponseEntity<Unit> {
-        TODO()
+        val resource = resourceDAO.getResource(resourceId) ?: return ResponseEntity.notFound().build()
+
+        val fhirId = runCatching {
+            val deserializedResource =
+                JacksonManager.objectMapper.readValue<com.projectronin.interop.fhir.r4.resource.Resource<*>>(resource.resource)
+            deserializedResource.id!!.value!!
+        }.getOrElse { exception ->
+            logger.error(exception) { "Failed to find FHIR ID on resource requested for reprocessing" }
+            return ResponseEntity.internalServerError().build()
+        }
+
+        val tenant = resource.organizationId
+
+        // The FHIR ID could be either a localized or non-localized value here, but we need to standardize on a Ronin ID.
+        // We could pull in interop-fhir-ronin here as well, but just using this for now.
+        val localizedFhirId = if (fhirId.startsWith("$tenant-")) fhirId else "$tenant-$fhirId"
+
+        val resourceType = ResourceType.valueOf(resource.resourceType)
+        val flowOptions = InteropResourceRequestV1.FlowOptions(
+            disableDownstreamResources = false,
+            normalizationRegistryMinimumTime = if (reprocessResourceRequest.refreshNormalization == true) {
+                OffsetDateTime.now(
+                    ZoneOffset.UTC
+                )
+            } else {
+                null
+            }
+        )
+        val response = requestService.pushRequestEvent(
+            tenant,
+            listOf(localizedFhirId),
+            resourceType,
+            "validation-server",
+            flowOptions
+        )
+        if (response.failures.isNotEmpty()) {
+            return ResponseEntity.internalServerError().build()
+        }
+
+        val reprocessComment = NewComment(
+            author = reprocessResourceRequest.user,
+            text = reprocessResourceRequest.comment
+        )
+        commentDAO.insertResourceComment(reprocessComment.toCommentDO(), resourceId)
+
+        resourceDAO.updateResource(resourceId) {
+            it.status = ResourceStatus.REPROCESSED
+        }
+
+        return ResponseEntity.ok().build()
     }
 
     private fun createResources(resourceDOs: List<ResourceDO>): List<Resource> {

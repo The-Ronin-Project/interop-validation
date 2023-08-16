@@ -11,7 +11,7 @@ import javax.sql.DataSource
  * Main Spring Boot application for the Interop Validation Server
  */
 @SpringBootApplication
-@ComponentScan("com.projectronin.interop.validation.server")
+@ComponentScan(*["com.projectronin.interop.validation.server", "com.projectronin.interop.kafka"])
 class ValidationServer {
     /**
      * The Database used by validation based off the [dataSource].

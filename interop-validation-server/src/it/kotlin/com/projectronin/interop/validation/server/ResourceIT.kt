@@ -1,5 +1,6 @@
 package com.projectronin.interop.validation.server
 
+import com.projectronin.event.interop.resource.request.v1.InteropResourceRequestV1
 import com.projectronin.interop.common.http.exceptions.ClientFailureException
 import com.projectronin.interop.common.jackson.JacksonManager.Companion.objectMapper
 import com.projectronin.interop.fhir.r4.datatype.primitive.Id
@@ -9,11 +10,13 @@ import com.projectronin.interop.validation.client.generated.models.NewIssue
 import com.projectronin.interop.validation.client.generated.models.NewMetadata
 import com.projectronin.interop.validation.client.generated.models.NewResource
 import com.projectronin.interop.validation.client.generated.models.Order
+import com.projectronin.interop.validation.client.generated.models.ReprocessResourceRequest
 import com.projectronin.interop.validation.client.generated.models.ResourceStatus
 import com.projectronin.interop.validation.client.generated.models.Severity
 import com.projectronin.interop.validation.client.generated.models.UpdatableResourceStatus
 import com.projectronin.interop.validation.client.generated.models.UpdateResource
 import com.projectronin.interop.validation.server.data.binding.ResourceDOs
+import com.projectronin.interop.validation.server.testclients.KafkaClient
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -125,7 +128,8 @@ class ResourceIT : BaseValidationIT() {
 
     @Test
     fun `getResources when none exist`() {
-        val resources = runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 10, issueType = null) }
+        val resources =
+            runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 10, issueType = null) }
 
         assertTrue(resources.isEmpty())
     }
@@ -134,7 +138,8 @@ class ResourceIT : BaseValidationIT() {
     fun `getResources returns less than limit if not enough qualify`() {
         val newResource1Id = addResource(newFailedResource)
 
-        val resources = runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 10, issueType = null) }
+        val resources =
+            runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 10, issueType = null) }
         assertEquals(1, resources.size)
         assertEquals(newResource1Id, resources[0].id)
     }
@@ -145,7 +150,8 @@ class ResourceIT : BaseValidationIT() {
         val newResource2Id = addResource(newWarningResource)
         val newResource3Id = addResource(newWarningAndFailedResource)
 
-        val resources = runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 2, issueType = null) }
+        val resources =
+            runBlocking { resourceClient.getResources(status = null, order = Order.ASC, limit = 2, issueType = null) }
         assertEquals(2, resources.size)
         assertEquals(newResource1Id, resources[0].id)
         assertEquals(newResource2Id, resources[1].id)
@@ -482,5 +488,118 @@ class ResourceIT : BaseValidationIT() {
         assertEquals(conceptMapMetadata?.get(0)?.conceptMapUuid, metadata2.conceptMapUuid)
         assertEquals(valueSetMetadata?.get(0)?.valueSetName, metadata1.valueSetName)
         assertEquals(valueSetMetadata?.get(0)?.valueSetUuid, metadata1.valueSetUuid)
+    }
+
+    @Test
+    fun `reprocessesResource works without refreshNormalization`() {
+        KafkaClient.monitorRequests()
+
+        val newResourceId = addResource(newLocationFailedResource)
+
+        val reprocessRequest = ReprocessResourceRequest(
+            user = "Josh Smith",
+            comment = "Reprocessed without refresh normalization"
+        )
+        runBlocking { resourceClient.reprocessResource(newResourceId, reprocessRequest) }
+
+        val postReprocessResource = runBlocking { resourceClient.getResourceById(newResourceId) }
+        assertEquals(ResourceStatus.REPROCESSED, postReprocessResource.status)
+
+        val comments = runBlocking { commentClient.getResourceComments(newResourceId, Order.ASC) }
+        assertEquals(1, comments.size)
+
+        val comment1 = comments.first()
+        assertEquals("Josh Smith", comment1.author)
+        assertEquals("Reprocessed without refresh normalization", comment1.text)
+
+        val events = KafkaClient.readEvents()
+        assertEquals(1, events.size)
+
+        val event1 = events.first()
+        val requestData = event1.data as InteropResourceRequestV1
+        assertEquals("Location", requestData.resourceType)
+        assertEquals("ronin-67890", requestData.resourceFHIRId)
+        assertEquals("validation-server", requestData.requestingService)
+        val flowOptions = requestData.flowOptions!!
+        assertEquals(false, flowOptions.disableDownstreamResources)
+        assertNull(flowOptions.normalizationRegistryMinimumTime)
+
+        KafkaClient.reset()
+    }
+
+    @Test
+    fun `reprocessesResource works with true refreshNormalization`() {
+        KafkaClient.monitorRequests()
+
+        val newResourceId = addResource(newLocationFailedResource)
+
+        val reprocessRequest = ReprocessResourceRequest(
+            user = "Josh Smith",
+            comment = "Reprocessed with true refresh normalization",
+            refreshNormalization = true
+        )
+        runBlocking { resourceClient.reprocessResource(newResourceId, reprocessRequest) }
+
+        val postReprocessResource = runBlocking { resourceClient.getResourceById(newResourceId) }
+        assertEquals(ResourceStatus.REPROCESSED, postReprocessResource.status)
+
+        val comments = runBlocking { commentClient.getResourceComments(newResourceId, Order.ASC) }
+        assertEquals(1, comments.size)
+
+        val comment1 = comments.first()
+        assertEquals("Josh Smith", comment1.author)
+        assertEquals("Reprocessed with true refresh normalization", comment1.text)
+
+        val events = KafkaClient.readEvents()
+        assertEquals(1, events.size)
+
+        val event1 = events.first()
+        val requestData = event1.data as InteropResourceRequestV1
+        assertEquals("Location", requestData.resourceType)
+        assertEquals("ronin-67890", requestData.resourceFHIRId)
+        assertEquals("validation-server", requestData.requestingService)
+        val flowOptions = requestData.flowOptions!!
+        assertEquals(false, flowOptions.disableDownstreamResources)
+        assertNotNull(flowOptions.normalizationRegistryMinimumTime)
+
+        KafkaClient.reset()
+    }
+
+    @Test
+    fun `reprocessesResource works with false refreshNormalization`() {
+        KafkaClient.monitorRequests()
+
+        val newResourceId = addResource(newLocationFailedResource)
+
+        val reprocessRequest = ReprocessResourceRequest(
+            user = "Josh Smith",
+            comment = "Reprocessed with false refresh normalization",
+            refreshNormalization = false
+        )
+        runBlocking { resourceClient.reprocessResource(newResourceId, reprocessRequest) }
+
+        val postReprocessResource = runBlocking { resourceClient.getResourceById(newResourceId) }
+        assertEquals(ResourceStatus.REPROCESSED, postReprocessResource.status)
+
+        val comments = runBlocking { commentClient.getResourceComments(newResourceId, Order.ASC) }
+        assertEquals(1, comments.size)
+
+        val comment1 = comments.first()
+        assertEquals("Josh Smith", comment1.author)
+        assertEquals("Reprocessed with false refresh normalization", comment1.text)
+
+        val events = KafkaClient.readEvents()
+        assertEquals(1, events.size)
+
+        val event1 = events.first()
+        val requestData = event1.data as InteropResourceRequestV1
+        assertEquals("Location", requestData.resourceType)
+        assertEquals("ronin-67890", requestData.resourceFHIRId)
+        assertEquals("validation-server", requestData.requestingService)
+        val flowOptions = requestData.flowOptions!!
+        assertEquals(false, flowOptions.disableDownstreamResources)
+        assertNull(flowOptions.normalizationRegistryMinimumTime)
+
+        KafkaClient.reset()
     }
 }
