@@ -34,6 +34,9 @@ dependencies {
     runtimeOnly(libs.liquibase.core)
     runtimeOnly(libs.mysql.connector.java)
 
+    // Needed to format logs for DataDog
+    runtimeOnly(libs.logstash.logback.encoder)
+
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.interop.commonTestDb)
     testImplementation(libs.mockk)

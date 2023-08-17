@@ -15,6 +15,8 @@ kotlin-logging = "3.0.5"
 ktor = "2.3.3"
 ktorm = "3.6.0"
 liquibase = "4.23.1"
+# @pin until Spring 6
+logstash = "7.3"
 mockk = "1.13.7"
 mockwebserver = "4.11.0"
 mysql = "8.0.33"
@@ -50,6 +52,7 @@ ktor-serialization-jackson = { module = "io.ktor:ktor-serialization-jackson", ve
 ktorm-core = { module = "org.ktorm:ktorm-core", version.ref = "ktorm" }
 ktorm-support-mysql = { module = "org.ktorm:ktorm-support-mysql", version.ref = "ktorm" }
 liquibase-core = { module = "org.liquibase:liquibase-core", version.ref = "liquibase" }
+logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "mockwebserver" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysql" }
