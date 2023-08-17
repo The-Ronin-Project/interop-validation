@@ -159,6 +159,8 @@ class ResourceController(
 
         resourceDAO.updateResource(resourceId) {
             it.status = ResourceStatus.REPROCESSED
+            it.reprocessDateTime = OffsetDateTime.now(ZoneOffset.UTC)
+            it.reprocessedBy = reprocessResourceRequest.user
         }
 
         return ResponseEntity.ok().build()

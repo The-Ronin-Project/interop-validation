@@ -987,6 +987,8 @@ class ResourceControllerTest {
 
         lambdaSlot.captured(resourceDO1)
         assertEquals(ResourceStatus.REPROCESSED, resourceDO1.status)
+        assertNotNull(resourceDO1.reprocessDateTime)
+        assertEquals("josh", resourceDO1.reprocessedBy)
 
         verify(exactly = 1) { commentDAO.insertResourceComment(any(), resourceId) }
         verify(exactly = 1) { resourceDAO.updateResource(resourceId, any()) }
@@ -1036,6 +1038,8 @@ class ResourceControllerTest {
 
         lambdaSlot.captured(resourceDO1)
         assertEquals(ResourceStatus.REPROCESSED, resourceDO1.status)
+        assertNotNull(resourceDO1.reprocessDateTime)
+        assertEquals("josh", resourceDO1.reprocessedBy)
 
         verify(exactly = 1) { commentDAO.insertResourceComment(any(), resourceId) }
         verify(exactly = 1) { resourceDAO.updateResource(resourceId, any()) }
@@ -1085,6 +1089,8 @@ class ResourceControllerTest {
 
         lambdaSlot.captured(resourceDO1)
         assertEquals(ResourceStatus.REPROCESSED, resourceDO1.status)
+        assertNotNull(resourceDO1.reprocessDateTime)
+        assertEquals("josh", resourceDO1.reprocessedBy)
 
         verify(exactly = 1) { commentDAO.insertResourceComment(any(), resourceId) }
         verify(exactly = 1) { resourceDAO.updateResource(resourceId, any()) }
@@ -1140,6 +1146,8 @@ class ResourceControllerTest {
 
         lambdaSlot.captured(resourceDO1)
         assertEquals(ResourceStatus.REPROCESSED, resourceDO1.status)
+        assertNotNull(resourceDO1.reprocessDateTime)
+        assertEquals("josh", resourceDO1.reprocessedBy)
 
         verify(exactly = 1) { commentDAO.insertResourceComment(any(), resourceId) }
         verify(exactly = 1) { resourceDAO.updateResource(resourceId, any()) }
@@ -1190,6 +1198,8 @@ class ResourceControllerTest {
 
         lambdaSlot.captured(resourceDO1)
         assertEquals(ResourceStatus.REPROCESSED, resourceDO1.status)
+        assertNotNull(resourceDO1.reprocessDateTime)
+        assertEquals("josh", resourceDO1.reprocessedBy)
 
         verify(exactly = 1) { commentDAO.insertResourceComment(any(), resourceId) }
         verify(exactly = 1) { resourceDAO.updateResource(resourceId, any()) }

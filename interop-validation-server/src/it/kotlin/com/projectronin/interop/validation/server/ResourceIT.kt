@@ -504,6 +504,8 @@ class ResourceIT : BaseValidationIT() {
 
         val postReprocessResource = runBlocking { resourceClient.getResourceById(newResourceId) }
         assertEquals(ResourceStatus.REPROCESSED, postReprocessResource.status)
+        assertNotNull(postReprocessResource.reprocessDtTm)
+        assertEquals("Josh Smith", postReprocessResource.reprocessedBy)
 
         val comments = runBlocking { commentClient.getResourceComments(newResourceId, Order.ASC) }
         assertEquals(1, comments.size)
@@ -542,6 +544,8 @@ class ResourceIT : BaseValidationIT() {
 
         val postReprocessResource = runBlocking { resourceClient.getResourceById(newResourceId) }
         assertEquals(ResourceStatus.REPROCESSED, postReprocessResource.status)
+        assertNotNull(postReprocessResource.reprocessDtTm)
+        assertEquals("Josh Smith", postReprocessResource.reprocessedBy)
 
         val comments = runBlocking { commentClient.getResourceComments(newResourceId, Order.ASC) }
         assertEquals(1, comments.size)
@@ -580,6 +584,8 @@ class ResourceIT : BaseValidationIT() {
 
         val postReprocessResource = runBlocking { resourceClient.getResourceById(newResourceId) }
         assertEquals(ResourceStatus.REPROCESSED, postReprocessResource.status)
+        assertNotNull(postReprocessResource.reprocessDtTm)
+        assertEquals("Josh Smith", postReprocessResource.reprocessedBy)
 
         val comments = runBlocking { commentClient.getResourceComments(newResourceId, Order.ASC) }
         assertEquals(1, comments.size)
