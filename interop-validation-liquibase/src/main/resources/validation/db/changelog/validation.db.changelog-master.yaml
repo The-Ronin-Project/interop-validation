@@ -3,3 +3,5 @@ databaseChangeLog:
       file: validation/db/changelog/validation.db.changelog-001.yaml
   - include:
       file: validation/db/changelog/validation.db.changelog-002.yaml
+  - include:
+      file: validation/db/changelog/validation.db.changelog-3.1.0.yaml

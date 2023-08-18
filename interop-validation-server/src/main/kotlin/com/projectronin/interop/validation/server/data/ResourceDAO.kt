@@ -125,7 +125,6 @@ class ResourceDAO(private val database: Database) {
     fun insertResource(resourceDO: ResourceDO): UUID {
         val newUUID = UUID.randomUUID()
         logger.info { "Inserting resource for organization ${resourceDO.organizationId} with UUID $newUUID" }
-
         database.insert(ResourceDOs) {
             set(it.id, newUUID)
             set(it.organizationId, resourceDO.organizationId)
@@ -136,6 +135,7 @@ class ResourceDAO(private val database: Database) {
             set(it.updateDateTime, resourceDO.updateDateTime)
             set(it.reprocessDateTime, resourceDO.reprocessDateTime)
             set(it.reprocessedBy, resourceDO.reprocessedBy)
+            set(it.clientFhirId, resourceDO.clientFhirId)
         }
 
         logger.info { "Resource $newUUID inserted" }

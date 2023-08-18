@@ -1,11 +1,14 @@
 package com.projectronin.interop.validation.server.data.model
 
+import com.projectronin.interop.common.jackson.JacksonUtil
+import com.projectronin.interop.fhir.r4.resource.Resource
 import com.projectronin.interop.validation.server.generated.models.IssueStatus
 import com.projectronin.interop.validation.server.generated.models.NewComment
 import com.projectronin.interop.validation.server.generated.models.NewIssue
 import com.projectronin.interop.validation.server.generated.models.NewMetadata
 import com.projectronin.interop.validation.server.generated.models.NewResource
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
+import mu.KotlinLogging
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -13,12 +16,20 @@ import java.util.UUID
  * Converts a [NewResource] into a [ResourceDO]
  */
 fun NewResource.toResourceDO(): ResourceDO {
+    val fhirId = runCatching {
+        val resource = JacksonUtil.readJsonObject(this.resource, Resource::class)
+        resource.findFhirId()
+    }.getOrElse {
+        KotlinLogging.logger {}.warn(it) { "Failed to cast to Resource: ${this.resource}" }
+        null
+    }
     return ResourceDO {
         organizationId = this@toResourceDO.organizationId
         resourceType = this@toResourceDO.resourceType
         resource = this@toResourceDO.resource
         status = ResourceStatus.REPORTED
         createDateTime = this@toResourceDO.createDtTm ?: OffsetDateTime.now()
+        clientFhirId = fhirId
     }
 }
 

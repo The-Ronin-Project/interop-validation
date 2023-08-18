@@ -22,4 +22,5 @@ object ResourceDOs : Table<ResourceDO>("resource") {
     val updateDateTime = utcDateTime("update_dt_tm").bindTo { it.updateDateTime }
     val reprocessDateTime = utcDateTime("reprocess_dt_tm").bindTo { it.reprocessDateTime }
     val reprocessedBy = varchar("reprocessed_by").bindTo { it.reprocessedBy }
+    val clientFhirId = varchar("client_fhir_id").bindTo { it.clientFhirId }
 }

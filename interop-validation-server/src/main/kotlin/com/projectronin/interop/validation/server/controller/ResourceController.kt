@@ -114,10 +114,10 @@ class ResourceController(
     ): ResponseEntity<Unit> {
         val resource = resourceDAO.getResource(resourceId) ?: return ResponseEntity.notFound().build()
 
-        val fhirId = runCatching {
+        val fhirId = resource.clientFhirId ?: runCatching {
             val deserializedResource =
                 JacksonManager.objectMapper.readValue<com.projectronin.interop.fhir.r4.resource.Resource<*>>(resource.resource)
-            deserializedResource.id!!.value!!
+            deserializedResource.findFhirId()!!
         }.getOrElse { exception ->
             logger.error(exception) { "Failed to find FHIR ID on resource requested for reprocessing" }
             return ResponseEntity.internalServerError().build()

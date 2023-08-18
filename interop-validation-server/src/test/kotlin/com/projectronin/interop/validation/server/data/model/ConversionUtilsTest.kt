@@ -1,5 +1,8 @@
 package com.projectronin.interop.validation.server.data.model
 
+import com.projectronin.interop.common.jackson.JacksonUtil
+import com.projectronin.interop.fhir.r4.datatype.primitive.Id
+import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.validation.server.generated.models.IssueStatus
 import com.projectronin.interop.validation.server.generated.models.NewIssue
 import com.projectronin.interop.validation.server.generated.models.NewMetadata
@@ -69,7 +72,7 @@ class ConversionUtilsTest {
     }
 
     @Test
-    fun `can convert NewResource to ResourceDO`() {
+    fun `can convert NewResource to ResourceDO with null fhir ID`() {
         val resourceDO = newResource.toResourceDO()
 
         assertEquals(newResource.organizationId, resourceDO.organizationId)
@@ -77,6 +80,28 @@ class ConversionUtilsTest {
         assertEquals(newResource.resource, resourceDO.resource)
         assertEquals(ResourceStatus.REPORTED, resourceDO.status)
         assertEquals(newResource.createDtTm, resourceDO.createDateTime)
+        assertNull(resourceDO.updateDateTime)
+        assertNull(resourceDO.reprocessDateTime)
+        assertNull(resourceDO.reprocessedBy)
+        assertNull(resourceDO.clientFhirId)
+    }
+
+    @Test
+    fun `can convert NewResource to ResourceDO with non-null fhir ID`() {
+        val newResourceWithId = NewResource(
+            organizationId = "testorg",
+            resourceType = "Patient",
+            resource = JacksonUtil.writeJsonValue(Patient(Id("123"))),
+            issues = listOf(newIssue),
+            createDtTm = OffsetDateTime.now()
+        )
+        val resourceDO = newResourceWithId.toResourceDO()
+        assertEquals(newResourceWithId.organizationId, resourceDO.organizationId)
+        assertEquals(newResourceWithId.resourceType, resourceDO.resourceType)
+        assertEquals(newResourceWithId.resource, resourceDO.resource)
+        assertEquals(ResourceStatus.REPORTED, resourceDO.status)
+        assertEquals(newResourceWithId.createDtTm, resourceDO.createDateTime)
+        assertEquals("123", resourceDO.clientFhirId)
         assertNull(resourceDO.updateDateTime)
         assertNull(resourceDO.reprocessDateTime)
         assertNull(resourceDO.reprocessedBy)

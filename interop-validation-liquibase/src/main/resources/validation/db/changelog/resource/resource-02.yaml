@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: resource-add-resource-id
+      author: Sam Felt
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            - columnExists:
+                tableName: resource
+                columnName: client_fhir_id
+      changes:
+        - addColumn:
+            tableName: resource
+            columns:
+              - column:
+                  name: client_fhir_id
+                  type: java.sql.Types.VARCHAR(64)
+        - createIndex:
+            tableName: resource
+            columns:
+              - column:
+                  name: client_fhir_id
+              - column:
+                  name: organization_id
+              - column:
+                  name: resource_type
+              - column:
+                  name: status
+            indexName: idx_resource_lookup

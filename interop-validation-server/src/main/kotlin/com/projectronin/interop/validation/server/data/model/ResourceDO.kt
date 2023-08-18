@@ -20,4 +20,5 @@ interface ResourceDO : Entity<ResourceDO> {
     var updateDateTime: OffsetDateTime?
     var reprocessDateTime: OffsetDateTime?
     var reprocessedBy: String?
+    var clientFhirId: String?
 }

@@ -9,4 +9,3 @@ resource:
     update_dt_tm: "2022-08-08 13:06:00 +0000"
     reprocess_dt_tm: "2022-08-08 13:06:00 +0000"
     reprocessed_by: "User 1"
-    client_fhir_id: "Test"

@@ -69,14 +69,16 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MultipleResources.yaml"], cleanAfter = true)
     fun `getResources - no resources found for requested statuses`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.ADDRESSING), Order.ASC, 2, null, null, null, null)
+        val resources =
+            resourceDAO.getResources(listOf(ResourceStatus.ADDRESSING), Order.ASC, 2, null, null, null, null)
         assertEquals(0, resources.size)
     }
 
     @Test
     @DataSet(value = ["/dbunit/resource/MultipleResources.yaml"], cleanAfter = true)
     fun `getResources - ASC order honors create date time`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 100, null, null, null, null)
+        val resources =
+            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 100, null, null, null, null)
         assertEquals(4, resources.size)
 
         val resource1 = resources[0]
@@ -127,7 +129,8 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MatchingDateTimeResources.yaml"], cleanAfter = true)
     fun `getResources - ASC order honors id`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 100, null, null, null, null)
+        val resources =
+            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 100, null, null, null, null)
         assertEquals(2, resources.size)
 
         val resource1 = resources[0]
@@ -156,7 +159,8 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MultipleResources.yaml"], cleanAfter = true)
     fun `getResources - DESC order honors create date time`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.DESC, 100, null, null, null, null)
+        val resources =
+            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.DESC, 100, null, null, null, null)
         assertEquals(4, resources.size)
 
         val resource1 = resources[0]
@@ -207,7 +211,8 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MatchingDateTimeResources.yaml"], cleanAfter = true)
     fun `getResources - DESC order honors id`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.DESC, 100, null, null, null, null)
+        val resources =
+            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.DESC, 100, null, null, null, null)
         assertEquals(2, resources.size)
 
         val resource1 = resources[0]
@@ -401,7 +406,8 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/FilteringResources.yaml"], cleanAfter = true)
     fun `getResources - no resources found for requested organization`() {
-        val resources = resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 2, null, "unknown", null, null)
+        val resources =
+            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 2, null, "unknown", null, null)
         assertEquals(0, resources.size)
     }
 
@@ -428,7 +434,15 @@ class ResourceDAOTest {
     @DataSet(value = ["/dbunit/resource/FilteringResources.yaml"], cleanAfter = true)
     fun `getResources - no resources found for requested resource type`() {
         val resources =
-            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 2, null, null, "DocumentReference", null)
+            resourceDAO.getResources(
+                listOf(ResourceStatus.REPORTED),
+                Order.ASC,
+                2,
+                null,
+                null,
+                "DocumentReference",
+                null
+            )
         assertEquals(0, resources.size)
     }
 
@@ -474,7 +488,15 @@ class ResourceDAOTest {
     @DataSet(value = ["/dbunit/resource/DoubleResourceIssueType.yaml"], cleanAfter = true)
     fun `getResources - resources found for multiple requested issue type`() {
         val resources =
-            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 2, null, null, null, listOf("pat-1", "pat-2"))
+            resourceDAO.getResources(
+                listOf(ResourceStatus.REPORTED),
+                Order.ASC,
+                2,
+                null,
+                null,
+                null,
+                listOf("pat-1", "pat-2")
+            )
         assertEquals(1, resources.size)
 
         val resource1 = resources[0]
@@ -493,7 +515,15 @@ class ResourceDAOTest {
     @DataSet(value = ["/dbunit/resource/MultipleResourcesMultipleIssues.yaml"], cleanAfter = true)
     fun `getResources - multiple resources found with multiple issue types that were requested`() {
         val resources =
-            resourceDAO.getResources(listOf(ResourceStatus.REPORTED), Order.ASC, 8, null, null, null, listOf("pat-1", "pat-2"))
+            resourceDAO.getResources(
+                listOf(ResourceStatus.REPORTED),
+                Order.ASC,
+                8,
+                null,
+                null,
+                null,
+                listOf("pat-1", "pat-2")
+            )
         assertEquals(2, resources.size)
 
         val resource1 = resources[0]
@@ -521,7 +551,7 @@ class ResourceDAOTest {
 
     @Test
     @DataSet(value = ["/dbunit/resource/NoResources.yaml"], cleanAfter = true)
-    @ExpectedDataSet(value = ["/dbunit/resource/SingleResource.yaml"], ignoreCols = ["resource_id"])
+    @ExpectedDataSet(value = ["/dbunit/resource/SingleResourceWithoutFhirID.yaml"], ignoreCols = ["resource_id"])
     fun `insertResource - can insert`() {
         resourceDAO.insertResource(
             ResourceDO {
@@ -533,6 +563,25 @@ class ResourceDAOTest {
                 updateDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
                 reprocessDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
                 reprocessedBy = "User 1"
+            }
+        )
+    }
+
+    @Test
+    @DataSet(value = ["/dbunit/resource/NoResources.yaml"], cleanAfter = true)
+    @ExpectedDataSet(value = ["/dbunit/resource/SingleResource.yaml"], ignoreCols = ["resource_id"])
+    fun `insertResource - can insert with fhirID`() {
+        resourceDAO.insertResource(
+            ResourceDO {
+                organizationId = "testorg"
+                resourceType = "Patient"
+                resource = "the patient resource"
+                status = ResourceStatus.REPROCESSED
+                createDateTime = OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+                updateDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
+                reprocessDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
+                reprocessedBy = "User 1"
+                clientFhirId = "Test"
             }
         )
     }

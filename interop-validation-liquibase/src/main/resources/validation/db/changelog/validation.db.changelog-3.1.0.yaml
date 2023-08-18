@@ -1,0 +1,3 @@
+databaseChangeLog:
+  - include:
+      file: validation/db/changelog/resource/resource-02.yaml
