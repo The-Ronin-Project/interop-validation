@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: resource-edit-fhir-id
+      author: Sam Felt
+      changes:
+        -  modifyDataType:
+             columnName:  client_fhir_id
+             newDataType: java.sql.Types.VARCHAR(255)
+             tableName:  resource
