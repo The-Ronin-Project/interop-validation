@@ -20,7 +20,7 @@ logstash = "7.3"
 mockk = "1.13.7"
 mockwebserver = "4.11.0"
 mysql = "8.0.33"
-openapi-generator = "6.6.0"
+openapi-generator = "7.0.0"
 ronin-kafka = "1.0.0"
 # @pin until JDK 17
 spring-boot = "2.7.13"
