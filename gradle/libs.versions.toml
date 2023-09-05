@@ -1,6 +1,6 @@
 [versions]
 apache-kafka = "3.5.1"
-dbrider = "1.39.0"
+dbrider = "1.40.0"
 idea-ext = "1.1.7"
 interop-common = "3.11.0"
 interop-event-resource-internal = "1.1.0"
@@ -12,7 +12,7 @@ jackson = "2.15.2"
 # @pin until Spring Boot 3
 jakarta = "2.0.2"
 kotlin-logging = "3.0.5"
-ktor = "2.3.3"
+ktor = "2.3.4"
 ktorm = "3.6.0"
 liquibase = "4.23.1"
 # @pin until Spring 6
