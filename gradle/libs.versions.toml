@@ -21,12 +21,12 @@ mockk = "1.13.7"
 mockwebserver = "4.11.0"
 mysql = "8.0.33"
 openapi-generator = "7.0.0"
-ronin-kafka = "1.0.0"
+ronin-kafka = "1.1.0"
 # @pin until JDK 17
 spring-boot = "2.7.13"
 springdoc = "1.7.0"
 testcontainers = "1.19.0"
-uuid-creator = "5.3.2"
+uuid-creator = "5.3.3"
 
 [libraries]
 event-interop-resource-internal = { module = "com.projectronin.contract.event:event-interop-resource-internal", version.ref = "interop-event-resource-internal" }
