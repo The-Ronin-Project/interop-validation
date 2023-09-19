@@ -50,6 +50,7 @@ dependencies {
     itImplementation(libs.interop.kafka)
     itImplementation(libs.event.interop.resource.request)
     itImplementation(libs.ronin.kafka)
+    itImplementation(libs.interop.kafka.testing.client)
     itImplementation(libs.kafka.clients)
     itImplementation(libs.ktor.client.core)
     itImplementation(platform(libs.testcontainers.bom))

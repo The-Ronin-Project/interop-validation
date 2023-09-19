@@ -7,7 +7,7 @@ interop-event-resource-internal = "1.1.0"
 interop-event-resource-request = "1.1.0"
 interop-fhir = "8.9.1"
 interop-gradle = "3.2.0"
-interop-kafka = "8.4.0"
+interop-kafka = "8.4.1"
 jackson = "2.15.2"
 # @pin until Spring Boot 3
 jakarta = "2.0.2"
@@ -38,6 +38,7 @@ interop-commonKtorm = { module = "com.projectronin.interop:interop-common-ktorm"
 interop-commonTestDb = { module = "com.projectronin.interop:interop-common-test-db", version.ref = "interop-common" }
 interop-fhir = { module = "com.projectronin.interop.fhir:interop-fhir", version.ref = "interop-fhir" }
 interop-kafka = { module = "com.projectronin.interop.publish:interop-kafka", version.ref = "interop-kafka" }
+interop-kafka-testing-client = { module = "com.projectronin.interop.publish:interop-kafka-testing-client", version.ref = "interop-kafka" }
 jackson-dataformat-xml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml", version.ref = "jackson" }
 jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
 jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
