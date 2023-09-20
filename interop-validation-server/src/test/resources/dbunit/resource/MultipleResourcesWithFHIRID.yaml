@@ -1,0 +1,33 @@
+resource:
+  - resource_id: "X3gcMALzTwatz3BVvLxXcA=="
+    # UUID: 5f781c30-02f3-4f06-adcf-7055bcbc5770
+    organization_id: "testorg"
+    resource_type: "Patient"
+    resource: "the patient resource"
+    status: "REPORTED"
+    create_dt_tm: "2022-08-01 11:18:00 +0000"
+    client_fhir_id: "9eec9890-b926-4feb-82d9-daf5a4d3140c"
+  - resource_id: "Tg8mHz3UQa2QZpczxBmTpw=="
+    # UUID: 4e0f261f-3dd4-41ad-9066-9733c41993a7
+    organization_id: "testorg"
+    resource_type: "Appointment"
+    resource: "the appointment resource"
+    status: "REPORTED"
+    create_dt_tm: "2022-08-02 11:18:00 +0000"
+    client_fhir_id: "9eec9890-b926-4feb-82d9-daf5a4d3140c" # same as above, but different type
+  - resource_id: "lpHVUJD1T7iD+eSjhA436w=="
+    # UUID: 9691d550-90f5-4fb8-83f9-e4a3840e37eb
+    organization_id: "testorg"
+    resource_type: "Patient"
+    resource: "the same patient resource"
+    status: "REPORTED"
+    create_dt_tm: "2022-08-03 11:18:00 +0000"
+    client_fhir_id: "9eec9890-b926-4feb-82d9-daf5a4d3140c" # same as first
+  - resource_id: "ugLSEbQqQ++gut4tbluEKQ=="
+    # UUID: ba02d211-b42a-43ef-a0ba-de2d6e5b8429
+    organization_id: "testorg"
+    resource_type: "Patient"
+    resource: "another patient resource"
+    status: "REPORTED"
+    create_dt_tm: "2022-08-04 11:18:00 +0000"
+    client_fhir_id: "690778ca-c6c2-4201-918b-8a6f40588a50"

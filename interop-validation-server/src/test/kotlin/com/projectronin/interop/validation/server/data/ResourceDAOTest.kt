@@ -75,6 +75,14 @@ class ResourceDAOTest {
     }
 
     @Test
+    @DataSet(value = ["/dbunit/resource/MultipleResourcesWithFHIRID.yaml"], cleanAfter = true)
+    fun `getResourcesByFHIRID - works`() {
+        val resources =
+            resourceDAO.getResourcesByFHIRID(listOf(ResourceStatus.REPORTED), "9eec9890-b926-4feb-82d9-daf5a4d3140c", "testorg", "Patient")
+        assertEquals(2, resources.size)
+    }
+
+    @Test
     @DataSet(value = ["/dbunit/resource/MultipleResources.yaml"], cleanAfter = true)
     fun `getResources - ASC order honors create date time`() {
         val resources =

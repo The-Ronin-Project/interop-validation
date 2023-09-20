@@ -56,6 +56,27 @@ class ResourceDAO(private val database: Database) {
     }
 
     /**
+     * Retrieves the [ResourceDO]s for [fhirID] with any status in [statuses].
+     */
+    fun getResourcesByFHIRID(
+        statuses: List<ResourceStatus>,
+        fhirID: String,
+        tenantID: String,
+        resourceType: String
+    ): List<ResourceDO> {
+        logger.info { "Looking up resources for FHIR ID: $fhirID" }
+
+        return database.from(ResourceDOs).select()
+            .where {
+                (ResourceDOs.status inList statuses) and
+                    (ResourceDOs.clientFhirId eq fhirID) and
+                    (ResourceDOs.organizationId eq tenantID) and
+                    (ResourceDOs.resourceType eq resourceType)
+            }
+            .map { ResourceDOs.createEntity(it) }
+    }
+
+    /**
      * Retrieves [limit] number of [ResourceDO]s with the [statuses] in the requested [order].
      * If an [after] is provided, the resources returned will all be considered logically after it based on the [order].
      */

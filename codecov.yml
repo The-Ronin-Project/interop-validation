@@ -20,10 +20,14 @@ coverage:
         target: 80
         threshold: 1%
         base: auto
+        flags:
+          - validation-client
       validation-server:
         target: 80
         threshold: 1%
         base: auto
+        flags:
+          - validation-server
 
 comment:
   layout: "reach, diff, flags, files"
