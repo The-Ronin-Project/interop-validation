@@ -39,7 +39,7 @@ object KafkaClient {
     private val mutex = Mutex()
     private val logger = KotlinLogging.logger { }
 
-    private val config = KafkaConfig(
+    val config = KafkaConfig(
         cloud = KafkaCloudConfig(
             vendor = "oci",
             region = "us-phoenix-1"
@@ -55,7 +55,7 @@ object KafkaClient {
             )
         )
     )
-    private val testingClient = KafkaTestingClient("localhost:9092", config)
+    val testingClient = KafkaTestingClient("localhost:9092", config)
     private val adminClient = testingClient.adminClient
 
     private var job: Job? = null

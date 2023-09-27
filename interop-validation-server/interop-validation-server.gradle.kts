@@ -10,9 +10,11 @@ dependencies {
     implementation(libs.springdoc.openapi.ui)
 
     implementation(libs.interop.commonJackson)
+    implementation(libs.ehr.data.authority.models)
     implementation(libs.interop.commonKtorm)
     implementation(libs.interop.fhir)
     implementation(libs.interop.kafka)
+    implementation(libs.ronin.kafka)
     implementation(libs.event.interop.resource.internal)
     implementation(libs.event.interop.resource.request)
 
@@ -43,8 +45,9 @@ dependencies {
     testImplementation(libs.rider.core)
 
     testRuntimeOnly("org.testcontainers:mysql")
-
+    itImplementation(libs.common.fhir.r4.models)
     itImplementation(project(":interop-validation-client"))
+    itImplementation(libs.ehr.data.authority.models)
     itImplementation(libs.interop.commonHttp)
     itImplementation(libs.interop.fhir)
     itImplementation(libs.interop.kafka)

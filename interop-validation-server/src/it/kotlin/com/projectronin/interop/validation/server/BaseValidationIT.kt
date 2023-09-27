@@ -25,7 +25,7 @@ import java.util.UUID
 abstract class BaseValidationIT {
     companion object {
         val docker =
-            DockerComposeContainer(File(ResourceIT::class.java.getResource("docker-compose.yaml")!!.file))
+            DockerComposeContainer(File(ResourceIT::class.java.getResource("docker-compose-it.yaml")!!.file))
                 .waitingFor("validation-server", Wait.forLogMessage(".*Started ValidationServerKt.*", 1))
                 .start()
     }

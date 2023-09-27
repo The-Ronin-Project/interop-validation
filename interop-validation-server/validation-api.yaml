@@ -336,6 +336,7 @@ components:
         - IGNORED
         - ADDRESSING
         - REPROCESSED
+        - CORRECTED
       description: The status of the resource
     UpdatableResourceStatus:
       type: string
