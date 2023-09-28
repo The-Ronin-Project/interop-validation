@@ -19,10 +19,12 @@ class EHRDAListener(
     private val resourceDAO: ResourceDAO
 ) {
     val logger = KotlinLogging.logger { }
-    val typeMap = topics.associate { topic ->
-        "ronin.ehr-data-authority.${getResourceName(topic.topicName)}.${KafkaAction.CREATE.type}" to topic.resourceClass
-        "ronin.ehr-data-authority.${getResourceName(topic.topicName)}.${KafkaAction.UPDATE.type}" to topic.resourceClass
-    }
+    val typeMap = topics.flatMap { topic ->
+        listOf(
+            "ronin.ehr-data-authority.${getResourceName(topic.topicName)}.${KafkaAction.CREATE.type}" to topic.resourceClass,
+            "ronin.ehr-data-authority.${getResourceName(topic.topicName)}.${KafkaAction.UPDATE.type}" to topic.resourceClass
+        )
+    }.toMap()
 
     @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MILLISECONDS) // Basically run constantly.
     fun poll() {

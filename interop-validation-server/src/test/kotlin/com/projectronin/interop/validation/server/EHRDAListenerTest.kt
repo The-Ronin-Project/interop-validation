@@ -7,6 +7,7 @@ import com.projectronin.interop.validation.server.data.ResourceDAO
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -42,5 +43,11 @@ internal class EHRDAListenerTest {
         every { resourceDAO.updateResource(any(), any()) } returns mockk()
         listener.poll()
         verify { resourceDAO.updateResource(any(), any()) }
+    }
+
+    @Test
+    fun `type map works`() {
+        Assertions.assertEquals(listener.typeMap["ronin.ehr-data-authority.patient.create"], Patient::class)
+        Assertions.assertEquals(listener.typeMap["ronin.ehr-data-authority.patient.update"], Patient::class)
     }
 }
