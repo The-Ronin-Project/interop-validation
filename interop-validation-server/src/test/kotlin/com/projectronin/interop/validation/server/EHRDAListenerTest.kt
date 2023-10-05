@@ -7,8 +7,10 @@ import com.projectronin.interop.validation.server.data.ResourceDAO
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.apache.kafka.common.errors.InterruptException
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.util.UUID
 
 internal class EHRDAListenerTest {
@@ -43,6 +45,31 @@ internal class EHRDAListenerTest {
         every { resourceDAO.updateResource(any(), any()) } returns mockk()
         listener.poll()
         verify { resourceDAO.updateResource(any(), any()) }
+    }
+
+    @Test
+    fun `interrupted poll does not throw exception`() {
+        every {
+            kafkaClient.retrieveMultiTopicEvents(
+                any(),
+                any(),
+                any(),
+                any()
+            )
+        } throws InterruptException("Interrupted")
+
+        listener.poll()
+
+        verify { kafkaClient.retrieveMultiTopicEvents(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `other exceptions are thrown`() {
+        every { kafkaClient.retrieveMultiTopicEvents(any(), any(), any(), any()) } throws RuntimeException()
+
+        assertThrows<RuntimeException> { listener.poll() }
+
+        verify { kafkaClient.retrieveMultiTopicEvents(any(), any(), any(), any()) }
     }
 
     @Test

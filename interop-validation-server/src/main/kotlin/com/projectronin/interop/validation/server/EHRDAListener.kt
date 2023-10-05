@@ -7,6 +7,7 @@ import com.projectronin.interop.kafka.model.KafkaAction
 import com.projectronin.interop.validation.server.data.ResourceDAO
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
 import mu.KotlinLogging
+import org.apache.kafka.common.errors.InterruptException
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.Duration
@@ -28,23 +29,31 @@ class EHRDAListener(
 
     @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MILLISECONDS) // Basically run constantly.
     fun poll() {
-        kafkaClient.retrieveMultiTopicEvents(
-            topics,
-            typeMap,
-            "interop-validation-server_group",
-            Duration.ofMillis(5)
-        ).map { it.data as Resource<*> }.forEach { resource ->
-            val fhirID = resource.findFhirId()!!
-            val tenantID = resource.findTenantId()!!
-            resourceDAO.getResourcesByFHIRID(
-                listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
-                fhirID,
-                tenantID,
-                resource.resourceType
-            ).forEach { validationResource ->
-                resourceDAO.updateResource(validationResource.id) {
-                    it.status = ResourceStatus.CORRECTED
+        // Catch logic can be removed if https://github.com/spring-projects/spring-framework/issues/26482 is fixed
+        runCatching {
+            kafkaClient.retrieveMultiTopicEvents(
+                topics,
+                typeMap,
+                "interop-validation-server_group",
+                Duration.ofMillis(5)
+            ).map { it.data as Resource<*> }.forEach { resource ->
+                val fhirID = resource.findFhirId()!!
+                val tenantID = resource.findTenantId()!!
+                resourceDAO.getResourcesByFHIRID(
+                    listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
+                    fhirID,
+                    tenantID,
+                    resource.resourceType
+                ).forEach { validationResource ->
+                    resourceDAO.updateResource(validationResource.id) {
+                        it.status = ResourceStatus.CORRECTED
+                    }
                 }
+            }
+        }.exceptionOrNull()?.let {
+            when (it) {
+                is InterruptException -> null
+                else -> throw it
             }
         }
     }
