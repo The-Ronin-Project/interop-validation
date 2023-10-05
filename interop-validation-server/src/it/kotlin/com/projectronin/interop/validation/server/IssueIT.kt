@@ -82,8 +82,8 @@ class IssueIT : BaseValidationIT() {
     private val failedIssueWithOutMeta = NewIssue(
         severity = ClientSeverity.FAILED,
         type = "PAT_001",
-        description = "No names",
-        location = "Patient.name"
+        description = "No DOB",
+        location = "Patient.birthDate"
     )
 
     private val resource1 = NewResource(

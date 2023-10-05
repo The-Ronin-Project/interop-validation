@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: resource-add-repeat-count-last-seen
+      author: Jiahan Deng
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            - columnExists:
+                tableName: resource
+                columnName: repeat_count
+            - columnExists:
+                tableName: resource
+                columnName: last_seen_dt_tm
+      changes:
+        - addColumn:
+            tableName: resource
+            columns:
+              - column:
+                  name: repeat_count
+                  type: integer
+                  constraints:
+                    nullable: true
+              - column:
+                  name: last_seen_dt_tm
+                  type: DATETIME(6)
+                  constraints:
+                    nullable: true

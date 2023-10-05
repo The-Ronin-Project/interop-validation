@@ -669,4 +669,28 @@ class ResourceDAOTest {
         }
         assertNull(resource)
     }
+
+    @Test
+    @DataSet(value = ["/dbunit/resource/InitialResource.yaml"], cleanAfter = true)
+    @ExpectedDataSet(value = ["/dbunit/resource/UpdatedResourceRepeats.yaml"])
+    fun `updateResource with repeats`() {
+        val resourceId = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
+        val resource = resourceDAO.updateResource(resourceId) {
+            it.repeatCount = 3
+            it.lastSeenDateTime = OffsetDateTime.of(2023, 9, 26, 12, 5, 0, 0, ZoneOffset.UTC)
+            it.updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+        }
+
+        resource!!
+        assertEquals(resourceId, resource.id)
+        assertEquals("Patient", resource.resourceType)
+        assertEquals("the patient resource", resource.resource)
+        assertEquals(ResourceStatus.REPORTED, resource.status)
+        assertEquals(OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC), resource.createDateTime)
+        assertEquals(OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC), resource.updateDateTime)
+        assertEquals(3, resource.repeatCount)
+        assertEquals(OffsetDateTime.of(2023, 9, 26, 12, 5, 0, 0, ZoneOffset.UTC), resource.lastSeenDateTime)
+        assertNull(resource.reprocessDateTime)
+        assertNull(resource.reprocessedBy)
+    }
 }

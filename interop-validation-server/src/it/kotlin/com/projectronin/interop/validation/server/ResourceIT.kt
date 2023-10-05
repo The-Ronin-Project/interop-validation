@@ -19,6 +19,7 @@ import com.projectronin.interop.validation.server.data.binding.ResourceDOs
 import com.projectronin.interop.validation.server.testclients.KafkaClient
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -50,6 +51,12 @@ class ResourceIT : BaseValidationIT() {
         type = "PAT_002",
         description = "No names",
         location = "Patient.name"
+    )
+    private val failedIssue3 = NewIssue(
+        severity = Severity.FAILED,
+        type = "PAT_001",
+        description = "No DOB",
+        location = "Patient.birthDate"
     )
     private val warningIssue = NewIssue(
         severity = Severity.WARNING,
@@ -93,6 +100,12 @@ class ResourceIT : BaseValidationIT() {
         resourceType = "Patient",
         resource = objectMapper.writeValueAsString(patient),
         issues = listOf(failedIssue, failedIssue2)
+    )
+    private val newFailedResource4 = NewResource(
+        organizationId = "ronin",
+        resourceType = "Patient",
+        resource = objectMapper.writeValueAsString(patient),
+        issues = listOf(failedIssue3)
     )
     private val newWarningResource = NewResource(
         organizationId = "ronin",
@@ -201,7 +214,7 @@ class ResourceIT : BaseValidationIT() {
     @Test
     fun `getResources returns multiple resources with requested issue types`() {
         val resource1Id = addResource(newFailedResource)
-        val resource2Id = addResource(newFailedResource)
+        val resource2Id = addResource(newFailedResource4)
         val reportedResources = runBlocking {
             resourceClient.getResources(
                 status = listOf(ResourceStatus.REPORTED),
@@ -607,5 +620,42 @@ class ResourceIT : BaseValidationIT() {
         assertNull(flowOptions.normalizationRegistryMinimumTime)
 
         KafkaClient.reset()
+    }
+
+    @Test
+    fun `add resources when issues exist - updates instead`() {
+        val newResourceId = addResource(newFailedResource)
+        val newResourceId2 = addResource(newFailedResource)
+        val postAddResource = runBlocking { resourceClient.getResourceById(newResourceId) }
+        assertEquals(newResourceId, newResourceId2)
+        assertEquals(postAddResource.repeatCount, 1)
+        runBlocking { resourceClient.addResource(newFailedResource) }
+        val postAddResource2 = runBlocking { resourceClient.getResourceById(newResourceId) }
+        assertEquals(postAddResource2.repeatCount, 2)
+    }
+
+    @Test
+    fun `add resources when different issues exist - adds`() {
+        val newResourceId = addResource(newFailedResource)
+        val newResourceId2 = addResource(newFailedResource2)
+        val postAddResource1 = runBlocking { resourceClient.getResourceById(newResourceId) }
+        val postAddResource2 = runBlocking { resourceClient.getResourceById(newResourceId2) }
+        assertNotEquals(postAddResource1.id, postAddResource2.id)
+        assertEquals(postAddResource2.repeatCount, null)
+        assertEquals(postAddResource1.repeatCount, null)
+    }
+
+    @Test
+    fun `add resource works for add and updates when same resource, multiple different sets of issues`() {
+        val newResourceId3 = addResource(newFailedResource3)
+        val newResourceId4 = addResource(newFailedResource4)
+        val postAddResource3 = runBlocking { resourceClient.getResourceById(newResourceId3) }
+        val postAddResource4 = runBlocking { resourceClient.getResourceById(newResourceId4) }
+
+        val newResourceId5 = addResource(newFailedResource3)
+        val postAddResource5 = runBlocking { resourceClient.getResourceById(newResourceId3) }
+        assertNotEquals(postAddResource3, postAddResource4)
+        assertEquals(newResourceId3, newResourceId5)
+        assertEquals(postAddResource5.repeatCount, 1)
     }
 }

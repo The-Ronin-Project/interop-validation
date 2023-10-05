@@ -15,6 +15,7 @@ import com.projectronin.interop.validation.server.data.model.toMetadataDO
 import com.projectronin.interop.validation.server.data.model.toResourceDO
 import com.projectronin.interop.validation.server.generated.apis.ResourceApi
 import com.projectronin.interop.validation.server.generated.models.GeneratedId
+import com.projectronin.interop.validation.server.generated.models.IssueStatus
 import com.projectronin.interop.validation.server.generated.models.NewComment
 import com.projectronin.interop.validation.server.generated.models.NewResource
 import com.projectronin.interop.validation.server.generated.models.Order
@@ -78,16 +79,50 @@ class ResourceController(
     @PreAuthorize("hasAuthority('SCOPE_create:resources')")
     @Transactional
     override fun addResource(newResource: NewResource): ResponseEntity<GeneratedId> {
-        val resourceUUID = resourceDAO.insertResource(newResource.toResourceDO())
+        val resource = newResource.toResourceDO()
 
-        newResource.issues.forEach { issue ->
-            val newIssueId = issueDAO.insertIssue(issue.toIssueDO(resourceUUID))
-            issue.metadata?.forEach { metadata ->
-                issueDAO.insertMetadata(metadata.toMetadataDO(newIssueId))
-            }
+        /** deduplication logic: getting all resources in the validation database that matches the fhir id of the resource **/
+        val resourceList = resource.clientFhirId?.let {
+            resourceDAO.getResourcesByFHIRID(
+                listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
+                it,
+                resource.organizationId,
+                resource.resourceType
+            )
         }
-
-        return ResponseEntity.ok(GeneratedId(resourceUUID))
+        /** if no resources are returned, add a new resource (and its attached issues and metadata) **/
+        if (resourceList.isNullOrEmpty()) {
+            return addNewResource(newResource)
+        } else {
+            /** get a list of pairs of type and location values for each issue that came in on the resource **/
+            val matchOn = newResource.issues.map { Pair(it.type, it.location) }.toSet()
+            /**
+             * for each resource returned from the resource database, get list of all issues for that resource from the
+             * issue database, check if any of the new issues from the resource we are trying to insert match on the
+             * issue type and issue location of any existing issues from the issue database
+             **/
+            resourceList.forEach { existingResource ->
+                val existingIssues = issueDAO.getIssues(existingResource.id, listOf(IssueStatus.REPORTED, IssueStatus.ADDRESSING), Order.ASC, 200, null)
+                val existingMatchOn = existingIssues.map { Pair(it.type, it.location) }.toSet()
+                /**
+                 * must match on all the new issues from the new resource to be considered a duplicate resource, if it
+                 * is a duplicate, update the resource with repeat count, last seen, and update date time information
+                 **/
+                if (existingMatchOn.containsAll(matchOn)) {
+                    val repeat = existingResource.repeatCount ?: 0
+                    val updatedResource = resourceDAO.updateResource(existingResource.id) {
+                        it.repeatCount = repeat + 1
+                        it.lastSeenDateTime = OffsetDateTime.now(ZoneOffset.UTC)
+                        it.updateDateTime = OffsetDateTime.now(ZoneOffset.UTC)
+                    }
+                    val responseResource = updatedResource?.let { createResource(updatedResource) }
+                    return responseResource?.let { ResponseEntity.ok(GeneratedId(responseResource.id)) } ?: ResponseEntity.internalServerError()
+                        .build()
+                }
+            }
+            /** if nothing matched exactly in the list of existing issues, add the new resource and its issues and metadata **/
+            return addNewResource(newResource)
+        }
     }
 
     @PreAuthorize("hasAuthority('SCOPE_update:resources')")
@@ -196,7 +231,21 @@ class ResourceController(
             createDtTm = resourceDO.createDateTime,
             updateDtTm = resourceDO.updateDateTime,
             reprocessDtTm = resourceDO.reprocessDateTime,
-            reprocessedBy = resourceDO.reprocessedBy
+            reprocessedBy = resourceDO.reprocessedBy,
+            repeatCount = resourceDO.repeatCount,
+            lastSeenDtTm = resourceDO.lastSeenDateTime
         )
+    }
+
+    private fun addNewResource(newResource: NewResource): ResponseEntity<GeneratedId> {
+        val resourceUUID = resourceDAO.insertResource(newResource.toResourceDO())
+
+        newResource.issues.forEach { issue ->
+            val newIssueId = issueDAO.insertIssue(issue.toIssueDO(resourceUUID))
+            issue.metadata?.forEach { metadata ->
+                issueDAO.insertMetadata(metadata.toMetadataDO(newIssueId))
+            }
+        }
+        return ResponseEntity.ok(GeneratedId(resourceUUID))
     }
 }

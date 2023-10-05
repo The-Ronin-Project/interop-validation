@@ -157,6 +157,8 @@ class ResourceDAO(private val database: Database) {
             set(it.reprocessDateTime, resourceDO.reprocessDateTime)
             set(it.reprocessedBy, resourceDO.reprocessedBy)
             set(it.clientFhirId, resourceDO.clientFhirId)
+            set(it.repeatCount, resourceDO.repeatCount)
+            set(it.lastSeenDateTime, resourceDO.lastSeenDateTime)
         }
 
         logger.info { "Resource $newUUID inserted" }

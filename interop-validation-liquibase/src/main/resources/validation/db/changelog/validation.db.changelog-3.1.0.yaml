@@ -3,3 +3,5 @@ databaseChangeLog:
       file: validation/db/changelog/resource/resource-02.yaml
   - include:
       file: validation/db/changelog/resource/resource-03.yaml
+  - include:
+      file: validation/db/changelog/resource/resource-04.yaml

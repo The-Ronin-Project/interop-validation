@@ -21,4 +21,6 @@ interface ResourceDO : Entity<ResourceDO> {
     var reprocessDateTime: OffsetDateTime?
     var reprocessedBy: String?
     var clientFhirId: String?
+    var repeatCount: Int?
+    var lastSeenDateTime: OffsetDateTime?
 }

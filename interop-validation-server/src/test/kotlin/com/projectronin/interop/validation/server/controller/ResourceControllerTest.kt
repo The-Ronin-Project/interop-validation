@@ -16,6 +16,7 @@ import com.projectronin.interop.validation.server.data.model.ResourceDO
 import com.projectronin.interop.validation.server.data.model.toIssueDO
 import com.projectronin.interop.validation.server.data.model.toMetadataDO
 import com.projectronin.interop.validation.server.data.model.toResourceDO
+import com.projectronin.interop.validation.server.generated.models.IssueStatus
 import com.projectronin.interop.validation.server.generated.models.NewIssue
 import com.projectronin.interop.validation.server.generated.models.NewMetadata
 import com.projectronin.interop.validation.server.generated.models.NewResource
@@ -31,6 +32,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -734,9 +736,18 @@ class ResourceControllerTest {
         val resourceUUID = UUID.randomUUID()
         val issue1UUID = UUID.randomUUID()
         val issue2UUID = UUID.randomUUID()
+        val resource = newResource.toResourceDO()
+        every {
+            resourceDAO.getResourcesByFHIRID(
+                listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
+                resource.clientFhirId!!,
+                resource.organizationId,
+                resource.resourceType
+            )
+        } returns listOf()
 
         every {
-            resourceDAO.insertResource(newResource.toResourceDO())
+            resourceDAO.insertResource(resource)
         } returns resourceUUID
 
         every {
@@ -756,6 +767,15 @@ class ResourceControllerTest {
 
     @Test
     fun `insertResource - handles error inserting resource`() {
+        val resource = newResource.toResourceDO()
+        every {
+            resourceDAO.getResourcesByFHIRID(
+                listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
+                resource.clientFhirId!!,
+                resource.organizationId,
+                resource.resourceType
+            )
+        } returns listOf()
         every {
             resourceDAO.insertResource(newResource.toResourceDO())
         } throws IllegalStateException("Bad insert")
@@ -768,9 +788,18 @@ class ResourceControllerTest {
     @Test
     fun `insertResource - handles error inserting issue`() {
         val resourceUUID = UUID.randomUUID()
+        val resource = newResource.toResourceDO()
+        every {
+            resourceDAO.getResourcesByFHIRID(
+                listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
+                resource.clientFhirId!!,
+                resource.organizationId,
+                resource.resourceType
+            )
+        } returns listOf()
 
         every {
-            resourceDAO.insertResource(newResource.toResourceDO())
+            resourceDAO.insertResource(resource)
         } returns resourceUUID
 
         every {
@@ -846,6 +875,8 @@ class ResourceControllerTest {
             status = ResourceStatus.ADDRESSING
             createDateTime = resource2CreateDtTm
             updateDateTime = resource2UpdateDtTm
+            repeatCount = 3
+            lastSeenDateTime = resource2UpdateDtTm
         }
         every { resourceDAO.updateResource(resourceId, captureLambda()) } returns resourceDO
         every { issueDAO.getIssueSeveritiesForResources(listOf(resourceId)) } returns mapOf(
@@ -865,6 +896,7 @@ class ResourceControllerTest {
         assertEquals(resource2CreateDtTm, resource.createDtTm)
         assertEquals(resource2UpdateDtTm, resource.updateDtTm)
         assertEquals(Severity.FAILED, resource.severity)
+        assertEquals(resource2UpdateDtTm, resource.lastSeenDtTm)
     }
 
     @Test
@@ -1219,5 +1251,198 @@ class ResourceControllerTest {
 
         verify(exactly = 1) { commentDAO.insertResourceComment(any(), resourcUUId) }
         verify(exactly = 1) { resourceDAO.updateResource(resourcUUId, any()) }
+    }
+
+    @Test
+    fun `insertResource - turns into update for duplicate resource`() {
+        val resource = newResource.toResourceDO()
+        val issue1 = newIssue1.toIssueDO(resource1Id)
+        val issue2 = newIssue2.toIssueDO(resource1Id)
+        every {
+            resourceDAO.getResourcesByFHIRID(
+                listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
+                resource.clientFhirId!!,
+                resource.organizationId,
+                resource.resourceType
+            )
+        } returns listOf(resourceDO1)
+
+        every { issueDAO.getIssueSeveritiesForResources(listOf(resource1Id)) } returns mapOf(
+            resource1Id to setOf(
+                Severity.WARNING,
+                Severity.FAILED
+            )
+        )
+
+        every {
+            issueDAO.getIssues(resource1Id, listOf(IssueStatus.REPORTED, IssueStatus.ADDRESSING), Order.ASC, 200, null)
+        } returns listOf(issue1, issue2)
+
+        every { resourceDAO.getResource(resource1Id) } returns mockk {
+            every { status } returns ResourceStatus.REPORTED
+        }
+
+        every { resourceDAO.updateResource(resource1Id, captureLambda()) } returns resourceDO1
+
+        val response = controller.addResource(newResource)
+        val generatedId = response.body!!
+
+        assertEquals(HttpStatus.OK, response.statusCode)
+        assertEquals(resource1Id, generatedId.id)
+    }
+
+    @Test
+    fun `insert resource for multiple resources with different issues`() {
+        val newResource1 = NewResource(
+            organizationId = "testorg",
+            resourceType = "Patient",
+            resource = JacksonUtil.writeJsonValue(Patient(id = Id("123"))),
+            issues = listOf(newIssue1),
+            createDtTm = OffsetDateTime.now()
+        )
+        val newResource2 = NewResource(
+            organizationId = "testorg",
+            resourceType = "Patient",
+            resource = JacksonUtil.writeJsonValue(Patient(id = Id("123"))),
+            issues = listOf(newIssue1, newIssue2),
+            createDtTm = OffsetDateTime.now()
+        )
+        val resource1 = newResource1.toResourceDO()
+        val issue1 = newIssue1.toIssueDO(resource1Id)
+        val issue2 = newIssue2.toIssueDO(resource3Id)
+        every {
+            resourceDAO.getResourcesByFHIRID(
+                listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
+                resource1.clientFhirId!!,
+                resource1.organizationId,
+                resource1.resourceType
+            )
+        } returns listOf(resourceDO1, resourceDO3)
+
+        every { issueDAO.getIssueSeveritiesForResources(listOf(resource1Id)) } returns mapOf(
+            resource1Id to setOf(
+                Severity.FAILED
+            )
+        )
+        every { issueDAO.getIssueSeveritiesForResources(listOf(resource3Id)) } returns mapOf(
+            resource3Id to setOf(
+                Severity.WARNING
+            )
+        )
+        every { resourceDAO.getResource(resource1Id) } returns mockk {
+            every { status } returns ResourceStatus.REPORTED
+        }
+        every { resourceDAO.getResource(resource3Id) } returns mockk {
+            every { status } returns ResourceStatus.REPORTED
+        }
+        every {
+            issueDAO.getIssues(resource1Id, listOf(IssueStatus.REPORTED, IssueStatus.ADDRESSING), Order.ASC, 200, null)
+        } returns listOf(issue1)
+        every {
+            issueDAO.getIssues(resource3Id, listOf(IssueStatus.REPORTED, IssueStatus.ADDRESSING), Order.ASC, 200, null)
+        } returns listOf(issue2)
+        val resourceUUID = UUID.randomUUID()
+        val issue1UUID = UUID.randomUUID()
+        val issue3UUID = UUID.randomUUID()
+        every {
+            resourceDAO.insertResource(newResource2.toResourceDO())
+        } returns resourceUUID
+
+        every {
+            issueDAO.insertIssue(newIssue1.toIssueDO(resourceUUID))
+        } returns issue1UUID
+
+        every {
+            issueDAO.insertIssue(newIssue2.toIssueDO(resourceUUID))
+        } returns issue3UUID
+
+        val response = controller.addResource(newResource2)
+        val generatedId = response.body!!
+
+        assertEquals(HttpStatus.OK, response.statusCode)
+        assertNotEquals(resource1Id, generatedId.id)
+        assertEquals(resourceUUID, generatedId.id)
+    }
+
+    @Test
+    fun `de-duplication update fails`() {
+        val resource = newResource.toResourceDO()
+        val issue1 = newIssue1.toIssueDO(resource1Id)
+        val issue2 = newIssue2.toIssueDO(resource1Id)
+        every {
+            resourceDAO.getResourcesByFHIRID(
+                listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
+                resource.clientFhirId!!,
+                resource.organizationId,
+                resource.resourceType
+            )
+        } returns listOf(resourceDO1)
+
+        every { issueDAO.getIssueSeveritiesForResources(listOf(resource1Id)) } returns mapOf(
+            resource1Id to setOf(
+                Severity.WARNING,
+                Severity.FAILED
+            )
+        )
+        every {
+            issueDAO.getIssues(resource1Id, listOf(IssueStatus.REPORTED, IssueStatus.ADDRESSING), Order.ASC, 200, null)
+        } returns listOf(issue1, issue2)
+
+        every { resourceDAO.getResource(resource1Id) } returns mockk {
+            every { status } returns ResourceStatus.REPORTED
+        }
+        every { resourceDAO.updateResource(resource1Id, captureLambda()) } returns null
+
+        val response = controller.addResource(newResource)
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
+    }
+
+    @Test
+    fun `de-duplication increments already duplicate resource`() {
+        val resourceDO = ResourceDO {
+            id = resource1Id
+            organizationId = "testorg"
+            resourceType = "Patient"
+            resource = "patient resource"
+            status = ResourceStatus.REPORTED
+            createDateTime = resource1CreateDtTm
+            repeatCount = 2
+            lastSeenDateTime = resource3CreateDtTm
+            updateDateTime = resource2UpdateDtTm
+        }
+        val resource = newResource.toResourceDO()
+        val issue1 = newIssue1.toIssueDO(resource1Id)
+        val issue2 = newIssue2.toIssueDO(resource1Id)
+        every {
+            resourceDAO.getResourcesByFHIRID(
+                listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
+                resource.clientFhirId!!,
+                resource.organizationId,
+                resource.resourceType
+            )
+        } returns listOf(resourceDO)
+
+        every { issueDAO.getIssueSeveritiesForResources(listOf(resource1Id)) } returns mapOf(
+            resource1Id to setOf(
+                Severity.WARNING,
+                Severity.FAILED
+            )
+        )
+
+        every {
+            issueDAO.getIssues(resource1Id, listOf(IssueStatus.REPORTED, IssueStatus.ADDRESSING), Order.ASC, 200, null)
+        } returns listOf(issue1, issue2)
+
+        every { resourceDAO.getResource(resource1Id) } returns mockk {
+            every { status } returns ResourceStatus.REPORTED
+        }
+
+        every { resourceDAO.updateResource(resource1Id, captureLambda()) } returns resourceDO
+
+        val response = controller.addResource(newResource)
+        val generatedId = response.body!!
+
+        assertEquals(HttpStatus.OK, response.statusCode)
+        assertEquals(resource1Id, generatedId.id)
     }
 }

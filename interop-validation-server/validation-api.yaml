@@ -442,6 +442,13 @@ components:
         reprocessed_by:
           type: string
           description: The name of the person who reprocessed this resource.
+        repeat_count:
+          type: integer
+          description: Number of times this resource has showed up in the validation service.
+        last_seen_dt_tm:
+          type: string
+          format: date-time
+          description: The date and time in UTC when this resource was last seen in the validation service.
       required:
         - id
         - organization_id

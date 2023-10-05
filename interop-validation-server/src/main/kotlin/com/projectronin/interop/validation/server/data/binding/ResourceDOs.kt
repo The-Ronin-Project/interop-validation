@@ -6,6 +6,7 @@ import com.projectronin.interop.validation.server.data.model.ResourceDO
 import com.projectronin.interop.validation.server.generated.models.ResourceStatus
 import org.ktorm.schema.Table
 import org.ktorm.schema.enum
+import org.ktorm.schema.int
 import org.ktorm.schema.text
 import org.ktorm.schema.varchar
 
@@ -23,4 +24,6 @@ object ResourceDOs : Table<ResourceDO>("resource") {
     val reprocessDateTime = utcDateTime("reprocess_dt_tm").bindTo { it.reprocessDateTime }
     val reprocessedBy = varchar("reprocessed_by").bindTo { it.reprocessedBy }
     val clientFhirId = varchar("client_fhir_id").bindTo { it.clientFhirId }
+    val repeatCount = int("repeat_count").bindTo { it.repeatCount }
+    val lastSeenDateTime = utcDateTime("last_seen_dt_tm").bindTo { it.lastSeenDateTime }
 }
