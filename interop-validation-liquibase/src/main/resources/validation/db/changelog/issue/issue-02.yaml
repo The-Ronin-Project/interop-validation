@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: issue-add-indexes
+      author: Josh Smith
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            - indexExists:
+                tableName: issue
+                indexName: idx_issue_1
+      changes:
+        - createIndex:
+            tableName: issue
+            columns:
+              - column:
+                  name: type
+            indexName: idx_issue_1

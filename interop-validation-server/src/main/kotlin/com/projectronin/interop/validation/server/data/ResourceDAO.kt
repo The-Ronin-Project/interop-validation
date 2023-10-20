@@ -15,7 +15,6 @@ import org.ktorm.dsl.from
 import org.ktorm.dsl.greater
 import org.ktorm.dsl.inList
 import org.ktorm.dsl.insert
-import org.ktorm.dsl.leftJoin
 import org.ktorm.dsl.less
 import org.ktorm.dsl.limit
 import org.ktorm.dsl.map
@@ -102,14 +101,18 @@ class ResourceDAO(private val database: Database) {
             Order.DESC -> listOf(ResourceDOs.createDateTime.desc(), ResourceDOs.id.desc())
         }
         val query = database.from(ResourceDOs)
-            .leftJoin(IssueDOs, on = ResourceDOs.id eq IssueDOs.resourceId)
             .selectDistinct(ResourceDOs.columns) // if multiple issues found for a resource, return the resource once
             .where {
                 val conditions = mutableListOf<ColumnDeclaring<Boolean>>()
 
                 conditions += ResourceDOs.status inList statuses
 
-                if (issueType != null) conditions += IssueDOs.type inList issueType
+                if (issueType?.isNotEmpty() == true) {
+                    val issues =
+                        database.from(IssueDOs).select(IssueDOs.resourceId)
+                            .where { (IssueDOs.type inList issueType) and (IssueDOs.resourceId eq ResourceDOs.id) }
+                    conditions += ResourceDOs.id inList issues
+                }
 
                 organizationId?.let { conditions += ResourceDOs.organizationId eq it }
                 resourceType?.let { conditions += ResourceDOs.resourceType eq it }

@@ -8,4 +8,7 @@
     <root level="WARN">
         <appender-ref ref="STDOUT"/>
     </root>
+    <logger name="org.ktorm" level="DEBUG" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
 </configuration>

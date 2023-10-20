@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: resource-add-indexes
+      author: Josh Smith
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            - indexExists:
+                tableName: resource
+                indexName: idx_resource_2
+      changes:
+        - createIndex:
+            tableName: resource
+            columns:
+              - column:
+                  name: status
+            indexName: idx_resource_2
+        - createIndex:
+            tableName: resource
+            columns:
+              - column:
+                  name: organization_id
+            indexName: idx_resource_3
+        - createIndex:
+            tableName: resource
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: resource_type
+              - column:
+                  name: status
+            indexName: idx_resource_5
