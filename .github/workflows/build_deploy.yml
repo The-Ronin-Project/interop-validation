@@ -3,8 +3,8 @@ run-name: Build and deploy to DEV by @${{ github.actor }}
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["Interop Validation Server Tests"]
-    types: [completed]
+    workflows: [ Tests ]
+    types: [ completed ]
     branches:
       - main
 
@@ -37,7 +37,7 @@ jobs:
 
   argocd_dev:
     uses: projectronin/github/.github/workflows/argocd_deploy.yml@master
-    needs: [image-push-sha]
+    needs: [ image-push-sha ]
     with:
       environment: dev
       image-tag: ${{ github.sha }}
