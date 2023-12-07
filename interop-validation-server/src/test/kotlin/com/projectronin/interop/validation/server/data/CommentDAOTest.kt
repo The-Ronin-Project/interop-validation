@@ -72,11 +72,12 @@ class CommentDAOTest {
     @Test
     @DataSet(value = ["/dbunit/comment/NoComments.yaml"], cleanAfter = true)
     fun `insert issue comment`() {
-        val commentDO = CommentDO {
-            author = "Beau"
-            text = "Oof this one is bad"
-            createDateTime = OffsetDateTime.of(2022, 8, 2, 11, 18, 0, 0, ZoneOffset.UTC)
-        }
+        val commentDO =
+            CommentDO {
+                author = "Beau"
+                text = "Oof this one is bad"
+                createDateTime = OffsetDateTime.of(2022, 8, 2, 11, 18, 0, 0, ZoneOffset.UTC)
+            }
         val commentID = commentDAO.insertIssueComment(commentDO, issueId)
         val commentsFromDB = commentDAO.getCommentsByIssue(issueId, order = Order.DESC)
         assertEquals(commentID, commentsFromDB.first().id)
@@ -86,11 +87,12 @@ class CommentDAOTest {
     @Test
     @DataSet(value = ["/dbunit/comment/NoComments.yaml"], cleanAfter = true)
     fun `insert resource comment`() {
-        val commentDO = CommentDO {
-            author = "Beau"
-            text = "Oof this one is bad"
-            createDateTime = OffsetDateTime.of(2022, 8, 2, 11, 18, 0, 0, ZoneOffset.UTC)
-        }
+        val commentDO =
+            CommentDO {
+                author = "Beau"
+                text = "Oof this one is bad"
+                createDateTime = OffsetDateTime.of(2022, 8, 2, 11, 18, 0, 0, ZoneOffset.UTC)
+            }
         val resourceID = commentDAO.insertResourceComment(commentDO, resourceId)
         val resourcesFromDB = commentDAO.getCommentsByResource(resourceId, order = Order.DESC)
         assertEquals(resourceID, resourcesFromDB.first().id)

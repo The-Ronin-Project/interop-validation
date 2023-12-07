@@ -37,68 +37,75 @@ import java.util.UUID
 
 class ResourceClientTest {
     private val authenticationToken = "123456"
-    private val authenticationService = mockk<ValidationAuthenticationService> {
-        every { getAuthentication() } returns mockk {
-            every { accessToken } returns authenticationToken
+    private val authenticationService =
+        mockk<ValidationAuthenticationService> {
+            every { getAuthentication() } returns
+                mockk {
+                    every { accessToken } returns authenticationToken
+                }
         }
-    }
-    private val client: HttpClient = HttpClient(OkHttp) {
-        install(ContentNegotiation) {
-            jackson {
-                JacksonManager.setUpMapper(this)
+    private val client: HttpClient =
+        HttpClient(OkHttp) {
+            install(ContentNegotiation) {
+                jackson {
+                    JacksonManager.setUpMapper(this)
+                }
             }
+            install(ContentLengthSupplier)
         }
-        install(ContentLengthSupplier)
-    }
     private val resource1Id = UUID.fromString("03d51d53-1a31-49a9-af74-573b456efca5")
     private val resource1CreateDtTm = OffsetDateTime.now(ZoneOffset.UTC)
-    private val expectedResource = Resource(
-        id = resource1Id,
-        organizationId = "testorg",
-        resourceType = "Patient",
-        resource = "patient resource",
-        status = ResourceStatus.REPORTED,
-        severity = Severity.FAILED,
-        createDtTm = resource1CreateDtTm
-    )
+    private val expectedResource =
+        Resource(
+            id = resource1Id,
+            organizationId = "testorg",
+            resourceType = "Patient",
+            resource = "patient resource",
+            status = ResourceStatus.REPORTED,
+            severity = Severity.FAILED,
+            createDtTm = resource1CreateDtTm,
+        )
     private val resource2Id = UUID.fromString("f1907389-d2c2-4b7e-a518-828a68127e5c")
     private val resource2CreateDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusDays(2)
     private val resource2UpdateDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1)
     private val resource2ReprocessDtTm = OffsetDateTime.now(ZoneOffset.UTC)
-    private val expectedresource2 = Resource(
-        id = resource2Id,
-        organizationId = "testorg",
-        resourceType = "Condition",
-        resource = "condition resource",
-        status = ResourceStatus.REPROCESSED,
-        severity = Severity.FAILED,
-        createDtTm = resource2CreateDtTm,
-        updateDtTm = resource2UpdateDtTm,
-        reprocessDtTm = resource2ReprocessDtTm,
-        reprocessedBy = "Josh"
-    )
+    private val expectedresource2 =
+        Resource(
+            id = resource2Id,
+            organizationId = "testorg",
+            resourceType = "Condition",
+            resource = "condition resource",
+            status = ResourceStatus.REPROCESSED,
+            severity = Severity.FAILED,
+            createDtTm = resource2CreateDtTm,
+            updateDtTm = resource2UpdateDtTm,
+            reprocessDtTm = resource2ReprocessDtTm,
+            reprocessedBy = "Josh",
+        )
     private val resource3Id = UUID.fromString("03d51d53-1a31-49a9-af74-573b456efca5")
     private val resource3CreateDtTm = OffsetDateTime.now(ZoneOffset.UTC)
-    private val expectedResource3 = Resource(
-        id = resource3Id,
-        organizationId = "testorg",
-        resourceType = "Patient",
-        resource = "patient resource",
-        status = ResourceStatus.ADDRESSING,
-        severity = Severity.WARNING,
-        createDtTm = resource3CreateDtTm
-    )
+    private val expectedResource3 =
+        Resource(
+            id = resource3Id,
+            organizationId = "testorg",
+            resourceType = "Patient",
+            resource = "patient resource",
+            status = ResourceStatus.ADDRESSING,
+            severity = Severity.WARNING,
+            createDtTm = resource3CreateDtTm,
+        )
     private val resource4Id = UUID.fromString("03d51d53-1a31-49a9-af74-573b456efca5")
     private val resource4CreateDtTm = OffsetDateTime.now(ZoneOffset.UTC)
-    private val expectedResource4 = Resource(
-        id = resource4Id,
-        organizationId = "testorg",
-        resourceType = "Patient",
-        resource = "patient resource",
-        status = ResourceStatus.IGNORED,
-        severity = Severity.WARNING,
-        createDtTm = resource4CreateDtTm
-    )
+    private val expectedResource4 =
+        Resource(
+            id = resource4Id,
+            organizationId = "testorg",
+            resourceType = "Patient",
+            resource = "patient resource",
+            status = ResourceStatus.IGNORED,
+            severity = Severity.WARNING,
+            createDtTm = resource4CreateDtTm,
+        )
 
     @Test
     fun `getResources - works for getting 1 type of status`() {
@@ -110,17 +117,19 @@ class ResourceClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(resourceJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val response = runBlocking {
-            val resources = ResourceClient(url.toString(), client, authenticationService).getResources(
-                listOf(ResourceStatus.REPORTED),
-                Order.ASC,
-                2
-            )
-            resources
-        }
+        val response =
+            runBlocking {
+                val resources =
+                    ResourceClient(url.toString(), client, authenticationService).getResources(
+                        listOf(ResourceStatus.REPORTED),
+                        Order.ASC,
+                        2,
+                    )
+                resources
+            }
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
@@ -139,17 +148,19 @@ class ResourceClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(resourceJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val response = runBlocking {
-            val resources = ResourceClient(url.toString(), client, authenticationService).getResources(
-                listOf(),
-                Order.ASC,
-                10
-            )
-            resources
-        }
+        val response =
+            runBlocking {
+                val resources =
+                    ResourceClient(url.toString(), client, authenticationService).getResources(
+                        listOf(),
+                        Order.ASC,
+                        10,
+                    )
+                resources
+            }
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
@@ -168,17 +179,19 @@ class ResourceClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(resourceJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val response = runBlocking {
-            val resources = ResourceClient(url.toString(), client, authenticationService).getResources(
-                null,
-                Order.ASC,
-                10
-            )
-            resources
-        }
+        val response =
+            runBlocking {
+                val resources =
+                    ResourceClient(url.toString(), client, authenticationService).getResources(
+                        null,
+                        Order.ASC,
+                        10,
+                    )
+                resources
+            }
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
@@ -197,18 +210,20 @@ class ResourceClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(resourceJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val response = runBlocking {
-            val resources = ResourceClient(url.toString(), client, authenticationService).getResources(
-                null,
-                Order.ASC,
-                10,
-                issueType = listOf("PAT_001")
-            )
-            resources
-        }
+        val response =
+            runBlocking {
+                val resources =
+                    ResourceClient(url.toString(), client, authenticationService).getResources(
+                        null,
+                        Order.ASC,
+                        10,
+                        issueType = listOf("PAT_001"),
+                    )
+                resources
+            }
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
@@ -227,25 +242,27 @@ class ResourceClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(resourceJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val response = runBlocking {
-            val resources = ResourceClient(url.toString(), client, authenticationService).getResources(
-                null,
-                Order.ASC,
-                10,
-                issueType = listOf("PAT_001", "PAT_002")
-            )
-            resources
-        }
+        val response =
+            runBlocking {
+                val resources =
+                    ResourceClient(url.toString(), client, authenticationService).getResources(
+                        null,
+                        Order.ASC,
+                        10,
+                        issueType = listOf("PAT_001", "PAT_002"),
+                    )
+                resources
+            }
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
         assertEquals("GET", request.method)
         assertEquals(
             true,
-            request.path?.endsWith("/resources?issue_type=PAT_001&issue_type=PAT_002&order=ASC&limit=10")
+            request.path?.endsWith("/resources?issue_type=PAT_001&issue_type=PAT_002&order=ASC&limit=10"),
         )
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
@@ -260,19 +277,21 @@ class ResourceClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(resourceJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
         val after = UUID.randomUUID()
-        val response = runBlocking {
-            val resources = ResourceClient(url.toString(), client, authenticationService).getResources(
-                listOf(),
-                Order.ASC,
-                10,
-                after
-            )
-            resources
-        }
+        val response =
+            runBlocking {
+                val resources =
+                    ResourceClient(url.toString(), client, authenticationService).getResources(
+                        listOf(),
+                        Order.ASC,
+                        10,
+                        after,
+                    )
+                resources
+            }
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
@@ -291,19 +310,20 @@ class ResourceClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(resourceJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val response = runBlocking {
-            val resources = ResourceClient(url.toString(), client, authenticationService).getResources(
-                listOf(),
-                Order.ASC,
-                10,
-                organizationId = "org"
-
-            )
-            resources
-        }
+        val response =
+            runBlocking {
+                val resources =
+                    ResourceClient(url.toString(), client, authenticationService).getResources(
+                        listOf(),
+                        Order.ASC,
+                        10,
+                        organizationId = "org",
+                    )
+                resources
+            }
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
@@ -322,18 +342,20 @@ class ResourceClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(resourceJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val response = runBlocking {
-            val resources = ResourceClient(url.toString(), client, authenticationService).getResources(
-                listOf(),
-                Order.ASC,
-                10,
-                resourceType = "Patient"
-            )
-            resources
-        }
+        val response =
+            runBlocking {
+                val resources =
+                    ResourceClient(url.toString(), client, authenticationService).getResources(
+                        listOf(),
+                        Order.ASC,
+                        10,
+                        resourceType = "Patient",
+                    )
+                resources
+            }
         assertEquals(resourceList, response)
 
         val request = mockWebServer.takeRequest()
@@ -348,18 +370,19 @@ class ResourceClientTest {
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.GatewayTimeout.value)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val exception = assertThrows<ServerFailureException> {
-            runBlocking {
-                ResourceClient(url.toString(), client, authenticationService).getResources(
-                    listOf(ResourceStatus.REPORTED),
-                    Order.ASC,
-                    1
-                )
+        val exception =
+            assertThrows<ServerFailureException> {
+                runBlocking {
+                    ResourceClient(url.toString(), client, authenticationService).getResources(
+                        listOf(ResourceStatus.REPORTED),
+                        Order.ASC,
+                        1,
+                    )
+                }
             }
-        }
         assertNotNull(exception.message)
         exception.message?.let { assertTrue(it.contains("504")) }
 
@@ -377,14 +400,15 @@ class ResourceClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(resourceJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
 
-        val response = runBlocking {
-            val resources = ResourceClient(url.toString(), client, authenticationService).getResourceById(resource1Id)
-            resources
-        }
+        val response =
+            runBlocking {
+                val resources = ResourceClient(url.toString(), client, authenticationService).getResourceById(resource1Id)
+                resources
+            }
         assertEquals(expectedResource, response)
 
         val request = mockWebServer.takeRequest()
@@ -399,14 +423,15 @@ class ResourceClientTest {
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.BadRequest.value)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val exception = assertThrows<ClientFailureException> {
-            runBlocking {
-                ResourceClient(url.toString(), client, authenticationService).getResourceById(resource1Id)
+        val exception =
+            assertThrows<ClientFailureException> {
+                runBlocking {
+                    ResourceClient(url.toString(), client, authenticationService).getResourceById(resource1Id)
+                }
             }
-        }
 
         assertNotNull(exception.message)
         exception.message?.let { assertTrue(it.contains("400")) }
@@ -420,39 +445,43 @@ class ResourceClientTest {
     @Test
     fun `addResource works`() {
         val resourceId1 = GeneratedId(id = resource1Id)
-        val newIssue1 = NewIssue(
-            severity = Severity.FAILED,
-            type = "pat-1",
-            description = "No contact details",
-            createDtTm = OffsetDateTime.now(),
-            location = "Patient.contact"
-        )
-        val newIssue2 = NewIssue(
-            severity = Severity.WARNING,
-            type = "pat-2",
-            description = "No contact details",
-            createDtTm = OffsetDateTime.now(),
-            location = "Patient.contact"
-        )
-        val newResource = NewResource(
-            organizationId = "testorg",
-            resourceType = "Patient",
-            resource = "the patient resource",
-            issues = listOf(newIssue1, newIssue2),
-            createDtTm = OffsetDateTime.now()
-        )
+        val newIssue1 =
+            NewIssue(
+                severity = Severity.FAILED,
+                type = "pat-1",
+                description = "No contact details",
+                createDtTm = OffsetDateTime.now(),
+                location = "Patient.contact",
+            )
+        val newIssue2 =
+            NewIssue(
+                severity = Severity.WARNING,
+                type = "pat-2",
+                description = "No contact details",
+                createDtTm = OffsetDateTime.now(),
+                location = "Patient.contact",
+            )
+        val newResource =
+            NewResource(
+                organizationId = "testorg",
+                resourceType = "Patient",
+                resource = "the patient resource",
+                issues = listOf(newIssue1, newIssue2),
+                createDtTm = OffsetDateTime.now(),
+            )
         val mockWebServer = MockWebServer()
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(JacksonManager.objectMapper.writeValueAsString(resourceId1))
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val response = runBlocking {
-            val resourceId = ResourceClient(url.toString(), client, authenticationService).addResource(newResource)
-            resourceId
-        }
+        val response =
+            runBlocking {
+                val resourceId = ResourceClient(url.toString(), client, authenticationService).addResource(newResource)
+                resourceId
+            }
         assertEquals(resourceId1.id, response.id)
 
         val request = mockWebServer.takeRequest()
@@ -463,39 +492,43 @@ class ResourceClientTest {
 
     @Test
     fun `addResource - exception handling`() {
-        val newIssue1 = NewIssue(
-            severity = Severity.FAILED,
-            type = "pat-1",
-            description = "No contact details",
-            createDtTm = OffsetDateTime.now(),
-            location = "Patient.contact"
-        )
-        val newIssue2 = NewIssue(
-            severity = Severity.WARNING,
-            type = "pat-2",
-            description = "No contact details",
-            createDtTm = OffsetDateTime.now(),
-            location = "Patient.contact"
-        )
-        val newResource = NewResource(
-            organizationId = "testorg",
-            resourceType = "Patient",
-            resource = "the patient resource",
-            issues = listOf(newIssue1, newIssue2),
-            createDtTm = OffsetDateTime.now()
-        )
+        val newIssue1 =
+            NewIssue(
+                severity = Severity.FAILED,
+                type = "pat-1",
+                description = "No contact details",
+                createDtTm = OffsetDateTime.now(),
+                location = "Patient.contact",
+            )
+        val newIssue2 =
+            NewIssue(
+                severity = Severity.WARNING,
+                type = "pat-2",
+                description = "No contact details",
+                createDtTm = OffsetDateTime.now(),
+                location = "Patient.contact",
+            )
+        val newResource =
+            NewResource(
+                organizationId = "testorg",
+                resourceType = "Patient",
+                resource = "the patient resource",
+                issues = listOf(newIssue1, newIssue2),
+                createDtTm = OffsetDateTime.now(),
+            )
         val mockWebServer = MockWebServer()
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.BadRequest.value)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val exception = assertThrows<ClientFailureException> {
-            runBlocking {
-                ResourceClient(url.toString(), client, authenticationService).addResource(newResource)
+        val exception =
+            assertThrows<ClientFailureException> {
+                runBlocking {
+                    ResourceClient(url.toString(), client, authenticationService).addResource(newResource)
+                }
             }
-        }
         assertNotNull(exception.message)
         exception.message?.let { assertTrue(it.contains("400")) }
 
@@ -507,22 +540,23 @@ class ResourceClientTest {
 
     @Test
     fun `reprocessResourceById - works`() {
-        val reprocessResourceRequest = ReprocessResourceRequest(
-            user = "testuser",
-            comment = "comment"
-        )
+        val reprocessResourceRequest =
+            ReprocessResourceRequest(
+                user = "testuser",
+                comment = "comment",
+            )
         val mockWebServer = MockWebServer()
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
         val uuid = UUID.randomUUID()
         runBlocking {
             ResourceClient(url.toString(), client, authenticationService).reprocessResource(
                 uuid,
-                reprocessResourceRequest
+                reprocessResourceRequest,
             )
         }
 
@@ -534,26 +568,28 @@ class ResourceClientTest {
 
     @Test
     fun `reprocessResource - exception handling`() {
-        val reprocessResourceRequest = ReprocessResourceRequest(
-            user = "testuser",
-            comment = "comment"
-        )
+        val reprocessResourceRequest =
+            ReprocessResourceRequest(
+                user = "testuser",
+                comment = "comment",
+            )
         val mockWebServer = MockWebServer()
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.ServiceUnavailable.value)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
         val uuid = UUID.randomUUID()
-        val exception = assertThrows<ServiceUnavailableException> {
-            runBlocking {
-                ResourceClient(url.toString(), client, authenticationService).reprocessResource(
-                    uuid,
-                    reprocessResourceRequest
-                )
+        val exception =
+            assertThrows<ServiceUnavailableException> {
+                runBlocking {
+                    ResourceClient(url.toString(), client, authenticationService).reprocessResource(
+                        uuid,
+                        reprocessResourceRequest,
+                    )
+                }
             }
-        }
         assertNotNull(exception.message)
         exception.message?.let { assertTrue(it.contains("503")) }
 
@@ -567,28 +603,30 @@ class ResourceClientTest {
     fun `updateResource works`() {
         val resourceId = UUID.randomUUID()
         val updateResource = UpdateResource(status = UpdatableResourceStatus.IGNORED)
-        val updatedResource = Resource(
-            id = resourceId,
-            organizationId = "test",
-            resourceType = "Patient",
-            resource = "{}",
-            status = ResourceStatus.IGNORED,
-            severity = Severity.FAILED,
-            createDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusHours(2),
-            updateDtTm = OffsetDateTime.now(ZoneOffset.UTC)
-        )
+        val updatedResource =
+            Resource(
+                id = resourceId,
+                organizationId = "test",
+                resourceType = "Patient",
+                resource = "{}",
+                status = ResourceStatus.IGNORED,
+                severity = Severity.FAILED,
+                createDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusHours(2),
+                updateDtTm = OffsetDateTime.now(ZoneOffset.UTC),
+            )
 
         val mockWebServer = MockWebServer()
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(JacksonManager.objectMapper.writeValueAsString(updatedResource))
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val response = runBlocking {
-            ResourceClient(url.toString(), client, authenticationService).updateResource(resourceId, updateResource)
-        }
+        val response =
+            runBlocking {
+                ResourceClient(url.toString(), client, authenticationService).updateResource(resourceId, updateResource)
+            }
         assertEquals(updatedResource, response)
 
         val request = mockWebServer.takeRequest()
@@ -606,14 +644,15 @@ class ResourceClientTest {
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.ServiceUnavailable.value)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
         val url = mockWebServer.url("/test")
-        val exception = assertThrows<ServiceUnavailableException> {
-            runBlocking {
-                ResourceClient(url.toString(), client, authenticationService).updateResource(resourceId, updateResource)
+        val exception =
+            assertThrows<ServiceUnavailableException> {
+                runBlocking {
+                    ResourceClient(url.toString(), client, authenticationService).updateResource(resourceId, updateResource)
+                }
             }
-        }
         assertNotNull(exception.message)
         exception.message?.let { assertTrue(it.contains("503")) }
 

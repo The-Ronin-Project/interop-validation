@@ -18,18 +18,22 @@ class SpringDocConfiguration {
             .info(
                 Info()
                     .title("Data Validation Service")
-                    .description("The Data Validation Service provides APIs for managing data validation issues within the Ronin data ecosystem.")
-                    .version("1.0.0")
+                    .description(
+                        "The Data Validation Service provides APIs for managing data validation issues within the Ronin data ecosystem.",
+                    )
+                    .version("1.0.0"),
             )
             .components(
                 Components()
                     .addSecuritySchemes(
                         "auth0",
-                        SecurityScheme() // This is defined as oauth2 within the OpenAPI spec to match the actual use, but is defined as Bearer here to allow for "Try It Out" support that is not available with Swagger and Auth0
+                        // This is defined as oauth2 within the OpenAPI spec to match the actual use, but is defined as Bearer
+                        // here to allow for "Try It Out" support that is not available with Swagger and Auth0
+                        SecurityScheme()
                             .type(SecurityScheme.Type.HTTP)
                             .scheme("bearer")
-                            .bearerFormat("JWT")
-                    )
+                            .bearerFormat("JWT"),
+                    ),
             )
     }
 }

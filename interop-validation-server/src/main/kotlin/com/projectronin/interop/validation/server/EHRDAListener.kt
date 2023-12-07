@@ -17,15 +17,16 @@ import java.util.concurrent.TimeUnit
 class EHRDAListener(
     private val kafkaClient: KafkaClient,
     private val topics: List<EhrDAKafkaTopic>,
-    private val resourceDAO: ResourceDAO
+    private val resourceDAO: ResourceDAO,
 ) {
     val logger = KotlinLogging.logger { }
-    val typeMap = topics.flatMap { topic ->
-        listOf(
-            "ronin.ehr-data-authority.${getResourceName(topic.topicName)}.${KafkaAction.CREATE.type}" to topic.resourceClass,
-            "ronin.ehr-data-authority.${getResourceName(topic.topicName)}.${KafkaAction.UPDATE.type}" to topic.resourceClass
-        )
-    }.toMap()
+    val typeMap =
+        topics.flatMap { topic ->
+            listOf(
+                "ronin.ehr-data-authority.${getResourceName(topic.topicName)}.${KafkaAction.CREATE.type}" to topic.resourceClass,
+                "ronin.ehr-data-authority.${getResourceName(topic.topicName)}.${KafkaAction.UPDATE.type}" to topic.resourceClass,
+            )
+        }.toMap()
 
     @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MILLISECONDS) // Basically run constantly.
     fun poll() {
@@ -35,7 +36,7 @@ class EHRDAListener(
                 topics,
                 typeMap,
                 "interop-validation-server_group",
-                Duration.ofMillis(5)
+                Duration.ofMillis(5),
             ).map { it.data as Resource<*> }.forEach { resource ->
                 val fhirID = resource.findFhirId()!!
                 val tenantID = resource.findTenantId()!!
@@ -43,7 +44,7 @@ class EHRDAListener(
                     listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
                     fhirID,
                     tenantID,
-                    resource.resourceType
+                    resource.resourceType,
                 ).forEach { validationResource ->
                     resourceDAO.updateResource(validationResource.id) {
                         it.status = ResourceStatus.CORRECTED

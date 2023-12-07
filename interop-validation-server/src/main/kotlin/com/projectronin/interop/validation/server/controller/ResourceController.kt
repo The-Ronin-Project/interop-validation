@@ -38,7 +38,7 @@ class ResourceController(
     private val resourceDAO: ResourceDAO,
     private val issueDAO: IssueDAO,
     private val commentDAO: CommentDAO,
-    private val requestService: KafkaRequestService
+    private val requestService: KafkaRequestService,
 ) : ResourceApi {
     val logger = KotlinLogging.logger { }
 
@@ -50,7 +50,7 @@ class ResourceController(
         after: UUID?,
         organizationId: String?,
         resourceType: String?,
-        issueType: List<String>?
+        issueType: List<String>?,
     ): ResponseEntity<List<Resource>> {
         val statuses = if (status.isNullOrEmpty()) ResourceStatus.values().toList() else status
 
@@ -66,8 +66,9 @@ class ResourceController(
 
     @PreAuthorize("hasAuthority('SCOPE_read:resources')")
     override fun getResourceById(resourceId: UUID): ResponseEntity<Resource> {
-        val resourceDO = resourceDAO.getResource(resourceId)
-            ?: return ResponseEntity.notFound().build()
+        val resourceDO =
+            resourceDAO.getResource(resourceId)
+                ?: return ResponseEntity.notFound().build()
 
         val resource = createResource(resourceDO)
 
@@ -82,14 +83,15 @@ class ResourceController(
         val resource = newResource.toResourceDO()
 
         /** deduplication logic: getting all resources in the validation database that matches the fhir id of the resource **/
-        val resourceList = resource.clientFhirId?.let {
-            resourceDAO.getResourcesByFHIRID(
-                listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
-                it,
-                resource.organizationId,
-                resource.resourceType
-            )
-        }
+        val resourceList =
+            resource.clientFhirId?.let {
+                resourceDAO.getResourcesByFHIRID(
+                    listOf(ResourceStatus.REPORTED, ResourceStatus.ADDRESSING),
+                    it,
+                    resource.organizationId,
+                    resource.resourceType,
+                )
+            }
         /** if no resources are returned, add a new resource (and its attached issues and metadata) **/
         if (resourceList.isNullOrEmpty()) {
             return addNewResource(newResource)
@@ -102,7 +104,14 @@ class ResourceController(
              * issue type and issue location of any existing issues from the issue database
              **/
             resourceList.forEach { existingResource ->
-                val existingIssues = issueDAO.getIssues(existingResource.id, listOf(IssueStatus.REPORTED, IssueStatus.ADDRESSING), Order.ASC, 200, null)
+                val existingIssues =
+                    issueDAO.getIssues(
+                        existingResource.id,
+                        listOf(IssueStatus.REPORTED, IssueStatus.ADDRESSING),
+                        Order.ASC,
+                        200,
+                        null,
+                    )
                 val existingMatchOn = existingIssues.map { Pair(it.type, it.location) }.toSet()
                 /**
                  * must match on all the new issues from the new resource to be considered a duplicate resource, if it
@@ -110,14 +119,15 @@ class ResourceController(
                  **/
                 if (existingMatchOn.containsAll(matchOn)) {
                     val repeat = existingResource.repeatCount ?: 0
-                    val updatedResource = resourceDAO.updateResource(existingResource.id) {
-                        it.repeatCount = repeat + 1
-                        it.lastSeenDateTime = OffsetDateTime.now(ZoneOffset.UTC)
-                        it.updateDateTime = OffsetDateTime.now(ZoneOffset.UTC)
-                    }
+                    val updatedResource =
+                        resourceDAO.updateResource(existingResource.id) {
+                            it.repeatCount = repeat + 1
+                            it.lastSeenDateTime = OffsetDateTime.now(ZoneOffset.UTC)
+                            it.updateDateTime = OffsetDateTime.now(ZoneOffset.UTC)
+                        }
                     val responseResource = updatedResource?.let { createResource(updatedResource) }
-                    return responseResource?.let { ResponseEntity.ok(GeneratedId(responseResource.id)) } ?: ResponseEntity.internalServerError()
-                        .build()
+                    return responseResource?.let { ResponseEntity.ok(GeneratedId(responseResource.id)) }
+                        ?: ResponseEntity.internalServerError().build()
                 }
             }
             /** if nothing matched exactly in the list of existing issues, add the new resource and its issues and metadata **/
@@ -126,16 +136,20 @@ class ResourceController(
     }
 
     @PreAuthorize("hasAuthority('SCOPE_update:resources')")
-    override fun updateResource(resourceId: UUID, updateResource: UpdateResource): ResponseEntity<Resource> {
+    override fun updateResource(
+        resourceId: UUID,
+        updateResource: UpdateResource,
+    ): ResponseEntity<Resource> {
         val resource = resourceDAO.getResource(resourceId) ?: return ResponseEntity.notFound().build()
         if (resource.status == ResourceStatus.REPROCESSED) {
             logger.info { "Unable to update $resourceId as it has already been reprocessed" }
             return ResponseEntity.badRequest().build()
         }
 
-        val updatedResource = resourceDAO.updateResource(resourceId) {
-            it.status = ResourceStatus.valueOf(updateResource.status.value)
-        }
+        val updatedResource =
+            resourceDAO.updateResource(resourceId) {
+                it.status = ResourceStatus.valueOf(updateResource.status.value)
+            }
 
         val responseResource = updatedResource?.let { createResource(updatedResource) }
         return responseResource?.let { ResponseEntity.ok(responseResource) } ?: ResponseEntity.internalServerError()
@@ -145,18 +159,21 @@ class ResourceController(
     @PreAuthorize("hasAuthority('SCOPE_update:resources')")
     override fun reprocessResource(
         resourceId: UUID,
-        reprocessResourceRequest: ReprocessResourceRequest
+        reprocessResourceRequest: ReprocessResourceRequest,
     ): ResponseEntity<Unit> {
         val resource = resourceDAO.getResource(resourceId) ?: return ResponseEntity.notFound().build()
 
-        val fhirId = resource.clientFhirId ?: runCatching {
-            val deserializedResource =
-                JacksonManager.objectMapper.readValue<com.projectronin.interop.fhir.r4.resource.Resource<*>>(resource.resource)
-            deserializedResource.findFhirId()!!
-        }.getOrElse { exception ->
-            logger.error(exception) { "Failed to find FHIR ID on resource requested for reprocessing" }
-            return ResponseEntity.internalServerError().build()
-        }
+        val fhirId =
+            resource.clientFhirId ?: runCatching {
+                val deserializedResource =
+                    JacksonManager.objectMapper.readValue<com.projectronin.interop.fhir.r4.resource.Resource<*>>(
+                        resource.resource,
+                    )
+                deserializedResource.findFhirId()!!
+            }.getOrElse { exception ->
+                logger.error(exception) { "Failed to find FHIR ID on resource requested for reprocessing" }
+                return ResponseEntity.internalServerError().build()
+            }
 
         val tenant = resource.organizationId
 
@@ -165,31 +182,35 @@ class ResourceController(
         val localizedFhirId = if (fhirId.startsWith("$tenant-")) fhirId else "$tenant-$fhirId"
 
         val resourceType = ResourceType.valueOf(resource.resourceType)
-        val flowOptions = InteropResourceRequestV1.FlowOptions(
-            disableDownstreamResources = false,
-            normalizationRegistryMinimumTime = if (reprocessResourceRequest.refreshNormalization == true) {
-                OffsetDateTime.now(
-                    ZoneOffset.UTC
-                )
-            } else {
-                null
-            }
-        )
-        val response = requestService.pushRequestEvent(
-            tenant,
-            listOf(localizedFhirId),
-            resourceType,
-            "validation-server",
-            flowOptions
-        )
+        val flowOptions =
+            InteropResourceRequestV1.FlowOptions(
+                disableDownstreamResources = false,
+                normalizationRegistryMinimumTime =
+                    if (reprocessResourceRequest.refreshNormalization == true) {
+                        OffsetDateTime.now(
+                            ZoneOffset.UTC,
+                        )
+                    } else {
+                        null
+                    },
+            )
+        val response =
+            requestService.pushRequestEvent(
+                tenant,
+                listOf(localizedFhirId),
+                resourceType,
+                "validation-server",
+                flowOptions,
+            )
         if (response.failures.isNotEmpty()) {
             return ResponseEntity.internalServerError().build()
         }
 
-        val reprocessComment = NewComment(
-            author = reprocessResourceRequest.user,
-            text = reprocessResourceRequest.comment
-        )
+        val reprocessComment =
+            NewComment(
+                author = reprocessResourceRequest.user,
+                text = reprocessResourceRequest.comment,
+            )
         commentDAO.insertResourceComment(reprocessComment.toCommentDO(), resourceId)
 
         resourceDAO.updateResource(resourceId) {
@@ -218,7 +239,10 @@ class ResourceController(
 
     private fun createResource(resourceDO: ResourceDO): Resource? = createResources(listOf(resourceDO)).firstOrNull()
 
-    private fun createResource(resourceDO: ResourceDO, issueSeverities: Set<Severity>): Resource {
+    private fun createResource(
+        resourceDO: ResourceDO,
+        issueSeverities: Set<Severity>,
+    ): Resource {
         val resourceSeverity = if (issueSeverities.contains(Severity.FAILED)) Severity.FAILED else Severity.WARNING
 
         return Resource(
@@ -233,7 +257,7 @@ class ResourceController(
             reprocessDtTm = resourceDO.reprocessDateTime,
             reprocessedBy = resourceDO.reprocessedBy,
             repeatCount = resourceDO.repeatCount,
-            lastSeenDtTm = resourceDO.lastSeenDateTime
+            lastSeenDtTm = resourceDO.lastSeenDateTime,
         )
     }
 

@@ -165,9 +165,10 @@ class IssueDAOTest {
 
     @Test
     fun `getIssue - exception thrown if no statuses provided`() {
-        val exception = assertThrows<IllegalArgumentException> {
-            issueDAO.getIssues(UUID.randomUUID(), listOf(), Order.ASC, 2, null)
-        }
+        val exception =
+            assertThrows<IllegalArgumentException> {
+                issueDAO.getIssues(UUID.randomUUID(), listOf(), Order.ASC, 2, null)
+            }
         assertEquals("At least one status must be provided", exception.message)
     }
 
@@ -184,9 +185,10 @@ class IssueDAOTest {
     fun `getIssue - throws error when no issue found for after`() {
         val resourceUUID = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
         val after = UUID.randomUUID()
-        val exception = assertThrows<IllegalArgumentException> {
-            issueDAO.getIssues(resourceUUID, listOf(IssueStatus.ADDRESSING), Order.ASC, 2, after)
-        }
+        val exception =
+            assertThrows<IllegalArgumentException> {
+                issueDAO.getIssues(resourceUUID, listOf(IssueStatus.ADDRESSING), Order.ASC, 2, after)
+            }
         assertEquals("No issue found for $after", exception.message)
     }
 
@@ -270,7 +272,7 @@ class IssueDAOTest {
                 description = "No contact details"
                 status = IssueStatus.REPORTED
                 createDateTime = OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-            }
+            },
         )
     }
 
@@ -285,7 +287,7 @@ class IssueDAOTest {
                 valueSetName = "thisIsTheValueSetBeingUsed"
                 valueSetUuid = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec")
                 version = "1"
-            }
+            },
         )
     }
 
@@ -304,7 +306,7 @@ class IssueDAOTest {
                     description = "No contact details"
                     status = IssueStatus.REPORTED
                     // createDateTime = OffsetDateTime.of(2022, 8, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-                }
+                },
             )
         }
     }
@@ -315,14 +317,15 @@ class IssueDAOTest {
     fun `updateIssue`() {
         val resourceId = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
         val issueId = UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")
-        val issue = issueDAO.updateIssue(resourceId, issueId) {
-            it.severity = Severity.WARNING
-            it.type = "pat-2"
-            it.location = "Patient.telecom"
-            it.description = "No telecom details"
-            it.status = IssueStatus.ADDRESSED
-            it.updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-        }
+        val issue =
+            issueDAO.updateIssue(resourceId, issueId) {
+                it.severity = Severity.WARNING
+                it.type = "pat-2"
+                it.location = "Patient.telecom"
+                it.description = "No telecom details"
+                it.status = IssueStatus.ADDRESSED
+                it.updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+            }
 
         issue!!
         assertEquals(issueId, issue.id)
@@ -343,13 +346,14 @@ class IssueDAOTest {
     fun `updateIssue with no provided updateDateTime`() {
         val resourceId = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
         val issueId = UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")
-        val issue = issueDAO.updateIssue(resourceId, issueId) {
-            it.severity = Severity.WARNING
-            it.type = "pat-2"
-            it.location = "Patient.telecom"
-            it.description = "No telecom details"
-            it.status = IssueStatus.ADDRESSED
-        }
+        val issue =
+            issueDAO.updateIssue(resourceId, issueId) {
+                it.severity = Severity.WARNING
+                it.type = "pat-2"
+                it.location = "Patient.telecom"
+                it.description = "No telecom details"
+                it.status = IssueStatus.ADDRESSED
+            }
 
         issue!!
         assertEquals(issueId, issue.id)
@@ -368,9 +372,10 @@ class IssueDAOTest {
     @DataSet(value = ["/dbunit/issue/SingleIssue.yaml"], cleanAfter = true)
     @ExpectedDataSet(value = ["/dbunit/issue/SingleIssue.yaml"])
     fun `updateIssue for unknown resource`() {
-        val issue = issueDAO.updateIssue(UUID.randomUUID(), UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")) {
-            it.severity = Severity.FAILED
-        }
+        val issue =
+            issueDAO.updateIssue(UUID.randomUUID(), UUID.fromString("5f2139f1-3522-4746-8eb9-5607b9e0b663")) {
+                it.severity = Severity.FAILED
+            }
         assertNull(issue)
     }
 
@@ -379,9 +384,10 @@ class IssueDAOTest {
     @ExpectedDataSet(value = ["/dbunit/issue/SingleIssue.yaml"])
     fun `updateIssue for unknown issue`() {
         // issue with this UUID does not exist, therefore nothing gets updated.
-        val issue = issueDAO.updateIssue(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), UUID.randomUUID()) {
-            it.severity = Severity.FAILED
-        }
+        val issue =
+            issueDAO.updateIssue(UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"), UUID.randomUUID()) {
+                it.severity = Severity.FAILED
+            }
         assertNull(issue)
     }
 }

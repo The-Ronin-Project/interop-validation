@@ -16,30 +16,33 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 class ConversionUtilsTest {
-    private val newIssue = NewIssue(
-        severity = Severity.FAILED,
-        type = "pat-1",
-        description = "No contact details",
-        createDtTm = OffsetDateTime.now(),
-        location = "Patient.contact"
-    )
+    private val newIssue =
+        NewIssue(
+            severity = Severity.FAILED,
+            type = "pat-1",
+            description = "No contact details",
+            createDtTm = OffsetDateTime.now(),
+            location = "Patient.contact",
+        )
 
-    private val newResource = NewResource(
-        organizationId = "testorg",
-        resourceType = "Patient",
-        resource = "the patient resource",
-        issues = listOf(newIssue),
-        createDtTm = OffsetDateTime.now()
-    )
+    private val newResource =
+        NewResource(
+            organizationId = "testorg",
+            resourceType = "Patient",
+            resource = "the patient resource",
+            issues = listOf(newIssue),
+            createDtTm = OffsetDateTime.now(),
+        )
 
-    private val newMeta = NewMetadata(
-        registryEntryType = "value-set-test",
-        valueSetName = "name-of-value-set",
-        valueSetUuid = UUID.fromString("49e67956-393c-4d64-b99a-6e1e04e26c4e"),
-        conceptMapName = "name-of-concept-map",
-        conceptMapUuid = UUID.fromString("65508c9e-bfae-4401-8d1e-89f21f7049ce"),
-        version = "1"
-    )
+    private val newMeta =
+        NewMetadata(
+            registryEntryType = "value-set-test",
+            valueSetName = "name-of-value-set",
+            valueSetUuid = UUID.fromString("49e67956-393c-4d64-b99a-6e1e04e26c4e"),
+            conceptMapName = "name-of-concept-map",
+            conceptMapUuid = UUID.fromString("65508c9e-bfae-4401-8d1e-89f21f7049ce"),
+            version = "1",
+        )
 
     @Test
     fun `can convert NewMetadata to MetadataDO`() {
@@ -88,13 +91,14 @@ class ConversionUtilsTest {
 
     @Test
     fun `can convert NewResource to ResourceDO with non-null fhir ID`() {
-        val newResourceWithId = NewResource(
-            organizationId = "testorg",
-            resourceType = "Patient",
-            resource = JacksonUtil.writeJsonValue(Patient(Id("123"))),
-            issues = listOf(newIssue),
-            createDtTm = OffsetDateTime.now()
-        )
+        val newResourceWithId =
+            NewResource(
+                organizationId = "testorg",
+                resourceType = "Patient",
+                resource = JacksonUtil.writeJsonValue(Patient(Id("123"))),
+                issues = listOf(newIssue),
+                createDtTm = OffsetDateTime.now(),
+            )
         val resourceDO = newResourceWithId.toResourceDO()
         assertEquals(newResourceWithId.organizationId, resourceDO.organizationId)
         assertEquals(newResourceWithId.resourceType, resourceDO.resourceType)

@@ -75,7 +75,7 @@ openApiGenerate {
             "useTags" to "true",
             "packageName" to "com.projectronin.interop.validation.server.generated",
             "basePackage" to "com.projectronin.interop.validation.server.generated",
-            "gradleBuildFile" to "false"
-        )
+            "gradleBuildFile" to "false",
+        ),
     )
 }

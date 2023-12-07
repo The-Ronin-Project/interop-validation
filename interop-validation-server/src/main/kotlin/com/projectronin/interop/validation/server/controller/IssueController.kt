@@ -25,7 +25,7 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
         status: List<IssueStatus>?,
         order: Order,
         limit: Int,
-        after: UUID?
+        after: UUID?,
     ): ResponseEntity<List<Issue>> {
         val statuses = if (status == null || status.isEmpty()) IssueStatus.values().toList() else status
         val issueDOs = issueDAO.getIssues(resourceId, statuses, order, limit, after)
@@ -33,25 +33,34 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
             return ResponseEntity.ok(listOf())
         }
 
-        val issues = issueDOs.map {
-            createIssue(it)
-        }
+        val issues =
+            issueDOs.map {
+                createIssue(it)
+            }
 
         return ResponseEntity.ok(issues)
     }
 
     @PreAuthorize("hasAuthority('SCOPE_read:issues')")
-    override fun getIssueById(resourceId: UUID, issueId: UUID): ResponseEntity<Issue> {
+    override fun getIssueById(
+        resourceId: UUID,
+        issueId: UUID,
+    ): ResponseEntity<Issue> {
         val issueDO = issueDAO.getIssue(resourceId, issueId) ?: return ResponseEntity.notFound().build()
         val issue = createIssue(issueDO)
         return ResponseEntity.ok(issue)
     }
 
     @PreAuthorize("hasAuthority('SCOPE_update:issues')")
-    override fun updateIssue(resourceId: UUID, issueId: UUID, updateIssue: UpdateIssue): ResponseEntity<Issue> {
-        val updatedIssue = issueDAO.updateIssue(resourceId, issueId) {
-            it.status = updateIssue.status
-        } ?: return ResponseEntity.notFound().build()
+    override fun updateIssue(
+        resourceId: UUID,
+        issueId: UUID,
+        updateIssue: UpdateIssue,
+    ): ResponseEntity<Issue> {
+        val updatedIssue =
+            issueDAO.updateIssue(resourceId, issueId) {
+                it.status = updateIssue.status
+            } ?: return ResponseEntity.notFound().build()
 
         val issue = createIssue(updatedIssue)
         return ResponseEntity.ok(issue)
@@ -67,7 +76,7 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
             status = issueDO.status,
             createDtTm = issueDO.createDateTime,
             updateDtTm = issueDO.updateDateTime,
-            metadata = issueDO.metadata?.map { createMetadata(it) }
+            metadata = issueDO.metadata?.map { createMetadata(it) },
         )
     }
 
@@ -79,7 +88,7 @@ class IssueController(private val issueDAO: IssueDAO) : IssueApi {
             valueSetUuid = metadataDO.valueSetUuid,
             conceptMapName = metadataDO.conceptMapName,
             conceptMapUuid = metadataDO.conceptMapUuid,
-            version = metadataDO.version
+            version = metadataDO.version,
         )
     }
 }

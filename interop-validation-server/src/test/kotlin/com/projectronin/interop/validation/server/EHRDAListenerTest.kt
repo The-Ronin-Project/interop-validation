@@ -15,12 +15,13 @@ import java.util.UUID
 
 internal class EHRDAListenerTest {
     private val kafkaClient = mockk<KafkaClient>()
-    private val topics = listOf(
-        mockk<EhrDAKafkaTopic> {
-            every { topicName } returns "ehrdaTopic.patient.v1"
-            every { resourceClass } returns Patient::class
-        }
-    )
+    private val topics =
+        listOf(
+            mockk<EhrDAKafkaTopic> {
+                every { topicName } returns "ehrdaTopic.patient.v1"
+                every { resourceClass } returns Patient::class
+            },
+        )
     private val resourceDAO = mockk<ResourceDAO>()
     private val listener = EHRDAListener(kafkaClient, topics, resourceDAO)
 
@@ -32,16 +33,18 @@ internal class EHRDAListenerTest {
         every { fakeResource.findTenantId() } returns "tenantId"
         every { fakeResource.resourceType } returns "Patient"
 
-        every { kafkaClient.retrieveMultiTopicEvents(any(), any(), any(), any()) } returns listOf(
-            mockk {
-                every { data } returns fakeResource
-            }
-        )
-        every { resourceDAO.getResourcesByFHIRID(any(), "fhirId", "tenantId", "Patient") } returns listOf(
-            mockk {
-                every { id } returns UUID.randomUUID()
-            }
-        )
+        every { kafkaClient.retrieveMultiTopicEvents(any(), any(), any(), any()) } returns
+            listOf(
+                mockk {
+                    every { data } returns fakeResource
+                },
+            )
+        every { resourceDAO.getResourcesByFHIRID(any(), "fhirId", "tenantId", "Patient") } returns
+            listOf(
+                mockk {
+                    every { id } returns UUID.randomUUID()
+                },
+            )
         every { resourceDAO.updateResource(any(), any()) } returns mockk()
         listener.poll()
         verify { resourceDAO.updateResource(any(), any()) }
@@ -54,7 +57,7 @@ internal class EHRDAListenerTest {
                 any(),
                 any(),
                 any(),
-                any()
+                any(),
             )
         } throws InterruptException("Interrupted")
 

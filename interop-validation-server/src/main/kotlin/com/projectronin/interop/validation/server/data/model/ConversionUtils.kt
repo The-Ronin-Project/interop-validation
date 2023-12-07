@@ -16,13 +16,14 @@ import java.util.UUID
  * Converts a [NewResource] into a [ResourceDO]
  */
 fun NewResource.toResourceDO(): ResourceDO {
-    val fhirId = runCatching {
-        val resource = JacksonUtil.readJsonObject(this.resource, Resource::class)
-        resource.findFhirId()
-    }.getOrElse {
-        KotlinLogging.logger {}.warn(it) { "Failed to cast to Resource: ${this.resource}" }
-        null
-    }
+    val fhirId =
+        runCatching {
+            val resource = JacksonUtil.readJsonObject(this.resource, Resource::class)
+            resource.findFhirId()
+        }.getOrElse {
+            KotlinLogging.logger {}.warn(it) { "Failed to cast to Resource: ${this.resource}" }
+            null
+        }
     return ResourceDO {
         organizationId = this@toResourceDO.organizationId
         resourceType = this@toResourceDO.resourceType

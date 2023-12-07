@@ -34,63 +34,71 @@ class CommentControllerTest {
     private val comment1ID = UUID.fromString("981d2048-eb49-4bfd-ba96-8291288641c3")
     private val comment2ID = UUID.fromString("0e66c1a1-cd12-47f5-98bd-f4f78d1f1929")
     private val commentCreateTime = OffsetDateTime.now(ZoneOffset.UTC)
-    private val resourceDO = ResourceDO {
-        id = resourceId
-        organizationId = "testorg"
-        resourceType = "Patient"
-        resource = "patient resource"
-        status = ResourceStatus.REPORTED
-        createDateTime = commentCreateTime
-    }
+    private val resourceDO =
+        ResourceDO {
+            id = resourceId
+            organizationId = "testorg"
+            resourceType = "Patient"
+            resource = "patient resource"
+            status = ResourceStatus.REPORTED
+            createDateTime = commentCreateTime
+        }
 
-    private val issueDO = IssueDO {
-        id = issueId
-        resourceId = resourceDO.id
-        severity = Severity.FAILED
-        type = "pat-1"
-        location = "Patient.contact"
-        description = "No contact details"
-        status = IssueStatus.REPORTED
-        createDateTime = commentCreateTime
-    }
+    private val issueDO =
+        IssueDO {
+            id = issueId
+            resourceId = resourceDO.id
+            severity = Severity.FAILED
+            type = "pat-1"
+            location = "Patient.contact"
+            description = "No contact details"
+            status = IssueStatus.REPORTED
+            createDateTime = commentCreateTime
+        }
 
-    private val commentDO1 = CommentDO {
-        id = comment1ID
-        author = "Sam"
-        text = "I give up"
-        createDateTime = commentCreateTime
-    }
-    private val commentDO2 = CommentDO {
-        id = comment2ID
-        author = "Sam 2"
-        text = "I also give up"
-        createDateTime = commentCreateTime
-    }
+    private val commentDO1 =
+        CommentDO {
+            id = comment1ID
+            author = "Sam"
+            text = "I give up"
+            createDateTime = commentCreateTime
+        }
+    private val commentDO2 =
+        CommentDO {
+            id = comment2ID
+            author = "Sam 2"
+            text = "I also give up"
+            createDateTime = commentCreateTime
+        }
 
-    private val newComment1 = NewComment(
-        author = "Beau",
-        text = "I disagree with this error"
-    )
+    private val newComment1 =
+        NewComment(
+            author = "Beau",
+            text = "I disagree with this error",
+        )
 
-    private val newComment2 = NewComment(
-        author = "Beau",
-        text = "I also disagree with this error",
-        createDtTm = commentCreateTime
-    )
+    private val newComment2 =
+        NewComment(
+            author = "Beau",
+            text = "I also disagree with this error",
+            createDtTm = commentCreateTime,
+        )
 
     @BeforeEach
     fun setup() {
-        issueDAO = mockk<IssueDAO> {
-            every {
-                getIssue(resourceId, issueId)
-            } returns issueDO
-        }
+        issueDAO =
+            mockk<IssueDAO> {
+                every {
+                    getIssue(resourceId, issueId)
+                } returns issueDO
+            }
         commentDAO = mockk()
-        resourceDAO = mockk<ResourceDAO> {
-            every {
-                getResource(resourceId)
-            } returns resourceDO
-        }
+        resourceDAO =
+            mockk<ResourceDAO> {
+                every {
+                    getResource(resourceId)
+                } returns resourceDO
+            }
         controller = CommentController(commentDAO, issueDAO, resourceDAO)
     }
 

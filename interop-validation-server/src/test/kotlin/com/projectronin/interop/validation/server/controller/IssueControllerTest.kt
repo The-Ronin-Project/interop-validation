@@ -32,77 +32,84 @@ class IssueControllerTest {
     private val valueSetUUID = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec")
     private val conceptMapUUID = UUID.fromString("29681f0f-41a7-4790-9122-ccff1ee50e0e") // KWgfD0GnR5CRIgAAzP8e5Q==
     private val issueCreateTime = OffsetDateTime.now(ZoneOffset.UTC)
-    private val resourceDO = ResourceDO {
-        id = resourceId
-        organizationId = "testorg"
-        resourceType = "Patient"
-        resource = "patient resource"
-        status = ResourceStatus.REPORTED
-        createDateTime = issueCreateTime
-    }
+    private val resourceDO =
+        ResourceDO {
+            id = resourceId
+            organizationId = "testorg"
+            resourceType = "Patient"
+            resource = "patient resource"
+            status = ResourceStatus.REPORTED
+            createDateTime = issueCreateTime
+        }
 
-    private val issue1 = IssueDO {
-        id = issue1Id
-        resourceId = resourceDO.id
-        severity = Severity.FAILED
-        type = "pat-1"
-        location = "Patient.contact"
-        description = "No contact details"
-        status = IssueStatus.REPORTED
-        createDateTime = issueCreateTime
-    }
-    private val issue2 = IssueDO {
-        id = issue2Id
-        resourceId = resourceDO.id
-        severity = Severity.FAILED
-        type = "pat-1"
-        location = "Patient.contact"
-        description = "No contact details"
-        status = IssueStatus.REPORTED
-        createDateTime = issueCreateTime
-    }
+    private val issue1 =
+        IssueDO {
+            id = issue1Id
+            resourceId = resourceDO.id
+            severity = Severity.FAILED
+            type = "pat-1"
+            location = "Patient.contact"
+            description = "No contact details"
+            status = IssueStatus.REPORTED
+            createDateTime = issueCreateTime
+        }
+    private val issue2 =
+        IssueDO {
+            id = issue2Id
+            resourceId = resourceDO.id
+            severity = Severity.FAILED
+            type = "pat-1"
+            location = "Patient.contact"
+            description = "No contact details"
+            status = IssueStatus.REPORTED
+            createDateTime = issueCreateTime
+        }
 
-    private val meta1 = MetadataDO {
-        id = meta1Id
-        issueId = issue1Id
-        registryEntryType = "concept_map"
-        valueSetName = "value-set-name"
-        valueSetUuid = valueSetUUID
-        conceptMapName = "concept-map-name"
-        conceptMapUuid = conceptMapUUID
-    }
+    private val meta1 =
+        MetadataDO {
+            id = meta1Id
+            issueId = issue1Id
+            registryEntryType = "concept_map"
+            valueSetName = "value-set-name"
+            valueSetUuid = valueSetUUID
+            conceptMapName = "concept-map-name"
+            conceptMapUuid = conceptMapUUID
+        }
 
-    private val meta2 = MetadataDO {
-        id = meta2Id
-        issueId = issue2Id
-        registryEntryType = "concept_map"
-        valueSetName = "value-set-name"
-        valueSetUuid = valueSetUUID
-        conceptMapName = "concept-map-name"
-        conceptMapUuid = conceptMapUUID
-    }
+    private val meta2 =
+        MetadataDO {
+            id = meta2Id
+            issueId = issue2Id
+            registryEntryType = "concept_map"
+            valueSetName = "value-set-name"
+            valueSetUuid = valueSetUUID
+            conceptMapName = "concept-map-name"
+            conceptMapUuid = conceptMapUUID
+        }
 
-    private val metaForIssueUpdate = MetadataDO {
-        id = meta1Id
-        issueId = issue2Id
-        registryEntryType = "concept_map"
-        valueSetName = "value-set-name"
-        valueSetUuid = valueSetUUID
-        conceptMapName = "concept-map-name"
-        conceptMapUuid = conceptMapUUID
-    }
+    private val metaForIssueUpdate =
+        MetadataDO {
+            id = meta1Id
+            issueId = issue2Id
+            registryEntryType = "concept_map"
+            valueSetName = "value-set-name"
+            valueSetUuid = valueSetUUID
+            conceptMapName = "concept-map-name"
+            conceptMapUuid = conceptMapUUID
+        }
 
-    private val issueWithMeta = IssueDO {
-        id = issue1Id
-        resourceId = resourceDO.id
-        severity = Severity.FAILED
-        type = "pat-1"
-        location = "Patient.contact"
-        description = "No contact details"
-        status = IssueStatus.REPORTED
-        createDateTime = issueCreateTime
-        metadata = listOf(meta1)
-    }
+    private val issueWithMeta =
+        IssueDO {
+            id = issue1Id
+            resourceId = resourceDO.id
+            severity = Severity.FAILED
+            type = "pat-1"
+            location = "Patient.contact"
+            description = "No contact details"
+            status = IssueStatus.REPORTED
+            createDateTime = issueCreateTime
+            metadata = listOf(meta1)
+        }
 
     @BeforeEach
     fun setup() {
@@ -216,18 +223,19 @@ class IssueControllerTest {
 
     @Test
     fun `updateIssue - works`() {
-        val updatedIssue = IssueDO {
-            id = issue2Id
-            resourceId = resourceDO.id
-            severity = Severity.FAILED
-            type = "pat-1"
-            location = "Patient.contact"
-            description = "No contact details"
-            status = IssueStatus.REPORTED
-            createDateTime = issueCreateTime
-            updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-            metadata = listOf(metaForIssueUpdate)
-        }
+        val updatedIssue =
+            IssueDO {
+                id = issue2Id
+                resourceId = resourceDO.id
+                severity = Severity.FAILED
+                type = "pat-1"
+                location = "Patient.contact"
+                description = "No contact details"
+                status = IssueStatus.REPORTED
+                createDateTime = issueCreateTime
+                updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+                metadata = listOf(metaForIssueUpdate)
+            }
         every {
             issueDAO.updateIssue(resourceId, issue2Id, captureLambda())
         } returns updatedIssue
@@ -244,14 +252,15 @@ class IssueControllerTest {
 
     @Test
     fun `updateIssue - fails`() {
-        val updateIssue = IssueDO {
-            severity = Severity.FAILED
-            type = "pat-1"
-            location = "Patient.contact"
-            description = "No contact details"
-            status = IssueStatus.REPORTED
-            updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-        }
+        val updateIssue =
+            IssueDO {
+                severity = Severity.FAILED
+                type = "pat-1"
+                location = "Patient.contact"
+                description = "No contact details"
+                status = IssueStatus.REPORTED
+                updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+            }
         every {
             issueDAO.updateIssue(resourceId, issue2Id, captureLambda())
         } returns null

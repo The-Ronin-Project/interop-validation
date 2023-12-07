@@ -70,11 +70,11 @@ configure(openapiProjects) {
                         it.classDirectories.files.map {
                             fileTree(it).apply {
                                 exclude(
-                                    "**/generated/**"
+                                    "**/generated/**",
                                 )
                             }
-                        }
-                    )
+                        },
+                    ),
                 )
             }
         }

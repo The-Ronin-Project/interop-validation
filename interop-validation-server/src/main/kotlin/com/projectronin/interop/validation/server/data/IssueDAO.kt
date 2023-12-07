@@ -91,7 +91,10 @@ class IssueDAO(private val database: Database) {
     /**
      * Retrieves the [IssueDO] for the [resourceId] and [issueId].
      */
-    fun getIssue(resourceId: UUID, issueId: UUID): IssueDO? {
+    fun getIssue(
+        resourceId: UUID,
+        issueId: UUID,
+    ): IssueDO? {
         logger.info { "Looking up issue $issueId within resource $resourceId" }
         val issue =
             database.from(IssueDOs).select().where((IssueDOs.id eq issueId) and (IssueDOs.resourceId eq resourceId))
@@ -100,7 +103,9 @@ class IssueDAO(private val database: Database) {
             logger.info { "No issue found for resource $resourceId and issue $issueId" }
             return null
         } else {
-            issue.metadata = database.from(MetadataDOs).select().where(MetadataDOs.issueId eq issueId).map { MetadataDOs.createEntity(it) }
+            issue.metadata =
+                database.from(MetadataDOs).select().where(MetadataDOs.issueId eq issueId)
+                    .map { MetadataDOs.createEntity(it) }
         }
 
         logger.info { "Issue loaded for resource $resourceId and issue $issueId" }
@@ -116,7 +121,7 @@ class IssueDAO(private val database: Database) {
         statuses: List<IssueStatus>,
         order: Order,
         limit: Int,
-        after: UUID?
+        after: UUID?,
     ): List<IssueDO> {
         require(statuses.isNotEmpty()) { "At least one status must be provided" }
         logger.info { "Retrieving $limit issues in $order order after $after for following statuses: $statuses" }
@@ -125,42 +130,47 @@ class IssueDAO(private val database: Database) {
             after?.let { getIssue(resourceUUID, it) ?: throw IllegalArgumentException("No issue found for $after") }
 
         // Ordering by create and then ID ensures that issues with the same create time will always be in the same order
-        val orderBy = when (order) {
-            Order.ASC -> listOf(IssueDOs.createDateTime.asc(), IssueDOs.id.asc())
-            Order.DESC -> listOf(IssueDOs.createDateTime.desc(), IssueDOs.id.desc())
-        }
+        val orderBy =
+            when (order) {
+                Order.ASC -> listOf(IssueDOs.createDateTime.asc(), IssueDOs.id.asc())
+                Order.DESC -> listOf(IssueDOs.createDateTime.desc(), IssueDOs.id.desc())
+            }
 
-        val issues = database.from(IssueDOs)
-            .select()
-            .where {
-                val conditions = mutableListOf<ColumnDeclaring<Boolean>>()
+        val issues =
+            database.from(IssueDOs)
+                .select()
+                .where {
+                    val conditions = mutableListOf<ColumnDeclaring<Boolean>>()
 
-                conditions += IssueDOs.status inList statuses
-                conditions += IssueDOs.resourceId eq resourceUUID
+                    conditions += IssueDOs.status inList statuses
+                    conditions += IssueDOs.resourceId eq resourceUUID
 
-                afterResource?.let {
-                    // With an after resource, we care about 2 different conditions:
-                    // 1. The time is "after" the "after issue's time". So for ASC, it's greater, and for DESC it's less.
-                    // 2. If the time is the same, we need to check based off the ID, our secondary sort, to ensure that we
-                    //    have retrieved all the issues that occurred at the same time as the "after issue".
-                    conditions += when (order) {
-                        Order.ASC -> (
-                            (IssueDOs.createDateTime greater it.createDateTime) or
-                                ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id greater it.id))
-                            )
+                    afterResource?.let {
+                        // With an after resource, we care about 2 different conditions:
+                        // 1. The time is "after" the "after issue's time". So for ASC, it's greater, and for DESC it's less.
+                        // 2. If the time is the same, we need to check based off the ID, our secondary sort, to ensure that we
+                        //    have retrieved all the issues that occurred at the same time as the "after issue".
+                        conditions +=
+                            when (order) {
+                                Order.ASC -> (
+                                    (IssueDOs.createDateTime greater it.createDateTime) or
+                                        ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id greater it.id))
+                                )
 
-                        Order.DESC -> (
-                            (IssueDOs.createDateTime less it.createDateTime) or
-                                ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id less it.id))
-                            )
+                                Order.DESC -> (
+                                    (IssueDOs.createDateTime less it.createDateTime) or
+                                        ((IssueDOs.createDateTime eq it.createDateTime) and (IssueDOs.id less it.id))
+                                )
+                            }
                     }
-                }
 
-                conditions.reduce { a, b -> a and b }
-            }.limit(limit).orderBy(orderBy).map { IssueDOs.createEntity(it) }
+                    conditions.reduce { a, b -> a and b }
+                }.limit(limit).orderBy(orderBy).map { IssueDOs.createEntity(it) }
 
         issues.forEach { issue ->
-            issue.metadata = database.from(MetadataDOs).select().where { MetadataDOs.issueId eq issue.id }.map { MetadataDOs.createEntity(it) }
+            issue.metadata =
+                database.from(MetadataDOs).select()
+                    .where { MetadataDOs.issueId eq issue.id }.map { MetadataDOs.createEntity(it) }
         }
 
         logger.info { "Found ${issues.size} issues" }
@@ -171,7 +181,11 @@ class IssueDAO(private val database: Database) {
      * Updates the issue with [resourceId] and [issueId] based off the provided [updateFunction]. [updateFunction] should
      * use the provided issue's setter functions to provide an updated view of the issue.
      */
-    fun updateIssue(resourceId: UUID, issueId: UUID, updateFunction: (IssueDO) -> Unit): IssueDO? {
+    fun updateIssue(
+        resourceId: UUID,
+        issueId: UUID,
+        updateFunction: (IssueDO) -> Unit,
+    ): IssueDO? {
         logger.info { "Updating issue $issueId" }
 
         val issue =

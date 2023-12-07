@@ -23,11 +23,13 @@ import java.util.UUID
 
 @Repository
 class CommentDAO(private val database: Database) {
-
     /**
      *  retrieves all [CommentDO]s sorted by [order] for a given [resourceID]
      */
-    fun getCommentsByResource(resourceID: UUID, order: Order): List<CommentDO> {
+    fun getCommentsByResource(
+        resourceID: UUID,
+        order: Order,
+    ): List<CommentDO> {
         return database.from(ResourceCommentDOs)
             .leftJoin(CommentDOs, ResourceCommentDOs.commentId eq CommentDOs.id)
             .select()
@@ -39,7 +41,10 @@ class CommentDAO(private val database: Database) {
     /**
      *  retrieves all [CommentDO]s sorted by [order] for a given [issueId]
      */
-    fun getCommentsByIssue(issueId: UUID, order: Order): List<CommentDO> {
+    fun getCommentsByIssue(
+        issueId: UUID,
+        order: Order,
+    ): List<CommentDO> {
         return database.from(IssueCommentDOs)
             .leftJoin(CommentDOs, IssueCommentDOs.commentId eq CommentDOs.id)
             .select()
@@ -57,7 +62,10 @@ class CommentDAO(private val database: Database) {
     }
 
     @Transactional
-    fun insertResourceComment(commentDO: CommentDO, resourceID: UUID): UUID {
+    fun insertResourceComment(
+        commentDO: CommentDO,
+        resourceID: UUID,
+    ): UUID {
         val commentUUID = insertComment(commentDO)
         database.insert(ResourceCommentDOs) {
             set(it.commentId, commentUUID)
@@ -67,7 +75,10 @@ class CommentDAO(private val database: Database) {
     }
 
     @Transactional
-    fun insertIssueComment(commentDO: CommentDO, issueID: UUID): UUID {
+    fun insertIssueComment(
+        commentDO: CommentDO,
+        issueID: UUID,
+    ): UUID {
         val commentUUID = insertComment(commentDO)
         database.insert(IssueCommentDOs) {
             set(it.commentId, commentUUID)

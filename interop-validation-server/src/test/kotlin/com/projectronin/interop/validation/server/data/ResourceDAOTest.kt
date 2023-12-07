@@ -60,9 +60,10 @@ class ResourceDAOTest {
 
     @Test
     fun `getResources - exception thrown if no statuses provided`() {
-        val exception = assertThrows<IllegalArgumentException> {
-            resourceDAO.getResources(listOf(), Order.ASC, 2, null, null, null, null)
-        }
+        val exception =
+            assertThrows<IllegalArgumentException> {
+                resourceDAO.getResources(listOf(), Order.ASC, 2, null, null, null, null)
+            }
         assertEquals("At least one status must be provided", exception.message)
     }
 
@@ -279,24 +280,26 @@ class ResourceDAOTest {
     @DataSet(value = ["/dbunit/resource/MultipleResources.yaml"], cleanAfter = true)
     fun `getResources - no resources found for after UUID`() {
         val uuid = UUID.randomUUID()
-        val exception = assertThrows<IllegalArgumentException> {
-            resourceDAO.getResources(listOf(ResourceStatus.ADDRESSING), Order.ASC, 2, uuid, null, null, null)
-        }
+        val exception =
+            assertThrows<IllegalArgumentException> {
+                resourceDAO.getResources(listOf(ResourceStatus.ADDRESSING), Order.ASC, 2, uuid, null, null, null)
+            }
         assertEquals("No resource found for $uuid", exception.message)
     }
 
     @Test
     @DataSet(value = ["/dbunit/resource/MultipleResources.yaml"], cleanAfter = true)
     fun `getResources - after is honored with ASC order`() {
-        val resources = resourceDAO.getResources(
-            listOf(ResourceStatus.REPORTED),
-            Order.ASC,
-            100,
-            UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7"),
-            null,
-            null,
-            null
-        )
+        val resources =
+            resourceDAO.getResources(
+                listOf(ResourceStatus.REPORTED),
+                Order.ASC,
+                100,
+                UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7"),
+                null,
+                null,
+                null,
+            )
         assertEquals(2, resources.size)
 
         val resource1 = resources[0]
@@ -325,15 +328,16 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MultipleResources.yaml"], cleanAfter = true)
     fun `getResources - after is honored with DESC order`() {
-        val resources = resourceDAO.getResources(
-            listOf(ResourceStatus.REPORTED),
-            Order.DESC,
-            100,
-            UUID.fromString("9691d550-90f5-4fb8-83f9-e4a3840e37eb"),
-            null,
-            null,
-            null
-        )
+        val resources =
+            resourceDAO.getResources(
+                listOf(ResourceStatus.REPORTED),
+                Order.DESC,
+                100,
+                UUID.fromString("9691d550-90f5-4fb8-83f9-e4a3840e37eb"),
+                null,
+                null,
+                null,
+            )
         assertEquals(2, resources.size)
 
         val resource1 = resources[0]
@@ -362,15 +366,16 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MatchingDateTimeResources.yaml"], cleanAfter = true)
     fun `getResources - after supports equivalent create date times with ASC order`() {
-        val resources = resourceDAO.getResources(
-            listOf(ResourceStatus.REPORTED),
-            Order.ASC,
-            100,
-            UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7"),
-            null,
-            null,
-            null
-        )
+        val resources =
+            resourceDAO.getResources(
+                listOf(ResourceStatus.REPORTED),
+                Order.ASC,
+                100,
+                UUID.fromString("4e0f261f-3dd4-41ad-9066-9733c41993a7"),
+                null,
+                null,
+                null,
+            )
         assertEquals(1, resources.size)
 
         val resource1 = resources[0]
@@ -388,15 +393,16 @@ class ResourceDAOTest {
     @Test
     @DataSet(value = ["/dbunit/resource/MatchingDateTimeResources.yaml"], cleanAfter = true)
     fun `getResources - after supports equivalent create date times with DESC order`() {
-        val resources = resourceDAO.getResources(
-            listOf(ResourceStatus.REPORTED),
-            Order.DESC,
-            100,
-            UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"),
-            null,
-            null,
-            null
-        )
+        val resources =
+            resourceDAO.getResources(
+                listOf(ResourceStatus.REPORTED),
+                Order.DESC,
+                100,
+                UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770"),
+                null,
+                null,
+                null,
+            )
         assertEquals(1, resources.size)
 
         val resource1 = resources[0]
@@ -449,7 +455,7 @@ class ResourceDAOTest {
                 null,
                 null,
                 "DocumentReference",
-                null
+                null,
             )
         assertEquals(0, resources.size)
     }
@@ -503,7 +509,7 @@ class ResourceDAOTest {
                 null,
                 null,
                 null,
-                listOf("pat-1", "pat-2")
+                listOf("pat-1", "pat-2"),
             )
         assertEquals(1, resources.size)
 
@@ -530,7 +536,7 @@ class ResourceDAOTest {
                 null,
                 null,
                 null,
-                listOf("pat-1", "pat-2")
+                listOf("pat-1", "pat-2"),
             )
         assertEquals(2, resources.size)
 
@@ -571,7 +577,7 @@ class ResourceDAOTest {
                 updateDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
                 reprocessDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
                 reprocessedBy = "User 1"
-            }
+            },
         )
     }
 
@@ -590,7 +596,7 @@ class ResourceDAOTest {
                 reprocessDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
                 reprocessedBy = "User 1"
                 clientFhirId = "Test"
-            }
+            },
         )
     }
 
@@ -610,7 +616,7 @@ class ResourceDAOTest {
                     updateDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
                     reprocessDateTime = OffsetDateTime.of(2022, 8, 8, 13, 6, 0, 0, ZoneOffset.UTC)
                     reprocessedBy = "User 1"
-                }
+                },
             )
         }
     }
@@ -620,11 +626,12 @@ class ResourceDAOTest {
     @ExpectedDataSet(value = ["/dbunit/resource/UpdatedResource.yaml"])
     fun `updateResource`() {
         val resourceId = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
-        val resource = resourceDAO.updateResource(resourceId) {
-            it.organizationId = "newtest"
-            it.status = ResourceStatus.IGNORED
-            it.updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-        }
+        val resource =
+            resourceDAO.updateResource(resourceId) {
+                it.organizationId = "newtest"
+                it.status = ResourceStatus.IGNORED
+                it.updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+            }
 
         resource!!
         assertEquals(resourceId, resource.id)
@@ -643,10 +650,11 @@ class ResourceDAOTest {
     @ExpectedDataSet(value = ["/dbunit/resource/UpdatedResource.yaml"], ignoreCols = ["update_dt_tm"])
     fun `updateResource with no provided updateDateTime`() {
         val resourceId = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
-        val resource = resourceDAO.updateResource(resourceId) {
-            it.organizationId = "newtest"
-            it.status = ResourceStatus.IGNORED
-        }
+        val resource =
+            resourceDAO.updateResource(resourceId) {
+                it.organizationId = "newtest"
+                it.status = ResourceStatus.IGNORED
+            }
 
         resource!!
         assertEquals(resourceId, resource.id)
@@ -664,9 +672,10 @@ class ResourceDAOTest {
     @DataSet(value = ["/dbunit/resource/InitialResource.yaml"], cleanAfter = true)
     @ExpectedDataSet(value = ["/dbunit/resource/InitialResource.yaml"])
     fun `updateResource for unknown resource`() {
-        val resource = resourceDAO.updateResource(UUID.randomUUID()) {
-            it.status = ResourceStatus.IGNORED
-        }
+        val resource =
+            resourceDAO.updateResource(UUID.randomUUID()) {
+                it.status = ResourceStatus.IGNORED
+            }
         assertNull(resource)
     }
 
@@ -675,11 +684,12 @@ class ResourceDAOTest {
     @ExpectedDataSet(value = ["/dbunit/resource/UpdatedResourceRepeats.yaml"])
     fun `updateResource with repeats`() {
         val resourceId = UUID.fromString("5f781c30-02f3-4f06-adcf-7055bcbc5770")
-        val resource = resourceDAO.updateResource(resourceId) {
-            it.repeatCount = 3
-            it.lastSeenDateTime = OffsetDateTime.of(2023, 9, 26, 12, 5, 0, 0, ZoneOffset.UTC)
-            it.updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
-        }
+        val resource =
+            resourceDAO.updateResource(resourceId) {
+                it.repeatCount = 3
+                it.lastSeenDateTime = OffsetDateTime.of(2023, 9, 26, 12, 5, 0, 0, ZoneOffset.UTC)
+                it.updateDateTime = OffsetDateTime.of(2022, 9, 1, 11, 18, 0, 0, ZoneOffset.UTC)
+            }
 
         resource!!
         assertEquals(resourceId, resource.id)

@@ -26,47 +26,56 @@ class IssueClient(
     @Value("\${validation.server.url}")
     private val hostUrl: String,
     private val client: HttpClient,
-    private val authenticationService: ValidationAuthenticationService
+    private val authenticationService: ValidationAuthenticationService,
 ) {
     private val resourceUrl: String = "$hostUrl/resources"
 
     /**
      * Retrieves the set of issues associated to the supplied resource.
      */
-    suspend fun getResourceIssues(resourceId: UUID, order: Order): List<Issue> {
+    suspend fun getResourceIssues(
+        resourceId: UUID,
+        order: Order,
+    ): List<Issue> {
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/issues"
-        val response: HttpResponse = client.request("Validation", urlString) { url ->
-            get(url) {
-                headers {
-                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse =
+            client.request("Validation", urlString) { url ->
+                get(url) {
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                    }
+                    accept(ContentType.Application.Json)
+                    contentType(ContentType.Application.Json)
+                    parameter("order", order)
                 }
-                accept(ContentType.Application.Json)
-                contentType(ContentType.Application.Json)
-                parameter("order", order)
             }
-        }
         return response.body()
     }
 
     /**
      * Updates the issue. Only status updates will be supported at this time.
      */
-    suspend fun updateResourceIssue(resourceId: UUID, issueId: UUID, updateIssue: UpdateIssue): Issue {
+    suspend fun updateResourceIssue(
+        resourceId: UUID,
+        issueId: UUID,
+        updateIssue: UpdateIssue,
+    ): Issue {
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/issues/$issueId"
-        val response: HttpResponse = client.request("Validation", urlString) { url ->
-            patch(url) {
-                headers {
-                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse =
+            client.request("Validation", urlString) { url ->
+                patch(url) {
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                    }
+                    accept(ContentType.Application.Json)
+                    contentType(ContentType.Application.Json)
+                    setBody(updateIssue)
                 }
-                accept(ContentType.Application.Json)
-                contentType(ContentType.Application.Json)
-                setBody(updateIssue)
             }
-        }
         return response.body()
     }
 }

@@ -61,7 +61,7 @@ class ResourceDAO(private val database: Database) {
         statuses: List<ResourceStatus>,
         fhirID: String,
         tenantID: String,
-        resourceType: String
+        resourceType: String,
     ): List<ResourceDO> {
         logger.info { "Looking up resources for FHIR ID: $fhirID" }
 
@@ -86,7 +86,7 @@ class ResourceDAO(private val database: Database) {
         after: UUID?,
         organizationId: String?,
         resourceType: String?,
-        issueType: List<String>?
+        issueType: List<String>?,
     ): List<ResourceDO> {
         require(statuses.isNotEmpty()) { "At least one status must be provided" }
 
@@ -96,47 +96,50 @@ class ResourceDAO(private val database: Database) {
             after?.let { getResource(it) ?: throw IllegalArgumentException("No resource found for $after") }
 
         // Ordering by create and then ID ensures that the conditions below can
-        val orderBy = when (order) {
-            Order.ASC -> listOf(ResourceDOs.createDateTime.asc(), ResourceDOs.id.asc())
-            Order.DESC -> listOf(ResourceDOs.createDateTime.desc(), ResourceDOs.id.desc())
-        }
-        val query = database.from(ResourceDOs)
-            .selectDistinct(ResourceDOs.columns) // if multiple issues found for a resource, return the resource once
-            .where {
-                val conditions = mutableListOf<ColumnDeclaring<Boolean>>()
+        val orderBy =
+            when (order) {
+                Order.ASC -> listOf(ResourceDOs.createDateTime.asc(), ResourceDOs.id.asc())
+                Order.DESC -> listOf(ResourceDOs.createDateTime.desc(), ResourceDOs.id.desc())
+            }
+        val query =
+            database.from(ResourceDOs)
+                .selectDistinct(ResourceDOs.columns) // if multiple issues found for a resource, return the resource once
+                .where {
+                    val conditions = mutableListOf<ColumnDeclaring<Boolean>>()
 
-                conditions += ResourceDOs.status inList statuses
+                    conditions += ResourceDOs.status inList statuses
 
-                if (issueType?.isNotEmpty() == true) {
-                    val issues =
-                        database.from(IssueDOs).select(IssueDOs.resourceId)
-                            .where { (IssueDOs.type inList issueType) and (IssueDOs.resourceId eq ResourceDOs.id) }
-                    conditions += ResourceDOs.id inList issues
-                }
-
-                organizationId?.let { conditions += ResourceDOs.organizationId eq it }
-                resourceType?.let { conditions += ResourceDOs.resourceType eq it }
-
-                afterResource?.let {
-                    // With an after resource, we care about 2 different conditions:
-                    // 1. The time is "after" the "after resource's time". So for ASC, it's greater, and for DESC it's less.
-                    // 2. If the time is the same, we need to check based off the ID, our secondary sort, to ensure that we
-                    //    have retrieved all the resources that occurred at the same time as the "after resource".
-                    conditions += when (order) {
-                        Order.ASC -> (
-                            (ResourceDOs.createDateTime greater it.createDateTime) or
-                                ((ResourceDOs.createDateTime eq it.createDateTime) and (ResourceDOs.id greater it.id))
-                            )
-
-                        Order.DESC -> (
-                            (ResourceDOs.createDateTime less it.createDateTime) or
-                                ((ResourceDOs.createDateTime eq it.createDateTime) and (ResourceDOs.id less it.id))
-                            )
+                    if (issueType?.isNotEmpty() == true) {
+                        val issues =
+                            database.from(IssueDOs).select(IssueDOs.resourceId)
+                                .where { (IssueDOs.type inList issueType) and (IssueDOs.resourceId eq ResourceDOs.id) }
+                        conditions += ResourceDOs.id inList issues
                     }
-                }
 
-                conditions.reduce { a, b -> a and b }
-            }.limit(limit).orderBy(orderBy)
+                    organizationId?.let { conditions += ResourceDOs.organizationId eq it }
+                    resourceType?.let { conditions += ResourceDOs.resourceType eq it }
+
+                    afterResource?.let {
+                        // With an after resource, we care about 2 different conditions:
+                        // 1. The time is "after" the "after resource's time". So for ASC, it's greater, and for DESC it's less.
+                        // 2. If the time is the same, we need to check based off the ID, our secondary sort, to ensure that we
+                        //    have retrieved all the resources that occurred at the same time as the "after resource".
+                        conditions +=
+                            when (order) {
+                                Order.ASC -> (
+                                    (ResourceDOs.createDateTime greater it.createDateTime) or
+                                        ((ResourceDOs.createDateTime eq it.createDateTime) and (ResourceDOs.id greater it.id))
+                                )
+
+                                Order.DESC -> (
+                                    (ResourceDOs.createDateTime less it.createDateTime) or
+                                        ((ResourceDOs.createDateTime eq it.createDateTime) and (ResourceDOs.id less it.id))
+                                )
+                            }
+                    }
+
+                    conditions.reduce { a, b -> a and b }
+                }.limit(limit).orderBy(orderBy)
 
         val resources = query.map { ResourceDOs.createEntity(it) }
         logger.info { "Found ${resources.size} resources" }
@@ -172,7 +175,10 @@ class ResourceDAO(private val database: Database) {
      * Updates the resource with [resourceId] based off the provided [updateFunction]. [updateFunction] should
      * use the provided resource's setter functions to provide an updated view of the issue.
      */
-    fun updateResource(resourceId: UUID, updateFunction: (ResourceDO) -> Unit): ResourceDO? {
+    fun updateResource(
+        resourceId: UUID,
+        updateFunction: (ResourceDO) -> Unit,
+    ): ResourceDO? {
         logger.info { "Updating resource $resourceId" }
 
         val resource =

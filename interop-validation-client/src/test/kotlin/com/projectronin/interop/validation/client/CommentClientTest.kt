@@ -32,32 +32,37 @@ class CommentClientTest {
     private val mockWebServer = MockWebServer()
     private val hostUrl = mockWebServer.url("/test")
     private val authenticationToken = "123456"
-    private val authenticationService = mockk<ValidationAuthenticationService> {
-        every { getAuthentication() } returns mockk {
-            every { accessToken } returns authenticationToken
+    private val authenticationService =
+        mockk<ValidationAuthenticationService> {
+            every { getAuthentication() } returns
+                mockk {
+                    every { accessToken } returns authenticationToken
+                }
         }
-    }
-    private val httpClient = HttpClient(OkHttp) {
-        install(ContentNegotiation) {
-            jackson {
-                JacksonManager.setUpMapper(this)
+    private val httpClient =
+        HttpClient(OkHttp) {
+            install(ContentNegotiation) {
+                jackson {
+                    JacksonManager.setUpMapper(this)
+                }
             }
+            install(ContentLengthSupplier)
         }
-        install(ContentLengthSupplier)
-    }
     private val client = CommentClient("$hostUrl", httpClient, authenticationService)
-    private val expectedComment1 = Comment(
-        id = UUID.fromString("573b456efca5-03d51d53-1a31-49a9-af74"),
-        author = "tester 1",
-        text = "mysterious",
-        createDtTm = OffsetDateTime.now(ZoneOffset.UTC)
-    )
-    private val expectedComment2 = Comment(
-        id = UUID.fromString("03d51d53-1a31-49a9-af74-573b456efca5"),
-        author = "tester 2",
-        text = "obfuscated",
-        createDtTm = OffsetDateTime.now(ZoneOffset.UTC)
-    )
+    private val expectedComment1 =
+        Comment(
+            id = UUID.fromString("573b456efca5-03d51d53-1a31-49a9-af74"),
+            author = "tester 1",
+            text = "mysterious",
+            createDtTm = OffsetDateTime.now(ZoneOffset.UTC),
+        )
+    private val expectedComment2 =
+        Comment(
+            id = UUID.fromString("03d51d53-1a31-49a9-af74-573b456efca5"),
+            author = "tester 2",
+            text = "obfuscated",
+            createDtTm = OffsetDateTime.now(ZoneOffset.UTC),
+        )
 
     @Test
     fun `getResourceComments - works`() {
@@ -68,15 +73,16 @@ class CommentClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(commentListJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
 
-        val response = runBlocking {
-            client.getResourceComments(
-                UUID.fromString("1d531a31-49a9-af74-03d5-573b456efca5"),
-                Order.ASC
-            )
-        }
+        val response =
+            runBlocking {
+                client.getResourceComments(
+                    UUID.fromString("1d531a31-49a9-af74-03d5-573b456efca5"),
+                    Order.ASC,
+                )
+            }
         assertEquals(commentList, response)
 
         val request = mockWebServer.takeRequest()
@@ -90,17 +96,18 @@ class CommentClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.Forbidden.value)
                 .setBody("")
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
 
-        val exception = assertThrows<ClientAuthenticationException> {
-            runBlocking {
-                client.getResourceComments(
-                    UUID.fromString("1d531a31-49a9-af74-03d5-573b456efca5"),
-                    Order.ASC
-                )
+        val exception =
+            assertThrows<ClientAuthenticationException> {
+                runBlocking {
+                    client.getResourceComments(
+                        UUID.fromString("1d531a31-49a9-af74-03d5-573b456efca5"),
+                        Order.ASC,
+                    )
+                }
             }
-        }
         val message = exception.message!!
         assertTrue(message.contains("Received 403 Client Error when calling Validation"))
         assertTrue(message.contains("for "))
@@ -113,26 +120,28 @@ class CommentClientTest {
 
     @Test
     fun `addResourceComment - works`() {
-        val newComment1 = NewComment(
-            author = "tester 1",
-            text = "mysterious",
-            createDtTm = OffsetDateTime.now(ZoneOffset.UTC)
-        )
+        val newComment1 =
+            NewComment(
+                author = "tester 1",
+                text = "mysterious",
+                createDtTm = OffsetDateTime.now(ZoneOffset.UTC),
+            )
         val commentJson = JacksonManager.objectMapper.writeValueAsString(expectedComment1)
 
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(commentJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
 
-        val response = runBlocking {
-            client.addResourceComment(
-                UUID.fromString("1d531a31-49a9-af74-03d5-573b456efca5"),
-                newComment1
-            )
-        }
+        val response =
+            runBlocking {
+                client.addResourceComment(
+                    UUID.fromString("1d531a31-49a9-af74-03d5-573b456efca5"),
+                    newComment1,
+                )
+            }
         assertEquals(GeneratedId(expectedComment1.id), response)
 
         val request = mockWebServer.takeRequest()
@@ -142,26 +151,28 @@ class CommentClientTest {
 
     @Test
     fun `addResourceComment - exception`() {
-        val newComment1 = NewComment(
-            author = "tester 1",
-            text = "mysterious",
-            createDtTm = OffsetDateTime.now(ZoneOffset.UTC)
-        )
+        val newComment1 =
+            NewComment(
+                author = "tester 1",
+                text = "mysterious",
+                createDtTm = OffsetDateTime.now(ZoneOffset.UTC),
+            )
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.PayloadTooLarge.value)
                 .setBody("")
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
 
-        val exception = assertThrows<ClientFailureException> {
-            runBlocking {
-                client.addResourceComment(
-                    UUID.fromString("1d531a31-49a9-af74-03d5-573b456efca5"),
-                    newComment1
-                )
+        val exception =
+            assertThrows<ClientFailureException> {
+                runBlocking {
+                    client.addResourceComment(
+                        UUID.fromString("1d531a31-49a9-af74-03d5-573b456efca5"),
+                        newComment1,
+                    )
+                }
             }
-        }
         val message = exception.message!!
         assertTrue(message.contains("Received 413 Client Error when calling Validation"))
         assertTrue(message.contains("for "))
@@ -181,20 +192,23 @@ class CommentClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(commentListJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
 
-        val response = runBlocking {
-            client.getResourceIssueComments(
-                UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
-                UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
-                Order.DESC
-            )
-        }
+        val response =
+            runBlocking {
+                client.getResourceIssueComments(
+                    UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
+                    UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
+                    Order.DESC,
+                )
+            }
         assertEquals(commentList, response)
 
         val request = mockWebServer.takeRequest()
-        request.path?.endsWith("/resources/123449a9-af74-03d5-1a31-573b456efca5/issues/12341a31-49a9-af74-573b-456e03d51d53/comments?order=DESC")
+        request.path?.endsWith(
+            "/resources/123449a9-af74-03d5-1a31-573b456efca5/issues/12341a31-49a9-af74-573b-456e03d51d53/comments?order=DESC",
+        )
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
@@ -204,51 +218,56 @@ class CommentClientTest {
             MockResponse()
                 .setResponseCode(HttpStatusCode.InternalServerError.value)
                 .setBody("")
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
 
-        val exception = assertThrows<ServerFailureException> {
-            runBlocking {
-                client.getResourceIssueComments(
-                    UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
-                    UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
-                    Order.DESC
-                )
+        val exception =
+            assertThrows<ServerFailureException> {
+                runBlocking {
+                    client.getResourceIssueComments(
+                        UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
+                        UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
+                        Order.DESC,
+                    )
+                }
             }
-        }
         val message = exception.message!!
         assertTrue(message.contains("Received 500 Server Error when calling Validation"))
         assertTrue(message.contains("for "))
         assertTrue(message.contains("/resources/123449a9-af74-03d5-1a31-573b456efca5/issues/12341a31-49a9-af74-573b-456e03d51d53/comments"))
 
         val request = mockWebServer.takeRequest()
-        request.path?.endsWith("/resources/123449a9-af74-03d5-1a31-573b456efca5/issues/12341a31-49a9-af74-573b-456e03d51d53/comments?order=DESC")
+        request.path?.endsWith(
+            "/resources/123449a9-af74-03d5-1a31-573b456efca5/issues/12341a31-49a9-af74-573b-456e03d51d53/comments?order=DESC",
+        )
         assertEquals("Bearer $authenticationToken", request.getHeader("Authorization"))
     }
 
     @Test
     fun `addResourceIssueComment - works`() {
-        val newComment1 = NewComment(
-            author = "tester 1",
-            text = "mysterious",
-            createDtTm = OffsetDateTime.now(ZoneOffset.UTC)
-        )
+        val newComment1 =
+            NewComment(
+                author = "tester 1",
+                text = "mysterious",
+                createDtTm = OffsetDateTime.now(ZoneOffset.UTC),
+            )
         val commentJson = JacksonManager.objectMapper.writeValueAsString(expectedComment1)
 
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.OK.value)
                 .setBody(commentJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
 
-        val response = runBlocking {
-            client.addResourceIssueComment(
-                UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
-                UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
-                newComment1
-            )
-        }
+        val response =
+            runBlocking {
+                client.addResourceIssueComment(
+                    UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
+                    UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
+                    newComment1,
+                )
+            }
         assertEquals(GeneratedId(expectedComment1.id), response)
 
         val request = mockWebServer.takeRequest()
@@ -258,29 +277,31 @@ class CommentClientTest {
 
     @Test
     fun `addResourceIssueComment - exception`() {
-        val newComment1 = NewComment(
-            author = "tester 1",
-            text = "mysterious",
-            createDtTm = OffsetDateTime.now(ZoneOffset.UTC)
-        )
+        val newComment1 =
+            NewComment(
+                author = "tester 1",
+                text = "mysterious",
+                createDtTm = OffsetDateTime.now(ZoneOffset.UTC),
+            )
         val commentJson = JacksonManager.objectMapper.writeValueAsString(expectedComment1)
 
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(HttpStatusCode.PayloadTooLarge.value)
                 .setBody(commentJson)
-                .setHeader("Content-Type", "application/json")
+                .setHeader("Content-Type", "application/json"),
         )
 
-        val exception = assertThrows<ClientFailureException> {
-            runBlocking {
-                client.addResourceIssueComment(
-                    UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
-                    UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
-                    newComment1
-                )
+        val exception =
+            assertThrows<ClientFailureException> {
+                runBlocking {
+                    client.addResourceIssueComment(
+                        UUID.fromString("123449a9-af74-03d5-1a31-573b456efca5"),
+                        UUID.fromString("12341a31-49a9-af74-573b-456e03d51d53"),
+                        newComment1,
+                    )
+                }
             }
-        }
         val message = exception.message!!
         assertTrue(message.contains("Received 413 Client Error when calling Validation"))
         assertTrue(message.contains("for "))

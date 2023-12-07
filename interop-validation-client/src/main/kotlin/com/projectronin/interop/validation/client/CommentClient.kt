@@ -27,7 +27,7 @@ class CommentClient(
     @Value("\${validation.server.url}")
     private val hostUrl: String,
     private val client: HttpClient,
-    private val authenticationService: ValidationAuthenticationService
+    private val authenticationService: ValidationAuthenticationService,
 ) {
     private val resourceUrl: String = "$hostUrl/resources"
 
@@ -35,80 +35,98 @@ class CommentClient(
      * Retrieves the set of comments associated to the supplied resource. This will only be comments directly
      * attached to the resource, and not nested through its issues.
      */
-    suspend fun getResourceComments(resourceId: UUID, order: Order): List<Comment> {
+    suspend fun getResourceComments(
+        resourceId: UUID,
+        order: Order,
+    ): List<Comment> {
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/comments"
-        val response: HttpResponse = client.request("Validation", urlString) { url ->
-            get(url) {
-                headers {
-                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse =
+            client.request("Validation", urlString) { url ->
+                get(url) {
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                    }
+                    accept(ContentType.Application.Json)
+                    contentType(ContentType.Application.Json)
+                    parameter("order", order)
                 }
-                accept(ContentType.Application.Json)
-                contentType(ContentType.Application.Json)
-                parameter("order", order)
             }
-        }
         return response.body()
     }
 
     /**
      * Posts a new comment to this resource.
      */
-    suspend fun addResourceComment(resourceId: UUID, newComment: NewComment): GeneratedId {
+    suspend fun addResourceComment(
+        resourceId: UUID,
+        newComment: NewComment,
+    ): GeneratedId {
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/comments"
-        val response: HttpResponse = client.request("Validation", urlString) { url ->
-            post(url) {
-                headers {
-                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse =
+            client.request("Validation", urlString) { url ->
+                post(url) {
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                    }
+                    accept(ContentType.Application.Json)
+                    contentType(ContentType.Application.Json)
+                    setBody(newComment)
                 }
-                accept(ContentType.Application.Json)
-                contentType(ContentType.Application.Json)
-                setBody(newComment)
             }
-        }
         return response.body()
     }
 
     /**
      * Retrieves the comments for a specific issue
      */
-    suspend fun getResourceIssueComments(resourceId: UUID, issueId: UUID, order: Order): List<Comment> {
+    suspend fun getResourceIssueComments(
+        resourceId: UUID,
+        issueId: UUID,
+        order: Order,
+    ): List<Comment> {
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/issues/$issueId/comments"
-        val response: HttpResponse = client.request("Validation", urlString) { url ->
-            get(url) {
-                headers {
-                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse =
+            client.request("Validation", urlString) { url ->
+                get(url) {
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                    }
+                    accept(ContentType.Application.Json)
+                    contentType(ContentType.Application.Json)
+                    parameter("order", order)
                 }
-                accept(ContentType.Application.Json)
-                contentType(ContentType.Application.Json)
-                parameter("order", order)
             }
-        }
         return response.body()
     }
 
     /**
      * Posts a new comment to an issue
      */
-    suspend fun addResourceIssueComment(resourceId: UUID, issueId: UUID, newComment: NewComment): GeneratedId {
+    suspend fun addResourceIssueComment(
+        resourceId: UUID,
+        issueId: UUID,
+        newComment: NewComment,
+    ): GeneratedId {
         val authentication = authenticationService.getAuthentication()
 
         val urlString = "$resourceUrl/$resourceId/issues/$issueId/comments"
-        val response: HttpResponse = client.request("Validation", urlString) { url ->
-            post(url) {
-                headers {
-                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+        val response: HttpResponse =
+            client.request("Validation", urlString) { url ->
+                post(url) {
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
+                    }
+                    accept(ContentType.Application.Json)
+                    contentType(ContentType.Application.Json)
+                    setBody(newComment)
                 }
-                accept(ContentType.Application.Json)
-                contentType(ContentType.Application.Json)
-                setBody(newComment)
             }
-        }
         return response.body()
     }
 }
