@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.interop.junit)
+    alias(libs.plugins.interop.spring.framework) // this is only needed to annotate the classes as open
 }
 
 dependencies {
@@ -16,6 +17,7 @@ dependencies {
 
     testImplementation(libs.mockk)
     testImplementation(libs.mockwebserver)
+    testImplementation("org.springframework:spring-test")
 }
 
 openApiGenerate {
