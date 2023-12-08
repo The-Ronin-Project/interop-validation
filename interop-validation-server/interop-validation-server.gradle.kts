@@ -70,6 +70,7 @@ openApiGenerate {
     ignoreFileOverride.set("$projectDir/.openapi-generator-ignore")
     configOptions.set(
         mapOf(
+            "useSpringBoot3" to "true",
             "enumPropertyNaming" to "UPPERCASE",
             "interfaceOnly" to "true",
             "useTags" to "true",

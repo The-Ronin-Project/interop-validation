@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.jwt.JwtClaimNames
 import org.springframework.security.oauth2.jwt.JwtClaimValidator
@@ -24,12 +25,24 @@ class SecurityConfig {
     lateinit var issuer: String
 
     @Bean
-    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        http.authorizeRequests()
-            .antMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-            .anyRequest().authenticated()
-            .and().cors()
-            .and().oauth2ResourceServer().jwt().decoder(jwtDecoder())
+    fun securityFilterChain(
+        http: HttpSecurity,
+        jwtDecoder: JwtDecoder,
+    ): SecurityFilterChain {
+        http {
+            cors { }
+            oauth2ResourceServer {
+                jwt {
+                    this.jwtDecoder = jwtDecoder
+                }
+            }
+            authorizeRequests {
+                authorize("/actuator/**", permitAll)
+                authorize("/swagger-ui/**", permitAll)
+                authorize("/v3/api-docs/**", permitAll)
+                authorize(anyRequest, authenticated)
+            }
+        }
         return http.build()
     }
 
