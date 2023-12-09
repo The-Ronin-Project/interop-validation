@@ -23,7 +23,7 @@ mysql = "8.0.33"
 openapi-generator = "7.1.0"
 ronin-kafka = "1.1.1"
 spring-boot = "3.2.0"
-springdoc = "1.7.0"
+springdoc = "2.3.0"
 testcontainers = "1.19.3"
 uuid-creator = "5.3.5"
 
@@ -62,7 +62,7 @@ rider-core = { module = "com.github.database-rider:rider-core", version.ref = "d
 ronin-kafka = { module = "com.projectronin:ronin-kafka", version.ref = "ronin-kafka" }
 spring-boot-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator", version.ref = "spring-boot" }
 spring-boot-parent = { module = "org.springframework.boot:spring-boot-parent", version.ref = "spring-boot" }
-springdoc-openapi-ui = { module = "org.springdoc:springdoc-openapi-ui", version.ref = "springdoc" }
+springdoc-openapi-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testcontainers" }
 uuid-creator = { module = "com.github.f4b6a3:uuid-creator", version.ref = "uuid-creator" }
