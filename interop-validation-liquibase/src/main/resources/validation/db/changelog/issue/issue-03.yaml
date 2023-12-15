@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: issue-description-remove-length-limit
+      author: Will Sun
+      preConditions:
+        - onFail: MARK_RAN
+        - columnExists:
+            tableName: issue
+            columnName: description
+      changes:
+        - modifyDataType:
+            tableName: issue
+            columnName: description
+            newDataType: clob
+        - addNotNullConstraint:
+            columnDataType: clob
+            columnName: description
+            constraintName: non_null_description
+            tableName: issue
+            validate: true

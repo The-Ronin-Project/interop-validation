@@ -504,6 +504,32 @@ class ResourceIT : BaseValidationIT() {
     }
 
     @Test
+    fun `addResource works for issue with long description`() {
+        val issue = NewIssue(
+            severity = Severity.FAILED,
+            type = "NOV_CONMAP_LOOKUP",
+            description = "Tenant source value '6941, 005058, 0097130, 3025, 005058, 005058, 100100, 110100, 30000300, 86003071, 900435668, 30000300, 86003071, 900435668, 30000300, 30000300, HCT1X, LCHCTX, LHCTX, PCV1X, PCVX, 1551.000, 6941, 6941' has no target defined in any Observation.code concept map for tenant '1xrekpx5'",
+            location = "Observation.code"
+        )
+        val newResource = NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = objectMapper.writeValueAsString(patient),
+            issues = listOf(issue),
+            createDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusHours(2)
+        )
+
+        val generatedId = runBlocking { resourceClient.addResource(newResource) }
+        assertNotNull(generatedId)
+
+        val uuid = generatedId.id!!
+        val issuesResponse = runBlocking { issueClient.getResourceIssues(uuid, Order.ASC) }
+        assertEquals(1, issuesResponse.size)
+        val issueResponse = issuesResponse[0]
+        assertEquals(issueResponse.description, issue.description)
+    }
+
+    @Test
     fun `reprocessesResource works without refreshNormalization`() {
         KafkaClient.monitorRequests()
 
