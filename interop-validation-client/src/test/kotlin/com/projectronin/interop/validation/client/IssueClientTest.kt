@@ -1,10 +1,10 @@
 package com.projectronin.interop.validation.client
 
+import com.projectronin.interop.common.http.auth.InteropAuthenticationService
 import com.projectronin.interop.common.http.exceptions.ClientAuthenticationException
 import com.projectronin.interop.common.http.exceptions.ClientFailureException
 import com.projectronin.interop.common.http.ktor.ContentLengthSupplier
 import com.projectronin.interop.common.jackson.JacksonManager
-import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.Issue
 import com.projectronin.interop.validation.client.generated.models.IssueStatus
 import com.projectronin.interop.validation.client.generated.models.Order
@@ -33,7 +33,7 @@ class IssueClientTest {
     private val hostUrl = mockWebServer.url("/test")
     private val authenticationToken = "123456"
     private val authenticationService =
-        mockk<ValidationAuthenticationService> {
+        mockk<InteropAuthenticationService> {
             every { getAuthentication() } returns
                 mockk {
                     every { accessToken } returns authenticationToken

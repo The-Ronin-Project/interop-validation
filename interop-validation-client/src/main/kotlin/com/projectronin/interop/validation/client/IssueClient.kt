@@ -1,7 +1,8 @@
 package com.projectronin.interop.validation.client
 
+import com.projectronin.interop.common.http.auth.InteropAuthenticationService
 import com.projectronin.interop.common.http.request
-import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
+import com.projectronin.interop.validation.client.auth.ValidationAuthenticationConfig
 import com.projectronin.interop.validation.client.generated.models.Issue
 import com.projectronin.interop.validation.client.generated.models.Order
 import com.projectronin.interop.validation.client.generated.models.UpdateIssue
@@ -17,6 +18,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -26,7 +28,8 @@ class IssueClient(
     @Value("\${validation.server.url}")
     private val hostUrl: String,
     private val client: HttpClient,
-    private val authenticationService: ValidationAuthenticationService,
+    @Qualifier(ValidationAuthenticationConfig.AUTH_SERVICE_BEAN_NAME)
+    private val authenticationService: InteropAuthenticationService,
 ) {
     private val resourceUrl: String = "$hostUrl/resources"
 

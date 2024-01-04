@@ -1,11 +1,11 @@
 package com.projectronin.interop.validation.client
 
+import com.projectronin.interop.common.http.auth.InteropAuthenticationService
 import com.projectronin.interop.common.http.exceptions.ClientFailureException
 import com.projectronin.interop.common.http.exceptions.ServerFailureException
 import com.projectronin.interop.common.http.exceptions.ServiceUnavailableException
 import com.projectronin.interop.common.http.ktor.ContentLengthSupplier
 import com.projectronin.interop.common.jackson.JacksonManager
-import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.GeneratedId
 import com.projectronin.interop.validation.client.generated.models.NewIssue
 import com.projectronin.interop.validation.client.generated.models.NewResource
@@ -38,7 +38,7 @@ import java.util.UUID
 class ResourceClientTest {
     private val authenticationToken = "123456"
     private val authenticationService =
-        mockk<ValidationAuthenticationService> {
+        mockk<InteropAuthenticationService> {
             every { getAuthentication() } returns
                 mockk {
                     every { accessToken } returns authenticationToken
@@ -406,7 +406,8 @@ class ResourceClientTest {
 
         val response =
             runBlocking {
-                val resources = ResourceClient(url.toString(), client, authenticationService).getResourceById(resource1Id)
+                val resources =
+                    ResourceClient(url.toString(), client, authenticationService).getResourceById(resource1Id)
                 resources
             }
         assertEquals(expectedResource, response)
@@ -650,7 +651,10 @@ class ResourceClientTest {
         val exception =
             assertThrows<ServiceUnavailableException> {
                 runBlocking {
-                    ResourceClient(url.toString(), client, authenticationService).updateResource(resourceId, updateResource)
+                    ResourceClient(url.toString(), client, authenticationService).updateResource(
+                        resourceId,
+                        updateResource,
+                    )
                 }
             }
         assertNotNull(exception.message)
