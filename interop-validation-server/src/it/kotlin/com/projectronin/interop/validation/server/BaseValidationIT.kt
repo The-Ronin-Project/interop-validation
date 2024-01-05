@@ -41,7 +41,7 @@ abstract class BaseValidationIT {
             "https://interop-validation.dev.projectronin.io",
             "id",
             "secret",
-            false
+            false,
         )
     protected val authenticationService = authenticationServiceConfig.interopAuthenticationService()
 
@@ -57,9 +57,10 @@ abstract class BaseValidationIT {
     /**
      * Adds a new resource.
      */
-    protected fun addResource(newResource: NewResource): UUID = runBlocking {
-        resourceClient.addResource(newResource).id!!
-    }
+    protected fun addResource(newResource: NewResource): UUID =
+        runBlocking {
+            resourceClient.addResource(newResource).id!!
+        }
 
     private fun purgeData() {
         database.deleteAll(IssueCommentDOs)

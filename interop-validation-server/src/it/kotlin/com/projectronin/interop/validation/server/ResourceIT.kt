@@ -32,112 +32,130 @@ import java.time.ZoneOffset
 import java.util.UUID
 
 class ResourceIT : BaseValidationIT() {
-    private val patient = Patient(
-        id = Id("12345"),
-        name = listOf()
-    )
-    private val location = Location(
-        id = Id("67890")
-    )
-
-    private val failedIssue = NewIssue(
-        severity = Severity.FAILED,
-        type = "PAT_001",
-        description = "No names",
-        location = "Patient.name"
-    )
-    private val failedIssue2 = NewIssue(
-        severity = Severity.FAILED,
-        type = "PAT_002",
-        description = "No names",
-        location = "Patient.name"
-    )
-    private val failedIssue3 = NewIssue(
-        severity = Severity.FAILED,
-        type = "PAT_001",
-        description = "No DOB",
-        location = "Patient.birthDate"
-    )
-    private val warningIssue = NewIssue(
-        severity = Severity.WARNING,
-        type = "PAT_001",
-        description = "No birth date",
-        location = "Patient.birthDate"
-    )
-    private val metadata1 = NewMetadata(
-        registryEntryType = "value-set",
-        valueSetName = "name of the value-set being referenced",
-        valueSetUuid = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec"),
-        version = "1"
-    )
-    private val metadata2 = NewMetadata(
-        registryEntryType = "concept-map",
-        conceptMapName = "name of the concept-map being referenced",
-        conceptMapUuid = UUID.fromString("29681f0f-41a7-4790-9122-ccff1ee50e0e"),
-        version = "2"
-    )
-    private val issueWithMeta = NewIssue(
-        severity = Severity.WARNING,
-        type = "PAT_001",
-        description = "No birth date",
-        location = "Patient.birthDate",
-        metadata = listOf(metadata1, metadata2)
-    )
-    private val newFailedResource = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = objectMapper.writeValueAsString(patient),
-        issues = listOf(failedIssue)
-    )
-    private val newFailedResource2 = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = objectMapper.writeValueAsString(patient),
-        issues = listOf(failedIssue2)
-    )
-    private val newFailedResource3 = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = objectMapper.writeValueAsString(patient),
-        issues = listOf(failedIssue, failedIssue2)
-    )
-    private val newFailedResource4 = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = objectMapper.writeValueAsString(patient),
-        issues = listOf(failedIssue3)
-    )
-    private val newWarningResource = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = objectMapper.writeValueAsString(patient),
-        issues = listOf(warningIssue)
-    )
-    private val newWarningAndFailedResource = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = objectMapper.writeValueAsString(patient),
-        issues = listOf(warningIssue, failedIssue)
-    )
-    private val newOtherTenantFailedResource = NewResource(
-        organizationId = "other",
-        resourceType = "Patient",
-        resource = objectMapper.writeValueAsString(patient),
-        issues = listOf(failedIssue)
-    )
-    private val newLocationFailedResource = NewResource(
-        organizationId = "ronin",
-        resourceType = "Location",
-        resource = objectMapper.writeValueAsString(location),
-        issues = listOf(
-            NewIssue(
-                severity = Severity.FAILED,
-                type = "LOC_001",
-                description = "No name",
-                location = "Location.name"
-            )
+    private val patient =
+        Patient(
+            id = Id("12345"),
+            name = listOf(),
         )
-    )
+    private val location =
+        Location(
+            id = Id("67890"),
+        )
+
+    private val failedIssue =
+        NewIssue(
+            severity = Severity.FAILED,
+            type = "PAT_001",
+            description = "No names",
+            location = "Patient.name",
+        )
+    private val failedIssue2 =
+        NewIssue(
+            severity = Severity.FAILED,
+            type = "PAT_002",
+            description = "No names",
+            location = "Patient.name",
+        )
+    private val failedIssue3 =
+        NewIssue(
+            severity = Severity.FAILED,
+            type = "PAT_001",
+            description = "No DOB",
+            location = "Patient.birthDate",
+        )
+    private val warningIssue =
+        NewIssue(
+            severity = Severity.WARNING,
+            type = "PAT_001",
+            description = "No birth date",
+            location = "Patient.birthDate",
+        )
+    private val metadata1 =
+        NewMetadata(
+            registryEntryType = "value-set",
+            valueSetName = "name of the value-set being referenced",
+            valueSetUuid = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec"),
+            version = "1",
+        )
+    private val metadata2 =
+        NewMetadata(
+            registryEntryType = "concept-map",
+            conceptMapName = "name of the concept-map being referenced",
+            conceptMapUuid = UUID.fromString("29681f0f-41a7-4790-9122-ccff1ee50e0e"),
+            version = "2",
+        )
+    private val issueWithMeta =
+        NewIssue(
+            severity = Severity.WARNING,
+            type = "PAT_001",
+            description = "No birth date",
+            location = "Patient.birthDate",
+            metadata = listOf(metadata1, metadata2),
+        )
+    private val newFailedResource =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = objectMapper.writeValueAsString(patient),
+            issues = listOf(failedIssue),
+        )
+    private val newFailedResource2 =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = objectMapper.writeValueAsString(patient),
+            issues = listOf(failedIssue2),
+        )
+    private val newFailedResource3 =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = objectMapper.writeValueAsString(patient),
+            issues = listOf(failedIssue, failedIssue2),
+        )
+    private val newFailedResource4 =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = objectMapper.writeValueAsString(patient),
+            issues = listOf(failedIssue3),
+        )
+    private val newWarningResource =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = objectMapper.writeValueAsString(patient),
+            issues = listOf(warningIssue),
+        )
+    private val newWarningAndFailedResource =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = objectMapper.writeValueAsString(patient),
+            issues = listOf(warningIssue, failedIssue),
+        )
+    private val newOtherTenantFailedResource =
+        NewResource(
+            organizationId = "other",
+            resourceType = "Patient",
+            resource = objectMapper.writeValueAsString(patient),
+            issues = listOf(failedIssue),
+        )
+    private val newLocationFailedResource =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Location",
+            resource = objectMapper.writeValueAsString(location),
+            issues =
+                listOf(
+                    NewIssue(
+                        severity = Severity.FAILED,
+                        type = "LOC_001",
+                        description = "No name",
+                        location = "Location.name",
+                    ),
+                ),
+        )
 
     @Test
     fun `getResources when none exist`() {
@@ -174,39 +192,42 @@ class ResourceIT : BaseValidationIT() {
     fun `getResources honors status`() {
         val newResource1Id = addResource(newFailedResource)
 
-        val reportedResources = runBlocking {
-            resourceClient.getResources(
-                status = listOf(ResourceStatus.REPORTED),
-                order = Order.ASC,
-                limit = 10,
-                issueType = null
-            )
-        }
+        val reportedResources =
+            runBlocking {
+                resourceClient.getResources(
+                    status = listOf(ResourceStatus.REPORTED),
+                    order = Order.ASC,
+                    limit = 10,
+                    issueType = null,
+                )
+            }
         assertEquals(1, reportedResources.size)
         assertEquals(newResource1Id, reportedResources[0].id)
 
-        val addressingResources = runBlocking {
-            resourceClient.getResources(
-                status = listOf(ResourceStatus.ADDRESSING),
-                order = Order.ASC,
-                limit = 10,
-                issueType = null
-            )
-        }
+        val addressingResources =
+            runBlocking {
+                resourceClient.getResources(
+                    status = listOf(ResourceStatus.ADDRESSING),
+                    order = Order.ASC,
+                    limit = 10,
+                    issueType = null,
+                )
+            }
         assertEquals(0, addressingResources.size)
     }
 
     @Test
     fun `getResources returns one resource with requested issue types`() {
         val resource1Id = addResource(newFailedResource)
-        val reportedResources = runBlocking {
-            resourceClient.getResources(
-                status = listOf(ResourceStatus.REPORTED),
-                order = Order.ASC,
-                limit = 10,
-                issueType = listOf("PAT_001")
-            )
-        }
+        val reportedResources =
+            runBlocking {
+                resourceClient.getResources(
+                    status = listOf(ResourceStatus.REPORTED),
+                    order = Order.ASC,
+                    limit = 10,
+                    issueType = listOf("PAT_001"),
+                )
+            }
         assertEquals(1, reportedResources.size)
         assertEquals(reportedResources[0].id, resource1Id)
     }
@@ -215,14 +236,15 @@ class ResourceIT : BaseValidationIT() {
     fun `getResources returns multiple resources with requested issue types`() {
         val resource1Id = addResource(newFailedResource)
         val resource2Id = addResource(newFailedResource4)
-        val reportedResources = runBlocking {
-            resourceClient.getResources(
-                status = listOf(ResourceStatus.REPORTED),
-                order = Order.ASC,
-                limit = 10,
-                issueType = listOf("PAT_001")
-            )
-        }
+        val reportedResources =
+            runBlocking {
+                resourceClient.getResources(
+                    status = listOf(ResourceStatus.REPORTED),
+                    order = Order.ASC,
+                    limit = 10,
+                    issueType = listOf("PAT_001"),
+                )
+            }
         assertEquals(2, reportedResources.size)
         assertEquals(reportedResources[0].id, resource1Id)
         assertEquals(reportedResources[1].id, resource2Id)
@@ -232,14 +254,15 @@ class ResourceIT : BaseValidationIT() {
     fun `getResources returns multiple resources with multiple requested issue types`() {
         val resource1Id = addResource(newFailedResource)
         val resource2Id = addResource(newFailedResource2)
-        val reportedResources = runBlocking {
-            resourceClient.getResources(
-                status = listOf(ResourceStatus.REPORTED),
-                order = Order.ASC,
-                limit = 10,
-                issueType = listOf("PAT_001", "PAT_002")
-            )
-        }
+        val reportedResources =
+            runBlocking {
+                resourceClient.getResources(
+                    status = listOf(ResourceStatus.REPORTED),
+                    order = Order.ASC,
+                    limit = 10,
+                    issueType = listOf("PAT_001", "PAT_002"),
+                )
+            }
         assertEquals(2, reportedResources.size)
         assertEquals(reportedResources[0].id, resource1Id)
         assertEquals(reportedResources[1].id, resource2Id)
@@ -248,14 +271,15 @@ class ResourceIT : BaseValidationIT() {
     @Test
     fun `getResources returns one resource with multiple requested issue types`() {
         val resource1Id = addResource(newFailedResource3)
-        val reportedResources = runBlocking {
-            resourceClient.getResources(
-                status = listOf(ResourceStatus.REPORTED),
-                order = Order.ASC,
-                limit = 10,
-                issueType = listOf("PAT_001", "PAT_002")
-            )
-        }
+        val reportedResources =
+            runBlocking {
+                resourceClient.getResources(
+                    status = listOf(ResourceStatus.REPORTED),
+                    order = Order.ASC,
+                    limit = 10,
+                    issueType = listOf("PAT_001", "PAT_002"),
+                )
+            }
         assertEquals(1, reportedResources.size)
         assertEquals(reportedResources[0].id, resource1Id)
     }
@@ -290,7 +314,7 @@ class ResourceIT : BaseValidationIT() {
                     order = Order.ASC,
                     limit = 10,
                     after = newResource1Id,
-                    issueType = null
+                    issueType = null,
                 )
             }
         assertEquals(1, ascendingResources.size)
@@ -309,7 +333,7 @@ class ResourceIT : BaseValidationIT() {
                     order = Order.ASC,
                     limit = 10,
                     organizationId = "other",
-                    issueType = null
+                    issueType = null,
                 )
             }
         assertEquals(1, ascendingResources.size)
@@ -328,7 +352,7 @@ class ResourceIT : BaseValidationIT() {
                     order = Order.ASC,
                     limit = 10,
                     resourceType = "Location",
-                    issueType = null
+                    issueType = null,
                 )
             }
         assertEquals(1, ascendingResources.size)
@@ -344,12 +368,13 @@ class ResourceIT : BaseValidationIT() {
 
     @Test
     fun `getResource returns for known ID`() {
-        val newResource = NewResource(
-            organizationId = "ronin",
-            resourceType = "Patient",
-            resource = objectMapper.writeValueAsString(patient),
-            issues = listOf(failedIssue)
-        )
+        val newResource =
+            NewResource(
+                organizationId = "ronin",
+                resourceType = "Patient",
+                resource = objectMapper.writeValueAsString(patient),
+                issues = listOf(failedIssue),
+            )
         val resourceId = addResource(newResource)
 
         val resource = runBlocking { resourceClient.getResourceById(resourceId) }
@@ -368,12 +393,13 @@ class ResourceIT : BaseValidationIT() {
 
     @Test
     fun `addResource works without an explicit create date-time`() {
-        val newResource = NewResource(
-            organizationId = "ronin",
-            resourceType = "Patient",
-            resource = objectMapper.writeValueAsString(patient),
-            issues = listOf(failedIssue)
-        )
+        val newResource =
+            NewResource(
+                organizationId = "ronin",
+                resourceType = "Patient",
+                resource = objectMapper.writeValueAsString(patient),
+                issues = listOf(failedIssue),
+            )
 
         val generatedId = runBlocking { resourceClient.addResource(newResource) }
         assertNotNull(generatedId)
@@ -395,13 +421,14 @@ class ResourceIT : BaseValidationIT() {
 
     @Test
     fun `addResource works with an explicit create date-time`() {
-        val newResource = NewResource(
-            organizationId = "ronin",
-            resourceType = "Patient",
-            resource = objectMapper.writeValueAsString(patient),
-            issues = listOf(failedIssue),
-            createDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusHours(2)
-        )
+        val newResource =
+            NewResource(
+                organizationId = "ronin",
+                resourceType = "Patient",
+                resource = objectMapper.writeValueAsString(patient),
+                issues = listOf(failedIssue),
+                createDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusHours(2),
+            )
 
         val generatedId = runBlocking { resourceClient.addResource(newResource) }
         assertNotNull(generatedId)
@@ -465,22 +492,24 @@ class ResourceIT : BaseValidationIT() {
         assertEquals(ResourceStatus.REPROCESSED, initialResource.status)
 
         val update = UpdateResource(status = UpdatableResourceStatus.ADDRESSING)
-        val exception = assertThrows<ClientFailureException> {
-            runBlocking { resourceClient.updateResource(resourceId, update) }
-        }
+        val exception =
+            assertThrows<ClientFailureException> {
+                runBlocking { resourceClient.updateResource(resourceId, update) }
+            }
         println(exception.message)
         assertEquals(true, exception.message?.contains("400"))
     }
 
     @Test
     fun `addResource works for issue with metadata`() {
-        val newResource = NewResource(
-            organizationId = "ronin",
-            resourceType = "Patient",
-            resource = objectMapper.writeValueAsString(patient),
-            issues = listOf(issueWithMeta),
-            createDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusHours(2)
-        )
+        val newResource =
+            NewResource(
+                organizationId = "ronin",
+                resourceType = "Patient",
+                resource = objectMapper.writeValueAsString(patient),
+                issues = listOf(issueWithMeta),
+                createDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusHours(2),
+            )
 
         val generatedId = runBlocking { resourceClient.addResource(newResource) }
         assertNotNull(generatedId)
@@ -505,19 +534,25 @@ class ResourceIT : BaseValidationIT() {
 
     @Test
     fun `addResource works for issue with long description`() {
-        val issue = NewIssue(
-            severity = Severity.FAILED,
-            type = "NOV_CONMAP_LOOKUP",
-            description = "Tenant source value '6941, 005058, 0097130, 3025, 005058, 005058, 100100, 110100, 30000300, 86003071, 900435668, 30000300, 86003071, 900435668, 30000300, 30000300, HCT1X, LCHCTX, LHCTX, PCV1X, PCVX, 1551.000, 6941, 6941' has no target defined in any Observation.code concept map for tenant '1xrekpx5'",
-            location = "Observation.code"
-        )
-        val newResource = NewResource(
-            organizationId = "ronin",
-            resourceType = "Patient",
-            resource = objectMapper.writeValueAsString(patient),
-            issues = listOf(issue),
-            createDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusHours(2)
-        )
+        val issue =
+            NewIssue(
+                severity = Severity.FAILED,
+                type = "NOV_CONMAP_LOOKUP",
+                description =
+                    "Tenant source value '6941, 005058, 0097130, 3025, 005058, 005058, 100100," +
+                        " 110100, 30000300, 86003071, 900435668, 30000300, 86003071, 900435668, 30000300, 30000300," +
+                        " HCT1X, LCHCTX, LHCTX, PCV1X, PCVX, 1551.000, 6941, 6941' has no target defined in any " +
+                        "Observation.code concept map for tenant '1xrekpx5'",
+                location = "Observation.code",
+            )
+        val newResource =
+            NewResource(
+                organizationId = "ronin",
+                resourceType = "Patient",
+                resource = objectMapper.writeValueAsString(patient),
+                issues = listOf(issue),
+                createDtTm = OffsetDateTime.now(ZoneOffset.UTC).minusHours(2),
+            )
 
         val generatedId = runBlocking { resourceClient.addResource(newResource) }
         assertNotNull(generatedId)
@@ -535,10 +570,11 @@ class ResourceIT : BaseValidationIT() {
 
         val newResourceId = addResource(newLocationFailedResource)
 
-        val reprocessRequest = ReprocessResourceRequest(
-            user = "Josh Smith",
-            comment = "Reprocessed without refresh normalization"
-        )
+        val reprocessRequest =
+            ReprocessResourceRequest(
+                user = "Josh Smith",
+                comment = "Reprocessed without refresh normalization",
+            )
         runBlocking { resourceClient.reprocessResource(newResourceId, reprocessRequest) }
 
         val postReprocessResource = runBlocking { resourceClient.getResourceById(newResourceId) }
@@ -574,11 +610,12 @@ class ResourceIT : BaseValidationIT() {
 
         val newResourceId = addResource(newLocationFailedResource)
 
-        val reprocessRequest = ReprocessResourceRequest(
-            user = "Josh Smith",
-            comment = "Reprocessed with true refresh normalization",
-            refreshNormalization = true
-        )
+        val reprocessRequest =
+            ReprocessResourceRequest(
+                user = "Josh Smith",
+                comment = "Reprocessed with true refresh normalization",
+                refreshNormalization = true,
+            )
         runBlocking { resourceClient.reprocessResource(newResourceId, reprocessRequest) }
 
         val postReprocessResource = runBlocking { resourceClient.getResourceById(newResourceId) }
@@ -614,11 +651,12 @@ class ResourceIT : BaseValidationIT() {
 
         val newResourceId = addResource(newLocationFailedResource)
 
-        val reprocessRequest = ReprocessResourceRequest(
-            user = "Josh Smith",
-            comment = "Reprocessed with false refresh normalization",
-            refreshNormalization = false
-        )
+        val reprocessRequest =
+            ReprocessResourceRequest(
+                user = "Josh Smith",
+                comment = "Reprocessed with false refresh normalization",
+                refreshNormalization = false,
+            )
         runBlocking { resourceClient.reprocessResource(newResourceId, reprocessRequest) }
 
         val postReprocessResource = runBlocking { resourceClient.getResourceById(newResourceId) }

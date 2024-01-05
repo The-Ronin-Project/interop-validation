@@ -28,56 +28,64 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class EHRDAListenerIT : BaseValidationIT() {
-
     @Test
     fun `listener polls EHRDA and marks resource as processed`() {
-        val config = KafkaConfig(
-            cloud = KafkaCloudConfig(
-                vendor = "oci",
-                region = "us-phoenix-1"
-            ),
-            bootstrap = KafkaBootstrapConfig(servers = "localhost:9092"),
-            publish = KafkaPublishConfig(source = "interop-validation"),
-            retrieve = KafkaRetrieveConfig(groupId = "interop-validation-it", serviceId = "ehr-data-authority"),
-            properties = KafkaPropertiesConfig(
-                security = KafkaSecurityConfig(protocol = "PLAINTEXT"),
-                sasl = KafkaSaslConfig(
-                    mechanism = "GSSAPI",
-                    jaas = KafkaSaslJaasConfig("nothing")
-                )
+        val config =
+            KafkaConfig(
+                cloud =
+                    KafkaCloudConfig(
+                        vendor = "oci",
+                        region = "us-phoenix-1",
+                    ),
+                bootstrap = KafkaBootstrapConfig(servers = "localhost:9092"),
+                publish = KafkaPublishConfig(source = "interop-validation"),
+                retrieve = KafkaRetrieveConfig(groupId = "interop-validation-it", serviceId = "ehr-data-authority"),
+                properties =
+                    KafkaPropertiesConfig(
+                        security = KafkaSecurityConfig(protocol = "PLAINTEXT"),
+                        sasl =
+                            KafkaSaslConfig(
+                                mechanism = "GSSAPI",
+                                jaas = KafkaSaslJaasConfig("nothing"),
+                            ),
+                    ),
             )
-        )
         val topic = KafkaTopicConfig(config).patientTopic()
-        val patient = Patient(
-            id = Id("tenant-12345"),
-            name = listOf(),
-            identifier = listOf(
-                Identifier(system = CodeSystem.RONIN_FHIR_ID.uri, value = FHIRString("12345")),
-                Identifier(system = CodeSystem.RONIN_TENANT.uri, value = FHIRString("tenant"))
+        val patient =
+            Patient(
+                id = Id("tenant-12345"),
+                name = listOf(),
+                identifier =
+                    listOf(
+                        Identifier(system = CodeSystem.RONIN_FHIR_ID.uri, value = FHIRString("12345")),
+                        Identifier(system = CodeSystem.RONIN_TENANT.uri, value = FHIRString("tenant")),
+                    ),
             )
-        )
 
         val resourceJson = objectMapper.writeValueAsString(patient)
-        val failedIssue = NewIssue(
-            severity = Severity.FAILED,
-            type = "PAT_001",
-            description = "No names",
-            location = "Patient.name"
-        )
-        val failedResource = NewResource(
-            organizationId = "tenant",
-            resourceType = "Patient",
-            resource = resourceJson,
-            issues = listOf(failedIssue)
-        )
+        val failedIssue =
+            NewIssue(
+                severity = Severity.FAILED,
+                type = "PAT_001",
+                description = "No names",
+                location = "Patient.name",
+            )
+        val failedResource =
+            NewResource(
+                organizationId = "tenant",
+                resourceType = "Patient",
+                resource = resourceJson,
+                issues = listOf(failedIssue),
+            )
         val resourceUUID = addResource(failedResource)
-        val ehrdaEvent = KafkaEvent(
-            domain = "ehr-data-authority",
-            resource = "patient",
-            action = KafkaAction.UPDATE,
-            resourceId = patient.id!!.value!!,
-            data = objectMapper.readValue(resourceJson, topic.eventClass.java)
-        )
+        val ehrdaEvent =
+            KafkaEvent(
+                domain = "ehr-data-authority",
+                resource = "patient",
+                action = KafkaAction.UPDATE,
+                resourceId = patient.id!!.value!!,
+                data = objectMapper.readValue(resourceJson, topic.eventClass.java),
+            )
         KafkaClient.testingClient.client.publishEvents(topic, listOf(ehrdaEvent))
         Thread.sleep(4000) // there has to be a better way
         val updatedResource = runBlocking { resourceClient.getResourceById(resourceUUID) }

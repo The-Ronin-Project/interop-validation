@@ -22,97 +22,110 @@ import java.util.UUID
 import com.projectronin.interop.validation.client.generated.models.Severity as ClientSeverity
 
 class IssueIT : BaseValidationIT() {
-    private val patient = Patient(
-        id = Id("12345"),
-        name = listOf()
-    )
+    private val patient =
+        Patient(
+            id = Id("12345"),
+            name = listOf(),
+        )
 
-    private val failedIssue = NewIssue(
-        severity = ClientSeverity.FAILED,
-        type = "PAT_001",
-        description = "No names",
-        location = "Patient.name"
-    )
+    private val failedIssue =
+        NewIssue(
+            severity = ClientSeverity.FAILED,
+            type = "PAT_001",
+            description = "No names",
+            location = "Patient.name",
+        )
 
-    private val warningIssue = NewIssue(
-        severity = ClientSeverity.WARNING,
-        type = "PAT_001",
-        description = "No birth date",
-        location = "Patient.birthDate"
-    )
+    private val warningIssue =
+        NewIssue(
+            severity = ClientSeverity.WARNING,
+            type = "PAT_001",
+            description = "No birth date",
+            location = "Patient.birthDate",
+        )
 
-    private val resource = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = JacksonManager.objectMapper.writeValueAsString(patient),
-        issues = listOf(failedIssue, warningIssue)
-    )
+    private val resource =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = JacksonManager.objectMapper.writeValueAsString(patient),
+            issues = listOf(failedIssue, warningIssue),
+        )
 
-    private val meta1 = NewMetadata(
-        registryEntryType = "value-set",
-        valueSetName = "name of the value-set being referenced",
-        valueSetUuid = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec"),
-        conceptMapName = "name of the concept-map being referenced",
-        conceptMapUuid = UUID.fromString("29681f0f-41a7-4790-9122-ccff1ee50e0e"),
-        version = "1"
-    )
+    private val meta1 =
+        NewMetadata(
+            registryEntryType = "value-set",
+            valueSetName = "name of the value-set being referenced",
+            valueSetUuid = UUID.fromString("778afb2e-8c0e-44a8-ad86-9058bcec"),
+            conceptMapName = "name of the concept-map being referenced",
+            conceptMapUuid = UUID.fromString("29681f0f-41a7-4790-9122-ccff1ee50e0e"),
+            version = "1",
+        )
 
-    private val meta2 = NewMetadata(
-        registryEntryType = "concept-map",
-        conceptMapName = "name of the concept-map being referenced",
-        conceptMapUuid = UUID.fromString("5de34981-4ad1-43c9-b70e-8cb519151df0"),
-        version = "2"
-    )
+    private val meta2 =
+        NewMetadata(
+            registryEntryType = "concept-map",
+            conceptMapName = "name of the concept-map being referenced",
+            conceptMapUuid = UUID.fromString("5de34981-4ad1-43c9-b70e-8cb519151df0"),
+            version = "2",
+        )
 
-    private val failedIssueWithMeta = NewIssue(
-        severity = ClientSeverity.FAILED,
-        type = "PAT_001",
-        description = "No names",
-        location = "Patient.name",
-        metadata = listOf(meta1)
-    )
+    private val failedIssueWithMeta =
+        NewIssue(
+            severity = ClientSeverity.FAILED,
+            type = "PAT_001",
+            description = "No names",
+            location = "Patient.name",
+            metadata = listOf(meta1),
+        )
 
-    private val failedIssueWithMetas = NewIssue(
-        severity = ClientSeverity.FAILED,
-        type = "PAT_001",
-        description = "No names",
-        location = "Patient.name",
-        metadata = listOf(meta1, meta2)
-    )
-    private val failedIssueWithOutMeta = NewIssue(
-        severity = ClientSeverity.FAILED,
-        type = "PAT_001",
-        description = "No DOB",
-        location = "Patient.birthDate"
-    )
+    private val failedIssueWithMetas =
+        NewIssue(
+            severity = ClientSeverity.FAILED,
+            type = "PAT_001",
+            description = "No names",
+            location = "Patient.name",
+            metadata = listOf(meta1, meta2),
+        )
+    private val failedIssueWithOutMeta =
+        NewIssue(
+            severity = ClientSeverity.FAILED,
+            type = "PAT_001",
+            description = "No DOB",
+            location = "Patient.birthDate",
+        )
 
-    private val resource1 = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = JacksonManager.objectMapper.writeValueAsString(patient),
-        issues = listOf(failedIssueWithMeta)
-    )
+    private val resource1 =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = JacksonManager.objectMapper.writeValueAsString(patient),
+            issues = listOf(failedIssueWithMeta),
+        )
 
-    private val resource2 = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = JacksonManager.objectMapper.writeValueAsString(patient),
-        issues = listOf(failedIssueWithOutMeta)
-    )
+    private val resource2 =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = JacksonManager.objectMapper.writeValueAsString(patient),
+            issues = listOf(failedIssueWithOutMeta),
+        )
 
-    private val resource3 = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = JacksonManager.objectMapper.writeValueAsString(patient),
-        issues = listOf(failedIssueWithMeta, failedIssueWithOutMeta)
-    )
+    private val resource3 =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = JacksonManager.objectMapper.writeValueAsString(patient),
+            issues = listOf(failedIssueWithMeta, failedIssueWithOutMeta),
+        )
 
-    private val resource4 = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = JacksonManager.objectMapper.writeValueAsString(patient),
-        issues = listOf(failedIssueWithMetas)
-    )
+    private val resource4 =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = JacksonManager.objectMapper.writeValueAsString(patient),
+            issues = listOf(failedIssueWithMetas),
+        )
 
     @Test
     fun `getResourceIssues - gets issues in order`() {

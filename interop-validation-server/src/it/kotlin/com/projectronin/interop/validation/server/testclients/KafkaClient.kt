@@ -39,22 +39,26 @@ object KafkaClient {
     private val mutex = Mutex()
     private val logger = KotlinLogging.logger { }
 
-    val config = KafkaConfig(
-        cloud = KafkaCloudConfig(
-            vendor = "oci",
-            region = "us-phoenix-1"
-        ),
-        bootstrap = KafkaBootstrapConfig(servers = "localhost:9092"),
-        publish = KafkaPublishConfig(source = "interop-validation-it"),
-        retrieve = KafkaRetrieveConfig(groupId = "interop-validation-it", serviceId = "interop-validation"),
-        properties = KafkaPropertiesConfig(
-            security = KafkaSecurityConfig(protocol = "PLAINTEXT"),
-            sasl = KafkaSaslConfig(
-                mechanism = "GSSAPI",
-                jaas = KafkaSaslJaasConfig("nothing")
-            )
+    val config =
+        KafkaConfig(
+            cloud =
+                KafkaCloudConfig(
+                    vendor = "oci",
+                    region = "us-phoenix-1",
+                ),
+            bootstrap = KafkaBootstrapConfig(servers = "localhost:9092"),
+            publish = KafkaPublishConfig(source = "interop-validation-it"),
+            retrieve = KafkaRetrieveConfig(groupId = "interop-validation-it", serviceId = "interop-validation"),
+            properties =
+                KafkaPropertiesConfig(
+                    security = KafkaSecurityConfig(protocol = "PLAINTEXT"),
+                    sasl =
+                        KafkaSaslConfig(
+                            mechanism = "GSSAPI",
+                            jaas = KafkaSaslJaasConfig("nothing"),
+                        ),
+                ),
         )
-    )
     val testingClient = KafkaTestingClient("localhost:9092", config)
     private val adminClient = testingClient.adminClient
 
@@ -72,52 +76,56 @@ object KafkaClient {
                     val groupId = UUID.randomUUID().toString()
 
                     var received = false
-                    job = GlobalScope.launch {
-                        val consumer = RoninConsumer(
-                            topics = listOf(topic),
-                            typeMap = mapOf(
-                                "ronin.interop-mirth.resource.request" to InteropResourceRequestV1::class,
-                                "test" to String::class
-                            ),
-                            kafkaProperties = RoninConsumerKafkaProperties(
-                                "bootstrap.servers" to config.bootstrap.servers,
-                                "security.protocol" to config.properties.security.protocol,
-                                "sasl.mechanism" to config.properties.sasl.mechanism,
-                                "sasl.jaas.config" to config.properties.sasl.jaas.config,
-                                "group.id" to groupId
-                            )
-                        )
+                    job =
+                        GlobalScope.launch {
+                            val consumer =
+                                RoninConsumer(
+                                    topics = listOf(topic),
+                                    typeMap =
+                                        mapOf(
+                                            "ronin.interop-mirth.resource.request" to InteropResourceRequestV1::class,
+                                            "test" to String::class,
+                                        ),
+                                    kafkaProperties =
+                                        RoninConsumerKafkaProperties(
+                                            "bootstrap.servers" to config.bootstrap.servers,
+                                            "security.protocol" to config.properties.security.protocol,
+                                            "sasl.mechanism" to config.properties.sasl.mechanism,
+                                            "sasl.jaas.config" to config.properties.sasl.jaas.config,
+                                            "group.id" to groupId,
+                                        ),
+                                )
 
-                        // Launch a separate coroutine for processing so that we can monitor the state of the current thread
-                        launch {
-                            consumer.process {
-                                logger.info { "Received event: $it" }
-                                if (it.type == "test") {
-                                    logger.info { "Test message received" }
-                                    // This exists to verify that the consumer is processing messages correctly before
-                                    // returning the control flow back to the caller.
-                                    received = true
-                                } else {
-                                    runBlocking {
-                                        mutex.withLock {
-                                            logger.info { "Adding event" }
-                                            events.add(it)
+                            // Launch a separate coroutine for processing so that we can monitor the state of the current thread
+                            launch {
+                                consumer.process {
+                                    logger.info { "Received event: $it" }
+                                    if (it.type == "test") {
+                                        logger.info { "Test message received" }
+                                        // This exists to verify that the consumer is processing messages correctly before
+                                        // returning the control flow back to the caller.
+                                        received = true
+                                    } else {
+                                        runBlocking {
+                                            mutex.withLock {
+                                                logger.info { "Adding event" }
+                                                events.add(it)
+                                            }
                                         }
                                     }
+                                    RoninEventResult.ACK
                                 }
-                                RoninEventResult.ACK
                             }
-                        }
 
-                        // Iterate until the thread has been killed, at which point we stop the consumer and exit gracefully.
-                        while (true) {
-                            if (!isActive) {
-                                logger.info { "Thread is no longer active. Stopping consumer" }
-                                consumer.stop()
-                                break
+                            // Iterate until the thread has been killed, at which point we stop the consumer and exit gracefully.
+                            while (true) {
+                                if (!isActive) {
+                                    logger.info { "Thread is no longer active. Stopping consumer" }
+                                    consumer.stop()
+                                    break
+                                }
                             }
                         }
-                    }
 
                     // Wait for the topic to be registered and the consumer group to be stable
                     while (true) {
@@ -125,8 +133,8 @@ object KafkaClient {
                         if (names.any { it == topic }) {
                             val groups = adminClient.listConsumerGroups().valid().get()
                             if (groups.any {
-                                it.groupId() == groupId && it.state().get() == ConsumerGroupState.STABLE
-                            }
+                                    it.groupId() == groupId && it.state().get() == ConsumerGroupState.STABLE
+                                }
                             ) {
                                 logger.info { "Topic and consumer group created" }
                                 break
@@ -140,17 +148,19 @@ object KafkaClient {
                     }
 
                     // Then send a test message to ensure the consumer is actually listening
-                    val producer = RoninProducer(
-                        topic = topic,
-                        source = config.publish.source,
-                        dataSchema = "schema",
-                        kafkaProperties = RoninProducerKafkaProperties(
-                            "bootstrap.servers" to config.bootstrap.servers,
-                            "security.protocol" to config.properties.security.protocol,
-                            "sasl.mechanism" to config.properties.sasl.mechanism,
-                            "sasl.jaas.config" to config.properties.sasl.jaas.config
+                    val producer =
+                        RoninProducer(
+                            topic = topic,
+                            source = config.publish.source,
+                            dataSchema = "schema",
+                            kafkaProperties =
+                                RoninProducerKafkaProperties(
+                                    "bootstrap.servers" to config.bootstrap.servers,
+                                    "security.protocol" to config.properties.security.protocol,
+                                    "sasl.mechanism" to config.properties.sasl.mechanism,
+                                    "sasl.jaas.config" to config.properties.sasl.jaas.config,
+                                ),
                         )
-                    )
                     logger.info { "Sending test message" }
                     producer.send("test", "subject", "Test Data")
 
@@ -198,13 +208,14 @@ object KafkaClient {
         }
 
         while (waiting) {
-            val events = runBlocking {
-                mutex.withLock {
-                    val currentEvents = events.toList()
-                    events.clear()
-                    currentEvents
+            val events =
+                runBlocking {
+                    mutex.withLock {
+                        val currentEvents = events.toList()
+                        events.clear()
+                        currentEvents
+                    }
                 }
-            }
             if (events.isNotEmpty()) {
                 return events
             }

@@ -20,50 +20,57 @@ import java.time.ZoneOffset
 import java.util.UUID
 
 class CommentIT : BaseValidationIT() {
-    private val patient = Patient(
-        id = Id("12345"),
-        name = listOf()
-    )
+    private val patient =
+        Patient(
+            id = Id("12345"),
+            name = listOf(),
+        )
 
-    private val failedIssue = NewIssue(
-        severity = Severity.FAILED,
-        type = "PAT_001",
-        description = "No names",
-        location = "Patient.name"
-    )
+    private val failedIssue =
+        NewIssue(
+            severity = Severity.FAILED,
+            type = "PAT_001",
+            description = "No names",
+            location = "Patient.name",
+        )
 
-    private val newFailedResource = NewResource(
-        organizationId = "ronin",
-        resourceType = "Patient",
-        resource = JacksonManager.objectMapper.writeValueAsString(patient),
-        issues = listOf(failedIssue)
-    )
+    private val newFailedResource =
+        NewResource(
+            organizationId = "ronin",
+            resourceType = "Patient",
+            resource = JacksonManager.objectMapper.writeValueAsString(patient),
+            issues = listOf(failedIssue),
+        )
 
-    private val newComment1 = NewComment(
-        author = "Jeff",
-        text = "Comment1",
-        createDtTm = OffsetDateTime.of(2020, 1, 1, 9, 0, 0, 0, ZoneOffset.UTC)
-    )
+    private val newComment1 =
+        NewComment(
+            author = "Jeff",
+            text = "Comment1",
+            createDtTm = OffsetDateTime.of(2020, 1, 1, 9, 0, 0, 0, ZoneOffset.UTC),
+        )
 
-    private val newComment2 = NewComment(
-        author = "Jane",
-        text = "Comment2",
-        createDtTm = OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.UTC)
-    )
+    private val newComment2 =
+        NewComment(
+            author = "Jane",
+            text = "Comment2",
+            createDtTm = OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.UTC),
+        )
 
-    private val newComment3 = NewComment(
-        author = "Joe",
-        text = "Comment3",
-        createDtTm = OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, ZoneOffset.UTC)
-    )
+    private val newComment3 =
+        NewComment(
+            author = "Joe",
+            text = "Comment3",
+            createDtTm = OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, ZoneOffset.UTC),
+        )
 
     @Test
     fun `addResourceComment - works without datetime`() {
         val newResourceId = addResource(newFailedResource)
-        val newComment = NewComment(
-            author = "Jeff",
-            text = "Comment"
-        )
+        val newComment =
+            NewComment(
+                author = "Jeff",
+                text = "Comment",
+            )
         runBlocking { commentClient.addResourceComment(newResourceId, newComment) }
         val comments = runBlocking { commentClient.getResourceComments(newResourceId, Order.ASC) }
 
@@ -79,12 +86,12 @@ class CommentIT : BaseValidationIT() {
     @Test
     fun `addResourceComment - works with datetime`() {
         val newResourceId = addResource(newFailedResource)
-        val newComment = NewComment(
-            author = "Jeff",
-            text = "Comment",
-            createDtTm = OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, ZoneOffset.UTC)
-
-        )
+        val newComment =
+            NewComment(
+                author = "Jeff",
+                text = "Comment",
+                createDtTm = OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, ZoneOffset.UTC),
+            )
         runBlocking { commentClient.addResourceComment(newResourceId, newComment) }
         val comments = runBlocking { commentClient.getResourceComments(newResourceId, Order.ASC) }
 
@@ -99,7 +106,8 @@ class CommentIT : BaseValidationIT() {
 
     @Test
     fun `addResourceComment - handles fake resource ID`() {
-        val exception = assertThrows<ClientFailureException> { runBlocking { commentClient.addResourceComment(UUID.randomUUID(), newComment1) } }
+        val exception =
+            assertThrows<ClientFailureException> { runBlocking { commentClient.addResourceComment(UUID.randomUUID(), newComment1) } }
         assertTrue(exception.message?.contains("404") ?: false)
     }
 
@@ -137,7 +145,8 @@ class CommentIT : BaseValidationIT() {
 
     @Test
     fun `getResourceComments - handles fake resource ID`() {
-        val exception = assertThrows<ClientFailureException> { runBlocking { commentClient.getResourceComments(UUID.randomUUID(), Order.DESC) } }
+        val exception =
+            assertThrows<ClientFailureException> { runBlocking { commentClient.getResourceComments(UUID.randomUUID(), Order.DESC) } }
         assertTrue(exception.message?.contains("404") ?: false)
     }
 
@@ -145,10 +154,11 @@ class CommentIT : BaseValidationIT() {
     fun `addResourceIssueComment - works without datetime`() {
         val newResourceId = addResource(newFailedResource)
         val issueId = runBlocking { issueClient.getResourceIssues(newResourceId, Order.ASC) }.single().id
-        val newComment = NewComment(
-            author = "Jeff",
-            text = "Comment"
-        )
+        val newComment =
+            NewComment(
+                author = "Jeff",
+                text = "Comment",
+            )
         runBlocking { commentClient.addResourceIssueComment(newResourceId, issueId, newComment) }
         val comments = runBlocking { commentClient.getResourceIssueComments(newResourceId, issueId, Order.ASC) }
 
@@ -165,12 +175,12 @@ class CommentIT : BaseValidationIT() {
     fun `addResourceIssueComment - works with datetime`() {
         val newResourceId = addResource(newFailedResource)
         val issueId = runBlocking { issueClient.getResourceIssues(newResourceId, Order.ASC) }.single().id
-        val newComment = NewComment(
-            author = "Jeff",
-            text = "Comment",
-            createDtTm = OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, ZoneOffset.UTC)
-
-        )
+        val newComment =
+            NewComment(
+                author = "Jeff",
+                text = "Comment",
+                createDtTm = OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, ZoneOffset.UTC),
+            )
         runBlocking { commentClient.addResourceIssueComment(newResourceId, issueId, newComment) }
         val comments = runBlocking { commentClient.getResourceIssueComments(newResourceId, issueId, Order.ASC) }
 
@@ -185,11 +195,12 @@ class CommentIT : BaseValidationIT() {
 
     @Test
     fun `addResourceIssueComment - handles fake resource ID and issue id`() {
-        val exception = assertThrows<ClientFailureException> {
-            runBlocking {
-                commentClient.addResourceIssueComment(UUID.randomUUID(), UUID.randomUUID(), newComment1)
+        val exception =
+            assertThrows<ClientFailureException> {
+                runBlocking {
+                    commentClient.addResourceIssueComment(UUID.randomUUID(), UUID.randomUUID(), newComment1)
+                }
             }
-        }
         assertTrue(exception.message?.contains("404") ?: false)
     }
 
@@ -234,7 +245,10 @@ class CommentIT : BaseValidationIT() {
 
     @Test
     fun `getResourceIssueComments - handles fake resource ID`() {
-        val exception = assertThrows<ClientFailureException> { runBlocking { commentClient.getResourceIssueComments(UUID.randomUUID(), UUID.randomUUID(), Order.DESC) } }
+        val exception =
+            assertThrows<ClientFailureException> {
+                runBlocking { commentClient.getResourceIssueComments(UUID.randomUUID(), UUID.randomUUID(), Order.DESC) }
+            }
         assertTrue(exception.message?.contains("404") ?: false)
     }
 }
