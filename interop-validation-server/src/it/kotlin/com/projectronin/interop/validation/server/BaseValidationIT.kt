@@ -16,20 +16,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.ktorm.database.Database
 import org.ktorm.dsl.deleteAll
-import org.testcontainers.containers.DockerComposeContainer
-import org.testcontainers.containers.wait.strategy.Wait
-import java.io.File
 import java.time.OffsetDateTime
 import java.util.UUID
 
 abstract class BaseValidationIT {
-    companion object {
-        val docker =
-            DockerComposeContainer(File(ResourceIT::class.java.getResource("docker-compose-it.yaml")!!.file))
-                .waitingFor("validation-server", Wait.forLogMessage(".*Started ValidationServerKt.*", 1))
-                .start()
-    }
-
     protected val database = Database.connect(url = "jdbc:mysql://springuser:ThePassword@localhost:3306/validation-db")
 
     protected val serverUrl = "http://localhost:8080"

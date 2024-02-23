@@ -1,6 +1,7 @@
 services:
   validation-server:
     restart: on-failure
+    build: ../../..
     image: interop-validation-server:local
     environment:
       SPRING_DATASOURCE_URL: "jdbc:mysql://springuser:ThePassword@validation-db:3306/validation-db"
@@ -17,6 +18,10 @@ services:
       KAFKA_PROPERTIES_SASL_JAAS: "nothing"
     ports:
       - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "curl", "-k", "-X", "GET", "localhost:8080/actuator/health" ]
+      timeout: 5s
+      retries: 30
     depends_on:
       mock-oauth2:
         condition: service_started
@@ -47,7 +52,7 @@ services:
     ports:
       - "8081:8080"
     volumes:
-      - ./:/host
+      - ../../../build/resources/it:/host
     environment:
       - JSON_CONFIG_PATH=/host/mock-oauth2-config.json
 
